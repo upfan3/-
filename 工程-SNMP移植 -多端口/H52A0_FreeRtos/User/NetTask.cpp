@@ -431,7 +431,7 @@ void Net_Task(void *pvParameters)
     while(1)
     {
 			
-			gnet.OnTick(1,8082,&rx_info[0]);
+//			gnet.OnTick(1,8082,&rx_info[0]);
 			gnet.OnTick(2,8083,&rx_info[1]);
 			gnet.OnTick(4,8081,&rx_info[2],PROTOCOL_UDP);
 							 gdhcp.Dhcp_Run();
