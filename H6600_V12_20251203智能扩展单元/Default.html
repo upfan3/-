@@ -1,0 +1,3442 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html;     =.UTF-8" />
+        <meta http-equiv="x-UA-Compatible" content="IE=Edge chrome=1" />
+        <meta name="viewport" content="initial-scale=1, maximum-scale=3, minimum-scale=1, user-scalable=no" />
+        <link rel="shortcut icon" href="es.png" />
+        <link rel="stylesheet" type="text/css" href="H6600.css" />
+        <script type="text/javascript" src="JSExt.js"></script><!--引用js内置对象通用扩展模块-->
+        <script type="text/javascript" src="GUI.js"></script><!--引用用户界面对象模板-->
+       <!-- <script type="text/javascript" src="Demo.js"></script>--><!--引用演示及调试模块-->
+        <script type="text/javascript" src="Database.js"></script><!--引用数据库管理模块-->
+        <script type="text/javascript" src="Comm.js"></script><!--引用设备通信模块-->
+        <script type="text/javascript" src="H52C0T2.js"></script><!--引用设备定义-->
+        <script type="text/javascript" src="weather.js"></script><!--引用天气模块-->
+        <script>
+            
+            //通信用智能光储系统触摸屏监控程序主文件
+            const ver = "V1.0"; //增加风机和燃料电池界面元素，增加主动向平台上报实时数据功能，用收益曲线代替PUE曲线
+
+            //触摸屏不支持class语句和startWiths、endWiths属性
+            //以下为全局常量
+            //var lang = (navigator.language || navigator.browserLanguage);
+            //langFlag = (lang.match(/zh-\w*-?cn\s*/i)) ? 0:1;
+            // var textValue;
+            const yTitle=["电压（V）","电流（A）","电量（kWh）","收益（元）"];    //图示纵坐标标题
+            var debugMode = true; //调试模式
+            if(typeof(demoResponse)!="undefined") debugMode=true;
+            var langFlag = 0;   //当前语言
+            var yMax=[100,100]; //纵坐标缺省刻度范围（主、次坐标）
+            const leftmenus = [
+                ["系统总览",0,""],
+                ["运行曲线",1,""],
+                ["日发电量",1,""],
+                ["月发电量",1,""],
+                ["工作状态",2,"414344"],
+                ["设备信息",2,"51D8"],
+                ["工作参数",2,"464D"],
+                ["时间表",3,"D6"],
+                // ["高级参数",2,"D2"],                
+                ["时刻表",4,"AE"]
+            ]
+            const dataSetColor = ["yellow","lime","aqua","white","red"];    //曲线颜色
+            const updateInterval = 2;  //界面定时更新间隔，单位秒
+            var setup = [{"title":"主机地址","value":"192.168.1.16"},
+                {"title":"平台地址","value":"enpd001.mentech.com.cn:9090"},
+                {"title":"光伏方阵容量","value":6.6,"unit":"kWp"},
+                {"title":"蓄电池组容量","value":22,"unit":"kWh"},
+                {"title":"投运时间","value":"2022/08/29"},
+                {"title":"直接带载","value":0,"unit":"否|是"},
+                // {"title":"站址","value":"东莞铭普总部展厅"}
+            ];
+            function setupOf(title){
+                for(var i=0;i<setup.length;i++) if(setup[i].title==title) return setup[i];
+            };
+
+            let deviceInfo = {
+                manufacturerName: " ",
+                productName: " ",
+                productSpec: " ",
+                productionDate: "2023-01-01",
+                systemCapacity: "mA"
+            };
+
+            // 定义可编辑行的数据
+    const editableRows = [
+        { label: "厂商名称", key: "manufacturerName", byteLength: 20 },
+        { label: "产品名称", key: "productName", byteLength: 10 },
+        { label: "产品规格", key: "productSpec", byteLength: 10 },
+        { label: "生产日期", key: "productionDate", byteLength: 10 },
+        { label: "使用日期", key: "productionDate", byteLength: 10 },
+        { label: "系统容量", key: "systemCapacity", byteLength: 10 }
+    ];
+            var periodValues = [    //时段缺省值
+                {text: "未用", color: "#404040"},
+                {text: "尖峰", color: "#400000"},
+                {text: "高峰", color: "#404000"},
+                {text: "平时", color: "#000040"},
+                {text: "低谷", color: "#004000"}
+            ];
+            var debugWin = {};
+            //类定义
+            function Period(start,value) {  //时段
+                this.start=start;
+                this.value=value;
+                return this;
+            }
+            //全局变量
+            const eqm = new Equipment();
+            //读入配置参数
+            var s = localStorage.getItem("comSetting");
+            if(typeof(s)=="string") setup=JSON.parse(s);
+            var pw = setupOf("口令");
+            if(pw==undefined) setup.push({"title":"口令","value":""});
+            else if(pw.value.length>0 && !goodPwd(pw.value)) pw.value="";
+            if(setupOf("直接带载")==undefined) setup.push({"title":"直接带载","value":0,"unit":"否|是"});
+
+            //检查配置
+            eqm.config.chkConfig();
+            //建立实时数据库
+            eqm.realtimeDB=createDatabase();
+
+            var page=0; //当前显示页面
+            var unit=0; //当前显示单元
+            var goHome=0;   //回主页计时
+            var sunShown=0;
+            function createDigramView() {
+                var objs = [{caption:"光伏方阵", type:1, left:"2%", right:"73%", top:"2%", bottom:"72%", pic:"pv.jpg", cfg:"pv"},
+                   // {caption:"风力发电机组", type:1, left:"30%", right:"52%", top:"2%", bottom:"72%", dat:"OutCurr", id:"1", pic:"windturbine.png", cfg:"wind"},
+                    {caption:"公用电网", type:1, left:"73%", right:"2%", top:"2%", bottom:"72%", pic:"mains.jpg", cfg:"base"},
+                    //{caption:"光伏变换模块", type:1, left:"15%", right:"66%", top:"32%", bottom:"54%",dat:"OutCurr", pic:"module.jpg", cfg:"pv", count:"SMCount"},
+                //    {caption:"整流模块", type:1, left:"66%", right:"15%", top:"32%", bottom:"54%",dat:"RecCurr", pic:"module.jpg", cfg:"rectifier"},
+                 //   {caption:"燃料电池", type:1, left:"2%",right:"77%",top:"68%",bottom:"2%",dat:"OutCurr",id:"2",pic:"fc.jpeg", cfg:"fc"},
+                 //   {caption:"安全锂电池组", type:1, left:"27%", right:"52%", top:"68%", bottom:"2%",dat:"BattCurr,BattLeft,EnvTemp",id:"-2,0,0",pic:"battery.png",alarm:",,EnvTempAlarm",cfg:"base",count:"BATGCount"},
+                    {caption:"通信负载", type:1, left:"52%", right:"27%", top:"68%", bottom:"2%", pic:"load.jpg", cfg:"base"},
+                    {caption:"开关电源系统", type:1, left:"77%", right:"2%",  top:"68%", bottom:"2%",pic:"oldPower.png",cfg:"!load"},
+                    // {caption:"累计收益", type:1, left:"52%", right:"30%", top:"14%", bottom:"72%", dat:"Income", cfg:"base", pic:"money.png"},
+                    // {caption:"", type:0, left:"42%", right:"41%", top:"55%", bottom:"61%", dat:"LoadCurr", cfg:"base"},
+                    // {caption:"", type:0, left:"18%", right:"64%", top:"55%", bottom:"61%", dat:"DCVolt", alarm:"DCVoltAlarm", cfg:"base"},
+                    // {caption:"", type:0, left:"52%", right:"30%", top:"2%", bottom:"90%", dat:"EqmTime", cfg:"base"}
+                ]
+                var lines = [
+                    ["12%","28%","12%","41%","gold","pv","OutCurr:0",1],
+                    ["12%","41%","15%","41%","gold","pv","OutCurr:0",1],
+                    ["88%","28%","88%","41%","gold","rectifier","",1],
+                    ["85%","41%","88%","41%","gold","rectifier","",-1],
+                    ["25%","46%","25%","61%","lime","pv","OutCurr:0",1],
+                    ["37%","61%","37%","67%","lime","base","BattCurr",1],
+                    ["39%","28%","39%","61%","lime","wind","OutCurr:1",1],
+                    ["75%","46%","75%","51%","lime","rectifier","RecCurr",1],
+                    ["39%","51%","75%","51%","lime","rectifier","RecCurr",-1],
+                    ["39%","51%","39%","61%","lime","rectifier","",1],
+                    ["85%","61%","85%","68%","lime","!load","",0],
+                    ["88%","28%","88%","68%","gold","!load","",1],
+                    ["25%","61%","37%","61%","lime","pv","OutCurr:0",1],
+                    ["37%","61%","39%","61%","lime","base","",0],
+                    ["39%","61%","62%","61%","lime","base","LoadCurr",1],
+                    ["62%","61%","85%","61%","lime","!load","",0],
+                    ["62%","61%","62%","68%","lime","base","",1],
+                    ["15%","61%","15%","68%","lime","fc","OutCurr:2",-1],
+                    ["15%","61%","37%","61%","lime","fc","OutCurr:2",1]
+                ];
+                function updateVisable(el, cfg) {
+                    var cfgName=cfg;
+                    var notFlag=false;
+                    if(/^!/.test(cfgName)) {
+                        cfgName=cfg.slice(1);
+                        notFlag=true;
+                    }
+                    var show = eqm.config[cfgName];
+                    if(show==undefined) show=false;
+                    if(notFlag) show = !show;
+                    // el.style.opacity=(show?1:el.className=="flowLine"?0:0.1);
+                }
+                var dig = el("#digramPage");
+                dig.clear();
+                createStars(dig,30);
+                dig.datas=[];
+                objs.forEach(function (v,i,a) {
+                    v.obj = dig.addChild("div", v.type==0 ? "pic" : "module", "obj"+i, v.caption).moveH(v.left, v.right).moveV(v.top, v.bottom);
+                    if(v.pic!=undefined) {  //显示背景图像
+                        v.obj.back("#202020 url("+v.pic+") bottom border-box " + (v.caption.indexOf("模块")>0?"repeat-x":"no-repeat"));
+                        if(v.dat!=undefined && v.dat.indexOf("BattCurr")>=0) {  //生成电池图案
+                            v.obj.style.background = "url(battery.png) 50% 50% border-box";
+                            v.obj.style.backgroundSize="100% 200%, 100% 100%";
+                            v.obj.addChild("span", "point").moveH("30%", null, "40%").moveV("-10px","101%").back("gold").style.borderRadius="5px 5px 0 0";
+                        }
+                        else if(v.caption.indexOf("模块")<0) v.obj.style.backgroundSize="cover";
+                    }
+                    else v.obj.back("black");
+                    if(v.count!=undefined) {    //定义了数量字段，添加数量显示元素
+                        v.obj.addChild("span","count");
+                        v.obj.countDat=eqm[v.count];
+                    }
+                    if(v.dat!=undefined) {  //显示数据
+                        var s = v.dat.split(",");
+                        var ids;
+                        if(v.id==undefined) ids=[];
+                        else ids=v.id.split(",");
+                        if(v.alarm==undefined) alarms=[];
+                        else alarms=v.alarm.split(",");
+                        for(var j=0;j<s.length;j++){
+                            var di = v.obj.addChild("div","value");
+                            di.dat = eqm[s[j]];
+                            di.id = ids[j]==undefined ? 0 : ids[j];
+                            di.alarm = alarms[j]==undefined ? "" : alarms[j];
+                            dig.datas.push(di);
+                        }
+                    }
+                    if(v.cfg!=undefined) updateVisable(v.obj, v.cfg);
+                })
+                // lines.forEach(function (v,i,a) {
+                //     v.obj=FlowLine(v[0],v[1],v[2],v[3],v[4],v[7]);
+                //     if(v.obj != undefined){
+                //         dig.appendChild(v.obj);
+                //         if(v[5].length>0) updateVisable(v.obj, v[5]);
+                //         //if(v[6]!=undefined && v[6].length>0) {v.obj.ar1.dat=eqm[v[6]]}
+                //     } 
+                //     else console.log("线段定义错误："+v.toString());
+                // })
+                //更新系统框图
+                dig.update = function() {
+                    var configChanged = eqm.config.changed;
+                    if(configChanged) eqm.config.changed=false;
+                    //更新框图对象可见性
+                    objs.forEach(function (v) {
+                        if(configChanged && v.cfg!=undefined) updateVisable(v.obj, v.cfg);
+                    });
+                    this.datas.forEach(function (v,i,a) {
+                        //更新数据
+                        if(v.id>=0) {   //在数据组中指定一项
+                            if(v.dat.valueText[v.id]!=undefined){
+                                if(v.dat.vtype==3) v.text(v.dat.valueText[v.id].slice(0,v.dat.valueText[v.id].length-3)).txtAlign("center").style.fontSize="1.2em";
+                                else v.text(v.dat.valueText[v.id]);
+                            }
+                        }
+                        else if(v.id==-1) v.text(v.dat.valueText.join("/"));    //显示数据组中全部元素
+                        else v.text(valueText(v.dat.sum(["sum","max","min"][-2-v.id]),v.dat,false));    //显示数据组的统计值(id<-1)
+                        //定义了数量字段，在左下角显示数量
+                        if(v.parentNode.countDat!=undefined) {
+                            v.parentNode.getElementsByClassName("count")[0].text(v.parentNode.countDat.valueText.length);
+                        }
+                        //有告警字段的根据告警状态改变字体颜色
+                        if(eqm[v.alarm]!=undefined){
+                            v.color(eqm[v.alarm].value(0)>0?"red":"while");
+                        }
+                        //更新电池SOC图示
+                        if(v.dat.name=="BattLeft") {
+                            v.parentNode.style.backgroundPosition="50% " + eqm["SOC"].valueText + ", 50% 50%";
+                        }
+                    })
+                    //更新线条可见性和电流箭头方向
+                    // lines.forEach(function (v,i,a) {
+                    //     if(configChanged && v[5].length>0) updateVisable(v.obj, v[5]);
+                    //     if(v[6]!=undefined && v[6].length>0) {
+                    //         if(v[6].indexOf(":")>0) {
+                    //             var dn = v[6].split(":");
+                    //             v.obj.goBack(eqm[dn[0]].value(parseInt(dn[1])));
+                    //         }
+                    //         else v.obj.goBack(eqm[v[6]].sum("sum"));
+                    //     }
+                    // })
+                }
+            }
+
+            var tStart = new Date();    //曲线下一段开始时间
+            // 原periods数组可保留（若不影响其他逻辑），无需修改
+            var periods=[[0,4],[480,4],[600,4],[660,4],[720,4],[840,4],[900,4],[1020,4],[1140,4],[1440,0]].map(function (value) {
+                return new Period(value[0],value[1]);
+            });
+            function createArixRange(pId) {
+                //确定设备容量，取安装的光伏方阵容量、电池容量、整流模块容量、光伏模块容量四者中的最大值
+                var cap = Math.max(eqm.BatteryCapacity, eqm.PVCapacity);
+                if(eqm.Capcitys.vCode.length>0){
+                    if(eqm.Capcitys.value(0)*48/1000>cap) cap=eqm.Capcitys.value(0)*48/1000;
+                    if(eqm.Capcitys.vCode.length>1) {
+                        if(eqm.Capcitys.value(1)*48/1000>cap) cap=eqm.Capcitys.value(1)*48/1000;
+                    }
+                }
+                switch(pId){
+                    case 0:
+                    yMax[0] = 100;  // 左侧纵轴最大值（原逻辑是动态计算，现固定为80）
+                    yMax[1] = 50;  // 右侧纵轴最大值（原逻辑是100，现改为80）s
+                        break;
+                    case 1:
+                        yMax[0]=(Math.floor(cap/10)+2)*10*20;    //日电量(KWh)
+                        yMax[1]=(Math.floor(cap/10)+2)*10*20*0.5;    //收益(元)
+                        break;
+                    case 2:
+                        yMax[0]=(Math.floor(cap/10)+2)*10*20*30; //月电量(kWh)
+                        yMax[1]=(Math.floor(cap/10)+2)*10*20*30*0.5; //收益(元)
+                        break;
+                }
+            }
+            function Graph(pId,dataSetName) {
+                this.dataSetName=dataSetName;
+                this.frame = el("#frame");
+                this.frame.clear();
+                this.cursor = el("#cursor");
+                this.float = el("#float");
+                this.float.clear();
+                this.box = el("#box");
+                this.box.clear();
+                this.box.parent = this;
+                this.tMax=[24,31,12][pId];
+                //生成图例
+                dataSetName.forEach(function (value,index,array){
+                    legends.addChild("span","legend","leg"+index,value).color(dataSetColor[index]).style.borderBottom="1px solid "+dataSetColor[index];
+                });   //显示图例
+                //绘制栅格线
+                this.grid=this.frame.addChild("table","grid");
+                for(var i=0;i<10;i++) {
+                    var r = this.grid.addChild("tr");
+                    for(var j=0;j<this.tMax;j++) r.addChild("td","grid").back(pId==0?"":"#404040");
+                }
+                //显示时间轴刻度
+                for(var i=(pId==0?0:1);i<=this.tMax;i+=(pId<2?2:1)){
+                    var txt = i.toFix();
+                    if(pId==0) txt+=":00";
+                    else if(pId==1) txt=(new Date().getMonth()+1).toFix()+"/"+txt;
+                    else txt = (new Date().getFullYear()).toFix(4,0)+"/"+txt;
+                    this.frame.addChild("span", "tlabel smallfont", "", txt).moveH(((i-2)/this.tMax*100).toFixed(1)+"%",((this.tMax-2-i+(pId==0?0:1))/this.tMax*100).toFixed(1)+"%");
+                }
+                //显示纵轴名称
+                this.frame.addChild("span", "vtitle", "", yTitle[pId<1?0:1]).moveH("-14%", "100%");
+                 this.frame.addChild("span", "vtitle", "", yTitle[pId<1?1:3]).moveH("100%", "-14%");
+                //曲线数据绘制浮动提示板
+                this.reDrawFloat = function() {
+                    this.float.clear()
+                    for(var i=0;i<=dataSetName.length;i++){
+                        var d = this.float.addChild("div", "smallfont", "data"+i, i==0?"":dataSetName[i-1]).color(i==0?"gary": dataSetColor[i-1]);
+                        d.addChild("span","smallfont floatright", "value"+i);
+                        if(pId==0 && i>0 && !eqm.config[eqm.realtimeChartDatas[i-1].cfg]) d.hide();
+                        else d.show();
+                    }   
+                }
+                this.reDrawFloat();
+                this.float.hide();
+                this.graphClear = function() {this.box.clear();this.reDrawFloat();};
+                this.showCursor = function() {this.float.show();this.cursor.show();};
+                this.hideCursor = function() {this.float.hide();this.cursor.hide();};
+                //浮动显示板跟随鼠标移动并更新
+                this.fMouse = function (e){
+                    var pic = this.frame;
+                    var oL = e.pageX - this.frame.parentNode.offsetLeft; // 鼠标水平偏移（像素）
+                    var oT = e.offsetY;
+                    this.cursor.moveH(oL+"px");
+                    this.float.moveH((oL+((oL<pic.offsetWidth/2)?10:-190)).toFixed()+"px").moveV((oT+((oT<pic.offsetHeight/2)?5:-100)).toFixed()+"px");
+                    var r = []; //获取曲线数据
+                    if(pId<1){
+                        var t = parseInt(oL / pic.offsetWidth * 1440);
+                        var s = 0;
+                        var m = t % 60;
+                        var h = (t-m) / 60;
+                        eqm.realtimeDB.datalogs.forEach(function (v) {r.push( v.points[t]==undefined ? " " : v.points[t].Last);});
+                    }
+                    else{
+                        var d = parseInt(oL / pic.offsetWidth * this.tMax);
+                        var pDate = new Date();
+                        if(pId<2) pDate.setDate(this.eLogs.start.getDate()+d);
+                        else pDate.setMonth(pDate.getMonth()+d);
+                        r = this.eLogs.log[d];
+                    }
+                    var nL = this.float.childNodes
+                    for(var i=0;i<=this.dataSetName.length;i++){
+                        var el = i==0 ? nL[0] : nL[i].getElementsByTagName("span")[0];
+                        if(el==undefined) break;
+                        var txt = "";
+                        if(i==0){
+                            if(pId==0) txt = tStart.toLocaleDateString() + " " + h.toFix() + ":" + m.toFix() +":" + s.toFix();
+                            else if(pId==1) txt = pDate.toLocaleDateString();
+                            else txt = (pDate.getFullYear()+"/"+(pDate.getMonth()+1).toFix());
+                        } 
+                        else if(pId==0){
+                            
+                            if(t<tStart.getMinute()*2){
+                                // 满足时间条件时：显示实时数值（带单位）
+                                txt = r[i-1]==" " ? "" : r[i-1].toFixed(2) + (i<1 ? "V" : "A");
+                            }
+                        }
+                        else{
+                            if(r!=undefined){
+                                if(i==this.dataSetName.length) txt = typeof(r[i-1])=="number" ? r[i-1].toFixed(2)+"元" : "";
+                                else txt = r[i-1].toPrecision(5)+"kWh"; 
+                            }
+                        }
+                        el.text(txt); 
+                    }
+                }
+                this.box.addEventListener("mouseenter", function() {this.parent.showCursor()});
+                this.box.addEventListener("mouseleave", function() {this.parent.hideCursor()});
+                this.box.addEventListener("mousemove", function() {this.parent.fMouse(event)});
+                return this;
+            }
+            var g;
+            function createChartView(p){
+                //显示图名
+                el("#graphCaption").text(["运行曲线 ","日电量记录 "][p-1]);
+                var legends = el("#legends");
+                legends.clear();
+                createArixRange(p-1); //确定纵轴刻度范围
+                if(p==1) {
+                    g=new Graph(0,eqm.realtimeChartDatas.map(function (v) {return v.caption;}));
+                    eqm.realtimeChartDatas.forEach(function(v,i,a) {
+                        var leg = el("#leg"+i);
+                        leg.style.cursor="pointer";
+                        leg.color(eqm.realtimeChartDatas[i].curveShown?dataSetColor[i]:"#808080");
+                        if(!eqm.config[eqm.realtimeChartDatas[i].cfg]) leg.hide();
+                        leg.onclick = function () {
+                            eqm.realtimeChartDatas[i].curveShown = !eqm.realtimeChartDatas[i].curveShown;
+                            if(eqm.realtimeChartDatas[i].curveShown) this.color(dataSetColor[i]);
+                            else this.color("#808080");
+                            g.graphClear();
+                            g.drawChart(0,new Date().getMinute());
+                        }
+                    })
+                    //显示运行曲线图时段背景    
+                    g.scheduleShown = function() {
+                        return this.frame.getElementsByClassName("period").length>1;
+                    }
+                    g.showSchedule = function() {
+                        if(eqm.DiscountSchedule!=undefined) {  //如果设备定义中的时间表已经存在，找出当前时间表
+                            if(eqm.DiscountSchedule.valueText.length>0) {    //至少定义了一个时间表
+                                var d, v, p = 0, today=new Date();
+                                for(p=0;p<eqm.DiscountSchedule.valueText.length;){
+                                    v = eqm.DiscountSchedule.valueText[p];
+                                    if(v.length==72) {
+                                        d = new Date(today.getFullYear(),parseInt(v.slice(0,2),16)-1,parseInt(v.slice(2,4),16),0,0,0,0);
+                                        if(today<d) break;
+                                        else p++
+                                    }
+                                };
+                                if(p==0) p=eqm.DiscountSchedule.valueText.length;
+                                v = eqm.DiscountSchedule.valueText[p-1];
+                                periods[0].start=0;
+                                periods[0].value= parseInt(v.slice(48,50),16);
+                                for(var i=1;i<12;i++){
+                                    if(i>=periods.length) periods.push(new Period(0,0));
+                                    periods[i].start= parseInt(v.slice(i*4,i*4+2),16) * 60 + parseInt(v.slice(i*4+2,i*4+4),16);
+                                    periods[i].value = parseInt(v.slice(48+i*2,50+i*2),16);
+                                    if(periods[i].value==0) break;
+                                }
+                                for(var i=0;i<periods.length-1;i++){
+                                    if(periods[i].start>=1440) break;
+                                    g.frame.addChild("div","period","",periodValues[periods[i].value].text).moveH((periods[i].start/1440*100)+"%",((1440-periods[i+1].start)/1440*100)+"%").back(periodValues[periods[i].value].color);
+                                }
+                            }
+                        }
+                    }
+                    //显示纵轴刻度
+                    for(var i=0;i<=10;i++){
+                        const leftValue = (yMax[0]/10 * i).toFixed(0);
+                        // 垂直位置：使用与右侧完全相同的参数(97-i*10)+"%"
+                        g.frame.addChild("span", "vlabel labelL smallfont", "", leftValue)
+                            .moveV((97-i*10)+"%", (97+i*10)+"%");
+                        g.frame.addChild("span", "vlabel labelR smallfont", "", (yMax[1]/10*i).toFixed(0)).moveV((97-i*10)+"%",(97+i*10)+"%");
+                    }
+                        g.drawPoint = function(time,point,axis,color){
+                            var value1=point.Min, value2=point.Max
+                            var left = (time/14.4).toFixed(2)+"%"; 
+                            
+                            var top, bottom=false;
+                            // 2. 统一纵轴基准：97%高度为0刻度，向上计算位置
+                            if(axis==0){ // 左侧纵轴（yMax[0]=100）
+                                // 计算数据点顶部位置（Max值）
+                                top = (100 - (value2 / yMax[0]) * 100).toFixed(2) + "%";
+                                // 若Min/Max差值大，计算底部位置（Min值）
+                                if(Math.abs(value2 - value1) > yMax[0]/100) {
+                                    bottom = (100 - (value1 / yMax[0]) * 100).toFixed(2) + "%";
+                                }
+                            } else { // 右侧纵轴（yMax[1]=50）
+                                // 计算数据点顶部位置（Max值）
+                                top = (100 - (value2 / yMax[1]) * 100).toFixed(2) + "%";
+                            }
+
+                            // 生成数据点（位置已与刻度对齐）
+                            var e = this.box.addChild("span", "point", "").moveH(left).back(color);
+                            if(bottom) e.moveV(top, bottom); // 有差值时画垂直线
+                            else e.moveV(top, null, "1px"); // 无差值时画点
+                        }
+                    //绘制指定时间之间的曲线段, 并更新曲线日期
+                    g.drawChart = function(t1,t2){
+                        for(var i=0;i<eqm.realtimeDB.datalogs.length;i++) {
+                            if(eqm.realtimeChartDatas[i].curveShown && eqm.config[eqm.realtimeChartDatas[i].cfg]) {
+                                var r = eqm.realtimeDB.datalogs[i];
+                                for(var t=t1;t<=t2;t++){
+                                    if(r.points[t]!=undefined){
+                                        this.drawPoint(t, r.points[t], i<1 ? 0 : 1, dataSetColor[i]);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    //是一个图表更新和绘制的功能实现，主要用于实时更新时间相关的数据图表
+                    g.update = function (){
+                        if(!this.scheduleShown()) this.showSchedule();
+                        var tEnd=new Date();
+                        if(tStart.getDay()==tEnd.getDay()) {
+                            this.drawChart(tStart.getMinute()+1,tEnd.getMinute());
+                        }
+                        else{
+                            this.graphClear();
+                            this.drawChart(0,tEnd.getMinute());
+                        }
+                        tStart=tEnd;
+                    }
+                    g.drawChart(0,tStart.getMinute());
+                }
+                else {
+                    g=new Graph(p-1,["市电用电量","光伏发电量","负载用电量","收益"]);
+                    //显示纵轴刻度
+                    for(var i=0;i<=10;i++){
+                        g.frame.addChild("span", "vlabel labelL smallfont", "", yMax[0]/10*i).moveV((97-i*10)+"%",(97+i*10)+"%");
+                        g.frame.addChild("span", "vlabel labelR smallfont", "", (yMax[1]/10*i).toFixed(0)).moveV((97-i*10)+"%",(97+i*10)+"%");
+                    }
+                    //根据配置隐藏图例
+                    eqm.energyDatas.forEach(function (v,i,a) {
+                        if(!eqm.config[eqm.energyDatas[i].cfg]) el("#leg"+i).hide();
+                    });
+                    //按照给定的日期和值，画出条形图
+                    g.drawBar = function(d,value,lastValue){
+                        var dn = eqm.energyDatas.length;
+                        var w = 100/this.tMax/(value.length+2);
+                        for(var i=0;i<dn;i++){
+                            if(eqm.config[eqm.energyDatas[i].cfg]){   //绘制柱状图
+                                var left = (100*d/this.tMax+w*(i+1)).toFixed(2)+"%";
+                                var e = this.box.addChild("span", "point", "").moveH(left,null,w.toFixed(2)+"%").back(dataSetColor[i]);
+                                var h = value[i];//-(lastValue!=undefined?lastValue[i]:0);
+                                var t = 1-h/yMax[i<dn-1?0:1];
+                                if(t<0) t=0;
+                                else if(t>1) t=1;
+                                e.moveV((t*100).toFixed(2)+"%","0");
+                            }
+                        }
+                    }
+                    //绘制指定时间开始的历史条形图, 并更新日期
+                    g.drawBars = function(dStart){
+                        this.eLogs = readEnergyLogs(dStart, page>=3 ? true : false);
+                        var tlabels = this.frame.getElementsByClassName("tlabel");
+                        if(page<3){
+                            for(var i=0;i<31;i++){
+                                var d = new Date(this.eLogs.start.getTime()+i*24*3600*1000);
+                                if(i%2==0) tlabels[i/2].text((d.getMonth()+1).toFix()+"/"+d.getDate().toFix());
+                                if(this.eLogs.log[i]!=undefined) this.drawBar(i,this.eLogs.log[i],i>0?this.eLogs.log[i-1]:null);
+                            }
+                        }
+                        else {
+                            var y = this.eLogs.start.getFullYear();
+                            var m = this.eLogs.start.getMonth()+1;
+                            for(var i=0;i<12;i++,m++){
+                                if(m>12) {m=1;y++}
+                                tlabels[i].text(y.toFix(4,0)+"/"+m.toFix());
+                                if(this.eLogs.log[i]!=undefined) this.drawBar(i,this.eLogs.log[i],i>0?this.eLogs.log[i-1]:null)
+                            }
+                        }
+                    }
+                    g.update = function (){
+                        this.drawBars(new Date());
+                    }
+                    if(page>1) g.update();
+                }
+            }
+            function createTableView(p){
+                var cap = el("#cap");
+                cap.clear();
+                var t = el("#tab");
+                t.clear();
+                t.filled = false;
+                var t2 = el("#tab2");
+                t2.clear();
+                eqm.units.forEach(function(u,id,ar) {
+                    if(u.enable){
+                        var pageSupport = false, headNum = false;
+                        var cmds = leftmenus[p][2];
+                        for(var i=0;i<cmds.length/2;i++){
+                            var c = cmds.slice(i*2,i*2+2);
+                            // console.log("u.supportCid2s.indexOf(parseInt(c,16))",u.supportCid2s.indexOf(parseInt(c,16)),parseInt(c,16));
+                            if(u.supportCid2s.indexOf(parseInt(c,16))>=0) pageSupport=true;
+                            if(u.cgcid.indexOf(c)>=0) {headNum=true;break;}
+                        }
+                        if(!pageSupport) return;
+                        var i=0;
+                        cap.addChild("span","mitem","umenu"+i,u.caption).onclick = function() {
+                            goHome=0;
+                            t.filled = false;
+                            var ms = this.parentNode.getElementsByClassName("mitemsel");
+                            for(var j=0;j<ms.length;j++) {ms[j].className="mitem"}
+                            this.className="mitemsel mitem";
+                            var rId = 0, dataGroup=0, gName="", r;
+                            t.clear();
+                            t2.clear();
+                            if(u.gid==-1 && headNum) {
+                                r = t.insertRow(0);
+                                r.className="head";
+                                r.gtype=u.countField.gtype;
+                                r.label=r.gtype;
+                                r.insertCell(-1);
+                                r.setCols(9);
+                            }
+                            for(var j=0;j<u.dataitems.length;j++){
+                                var d = u.dataitems[j];
+                                var flag=false;
+                                if(p==4 && [0x41,0x43,0x44].indexOf(d.cid2)>=0) flag=true;
+                                else if(p==5 && d.cid2==0x51) flag=true;
+                                else if(p==6 && [0x46,0x4D].indexOf(d.cid2)>=0) flag=true;
+                                // else if(p==6 && d.cid2==0x46) flag=true;
+                                else if(p==8 && d.cid2==0xD2) flag=true;
+                                // ========== 第一段：表格行创建逻辑（持久化序号行 + 确保17列布局） ==========
+                                if(flag && d.vtype<12){
+                                    var sp = -1, ep = -1;
+                                    
+                                    // 持续判断cid1=0x4A/0xE2 + 检查对应序号行是否存在（丢失则重建）
+                                    if(d.cid1 === 0x4A || d.cid1 === 0xE2) { 
+                                        var serialRowExists = false;
+                                        // 动态获取当前cid1对应的表头文本和列数
+                                        var serialRowTitle = d.cid1 === 0x4A ? "电池组" : "扩展单元";
+                                        var serialColCount = d.cid1 === 0x4A ? 17 : 65; // 核心：0x4A=17列，0xE2=65列
+                                        var serialMaxNum = d.cid1 === 0x4A ? 16 : 64;   // 序号最大值：0x4A=16，0xE2=64
+                                        
+                                        // 检查是否存在对应列数+标题的序号行
+                                        for(var m = 0; m < t.rows.length; m++) {
+                                            var row = t.rows[m];
+                                            // 改动：匹配当前cid1对应的列数（不再固定17列）
+                                            if(row.className === "head" && row.cells[0]?.textContent === serialRowTitle && row.cells.length === serialColCount) {
+                                                serialRowExists = true;
+                                                break;
+                                            }
+                                        }
+                                        
+                                        if (!serialRowExists) {
+                                            var serialRow = t.insertRow(0);
+                                            serialRow.className = "head";
+                                            serialRow.setCols(serialColCount); // 动态设置列数
+                                            serialRow.cells[0].text(serialRowTitle).txtAlign("center");
+                                            // 循环填充序号：0x4A→1-16，0xE2→1-64
+                                            for(var i = 1; i <= serialMaxNum; i++) {
+                                                serialRow.cells[i].text(i).txtAlign("center");
+                                            }
+                                            t.setAttribute(`serial-row-created-${d.cid1.toString(16)}`, "true");
+                                            rId++;
+                                        }
+                                    }
+                                    
+                                    if(d.gtype.length>1){
+                                        for(var k=0;k<t.rows.length;k++){
+                                            if(sp<0 && t.rows[k].gtype==d.gtype) sp=k;
+                                            else if(sp>=0 && t.rows[k].gtype!=d.gtype) {ep=k; break;}
+                                        }
+                                        if(sp<0) {
+                                            var r = t.insertRow(rId);
+                                            r.className="head";
+                                            var count = parseInt(d.repeat,10);
+                                            if(d.vtype==10)  count=8;
+                                        
+                                            // 改动：0x4A=17列，0xE2=65列
+                                            var headColCount = 9;
+                                            // if(d.cid1 === 0x4A) {
+                                            //     headColCount = 17;
+                                            // } else if(d.cid1 === 0xE2) {
+                                            //     headColCount = 65;
+                                            // }
+                                            r.setCols(headColCount);
+                                        
+                                            var k = 1;
+                                            if(d.gtype.indexOf("[1]")>=0) {
+                                                names(d.gtype,count).split(",").forEach(function(name) {r.cells[k++].text(name).txtAlign("center");})
+                                                r.label=d.gtype;
+                                            }
+                                            else if(d.gtype.indexOf("|")>0) d.gtype.split("|").forEach(function (name){r.cells[k++].text(name).txtAlign("center");})
+                                            r.gtype=d.gtype;
+                                            rId++;
+                                        }
+                                        else if(ep>sp) {
+                                            rId=ep;
+                                        }
+                                    }
+                                    else if(dataGroup==0) rId=t.rows.length;
+                                    
+                                    if(d.vtype==10){
+                                        dataGroup=parseInt(d.repeat,10);
+                                        gName=d.gtype;
+                                    }
+                                    else{
+                                        var r = t.insertRow(rId);
+                                        r.className="list";
+                                        
+                                        // 改动：0x4A=17列，0xE2=65列，初始化对应数量的空单元格
+                                        if(d.cid1 === 0x4A || d.cid1 === 0xE2) {
+                                            var listColCount = d.cid1 === 0x4A ? 17 : 65;
+                                            var listMaxNum = d.cid1 === 0x4A ? 16 : 64;
+                                            r.setCols(listColCount);
+                                            
+                                            // 初始化空单元格：0x4A→1-16列，0xE2→1-64列
+                                            for(let j = 1; j <= listMaxNum; j++) {
+                                                if(r.cells[j]) {
+                                                    r.cells[j].text("").txtAlign("center");
+                                                }
+                                            }
+                                            
+                                            // 不同cid1绑定不同全局变量，避免冲突
+                                            if(d.cid1 === 0x4A) {
+                                                window.current4ARow = r;
+                                            } else if(d.cid1 === 0xE2) {
+                                                window.currentE2Row = r;
+                                            }
+                                            d.rowElement = r;
+                                        } else {
+                                            r.setCols(9);
+                                        }
+                                        
+                                        r.cells[0].text(d.caption).txtAlign("left"); 
+                                        r.gtype=gName.length>0?gName:d.gtype;
+                                        r.d = d;
+                                        rId++;
+                                        if(dataGroup>0) dataGroup--;
+                                        if(dataGroup==0) gName="";
+                                    }
+                                }
+                            }
+                            gName="";
+                            for(var ri=0;ri<t.rows.length;ri++) {
+                                if(t.rows[ri].gtype!=gName) {
+                                    gName=t.rows[ri].gtype;
+                                    t.rows[ri].style.borderTop="1px solid darkblue";
+                                }
+                            }
+                            if(page==5){    //设备信息页增加显示界面版本
+                                r=t.insertRow(-1);
+                                r.style.borderTop="1px solid darkblue";
+                                r.insertCell(0).text("显示界面版本").txtAlign("left");
+                                r.insertCell(1).text(ver).txtAlign("right");
+                                
+                                window.inputElements = {};
+                            editableRows.forEach(item => {
+                                const r = t.insertRow(-1);
+                                
+                                // 左侧标签单元格
+                                r.insertCell(0).text(item.label).txtAlign("left");
+                                
+                                // 右侧可编辑输入框单元格
+                                const valueCell = r.insertCell(1).txtAlign("right");
+                                const input = document.createElement("input");
+                                input.type = "text";
+                                
+                                // 设置默认值
+                                const defaultValue = deviceInfo[item.key] || "";
+                                input.value = defaultValue;
+                                
+                                // 添加CSS类用于控制样式
+                                input.classList.add("transparent-default");
+                                
+                                // 初始状态：默认值设置为透明白色
+                                if (input.value === defaultValue) {
+                                    // 透明白色：RGB值255,255,255（白色），alpha值0.5（50%透明）
+                                    input.style.color = "rgba(255, 255, 255, 0.5)";
+                                }
+                                
+                                // 初次点击聚焦时清除默认值并恢复正常颜色
+                                input.addEventListener('focus', function() {
+                                    if (this.value === defaultValue) {
+                                        this.value = "";
+                                        this.style.color = "white";
+                                    }
+                                });
+                                
+                                // 失焦时如果为空，恢复默认值和透明白色
+                                input.addEventListener('blur', function() {
+                                    if (this.value.trim() === "") {
+                                        this.value = defaultValue;
+                                        // 恢复透明白色
+                                        this.style.color = "rgba(255, 255, 255, 0.5)";
+                                    }
+                                });
+                                
+                                input.style.width = "150px";
+                                // 建议设置背景色，让透明白色文字可见
+                                input.style.backgroundColor = "#333"; // 深色背景，便于透明白色文字显示
+                                window.inputElements[item.key] = input;
+                                
+                                input.onchange = function() {
+                                    deviceInfo[item.key] = this.value;
+                                };
+                                
+                                valueCell.appendChild(input);
+                            });
+    
+                                const saveRow = t.insertRow(-1);
+                                const saveCell = saveRow.insertCell(0);
+                                saveCell.colSpan = 2;
+                                saveCell.txtAlign("center");
+                                saveCell.button("保存修改", function() {
+                                    // 检查是否能访问到其他文件的函数
+                                    if (typeof getAllMergedData === 'function') {
+                                        // 传入必要的参数，避免依赖全局变量
+                                        const allMergedData = getAllMergedData(window.inputElements, editableRows);
+                                       setparacmd =  SetFactoryPara(0xE1,0xD8,allMergedData);
+                                        //  console.log("setparacmd:", setparacmd.length);    
+                                       SetParaCmd();
+                                        console.log("所有数据合并结果:", allMergedData);
+
+                                    } else {
+                                        console.error("无法找到getAllMergedData函数，请检查文件引用顺序");
+                                    }
+                                }, "saveAll");
+                            }
+                            else if(page==8) {  //高级参数页面增加按钮
+                                r=t.insertRow(-1);
+                                r.insertCell(0).txtAlign("right").button("保存更改",function () {login(function () {setPara(u.cid1,0xD3,-1);el("#saveAdv").parentNode.parentNode.hide();})},"saveAdv");
+                                r.insertCell(1).txtAlign("left").button("取消", function() {el("#tab").update();el("#saveAdv").parentNode.parentNode.hide();}, "cancelAdv");
+                                r.hide();
+                            }
+                        }
+                        i++;
+                    }
+                });
+                if(page==4 && weather!=undefined) {
+                    cap.addChild("span","mitem","umenuwea","天气").onclick = function() {
+                        goHome=0;
+                        t.filled = false;
+                        var ms = this.parentNode.getElementsByClassName("mitemsel");
+                        for(var j=0;j<ms.length;j++) {ms[j].className="mitem"}
+                        this.className="mitemsel mitem";
+                        t.clear();
+                        t.width="100%";
+                        t.addChild("caption","",null,weather.city+"天气 (更新时间："+weather.date+" "+weather.week+" "+weather.update_time+")").style.fontSize="1.2em";
+                        for(var k=0;k<5;k++) {
+                            var r = t.insertRow(-1);
+                            if(t.rows.length % 2 == 1) r.style.backgroundColor="#303030";
+                            if(k<3) {r.setCols(12,"center");r.style.fontSize="1.2em";for(l=2;l<12;l+=2) r.cells[l].style.borderLeft="3px solid darkblue";}
+                            else {r.setCols(2,"left");r.cells[1].colSpan=11;}
+                        }
+                        t.rows[4].cells[1].style.overflow="auto";
+                        t.rows[4].cells[1].style.whiteSpace="normal";
+                        wKeys.forEach(function(v,i,a){
+                            t.rows[v[3]].cells[v[4]-1].text(v[1]);
+                            t.rows[v[3]].cells[v[4]].innerHTML=weatherText(-1,i);
+                        })
+                        t2.clear();
+                        t2.width="100%";
+                        t2.addChild("caption","",null,"24小时天气预报").back("darkblue");
+                        whKeys.forEach(function(v,i,a) {
+                            var r = t2.insertRow(-1);
+                            if(t2.rows.length % 2 == 1) r.style.backgroundColor="#303030";
+                            r.insertCell(0).text(v[1]);
+                        })
+                        for(i=0;i<weather.hours.length;i++){
+                            for(j=0;j<whKeys.length;j++) {
+                                t2.rows[j].insertCell(-1).text(weatherText(i,j)).txtAlign("center");
+                            }
+                        }
+                    }
+                }
+                else if(page==8){   //在高级参数页增加站点配置参数
+                    cap.addChild("span","mitem","umenucfg","站点配置").onclick = function() {
+                        goHome=0;
+                        var ms = this.parentNode.getElementsByClassName("mitemsel");
+                        for(var j=0;j<ms.length;j++) {ms[j].className="mitem"}
+                        this.className="mitemsel mitem";
+                        t.clear();
+                        t.width="100%";
+                        setup.forEach(function(value,index,array){
+                            var r = t.insertRow(-1);
+                            r.className="list";
+                            r.insertCell(0).text(value.title).txtAlign("left");
+                            r.insertCell(1).txtAlign("right");
+                            r.cells[1].id="comSetting"+index;
+                            r.insertCell(2).txtAlign("left");
+                            if(typeof value.unit == "string" && value.unit.indexOf("|")>0){
+                                r.cells[1].options=value.unit.split("|");
+                                r.cells[1].optionId=value.value;
+                                r.cells[1].text(r.cells[1].options[value.value]);
+                                r.cells[2].text("");
+                                r.cells[1].onclick=function () {
+                                    this.optionId++;
+                                    if(this.optionId>=this.options.length) this.optionId=0;
+                                    this.text(this.options[this.optionId]);
+                                }
+                            }
+                            else{
+                                r.cells[1].cfg=value;
+                                r.cells[1].text(value.title=="口令"?"********":value.value);
+                                r.cells[2].text(typeof value.unit == "string" ? value.unit : "");
+                                r.cells[1].onclick=function () {
+                                    var panel = el("#popup");
+                                    panel.clear();
+                                    panel.addChild("div","","","请输入新的 "+value.title+" ：").style.margin="10px 20px";
+                                    var vbox=panel.addChild("input","","value");
+                                    vbox.name="value";
+                                    if(this.cfg.title=="口令") vbox.type="password";
+                                    else vbox.type="text";
+                                    vbox.value=this.cfg.value.toString();
+                                    vbox.style.width = this.cfg.unit!=undefined ? "80%" : "90%";
+                                    vbox.style.fontSize="1.5em";
+                                    vbox.style.margin="15px 1px 15px 15px";
+                                    if(this.cfg.unit!=undefined) {
+                                        vbox.txtAlign("right");
+                                        var ubox=panel.addChild("span","","unit",this.cfg.unit);
+                                        ubox.style.fontSize="1.5em";
+                                    }
+                                    else vbox.txtAlign("left");
+                                    var fr = panel.addChild("div").txtAlign("center");
+                                    fr.style.display="block";
+                                    var btOK = fr.addChild("button","button big","ok","确定");
+                                    btOK.c=this;
+                                    btOK.onclick=function() {
+                                        if(this.c.cfg.unit!=undefined) if(isNaN(vbox.value)) {alert("不是有效的数值，请重新输入!");return;}; 
+                                        this.parentNode.parentNode.hide();
+                                        this.c.text(vbox.value);
+                                    }
+                                    var btCancel = fr.addChild("button","button big","cancel","取消");
+                                    btCancel.onclick=function() {this.parentNode.parentNode.hide();}
+                                    panel.style.display="block";
+                                    el("#value").focus();
+                                    el("#value").onkeypress = function(e) {if(e.keyCode==13) btOK.onclick();}
+                                }
+                            }
+                        });
+                        t2.clear();
+                        t2.insertRow(-1);
+                        var buttons=t2.rows[0].insertCell(-1);
+                        buttons.txtAlign("center");
+                        buttons.addChild("div","button big",null,"保存更改").addEventListener("click", function(){
+                            login(saveSetting);
+                        });
+                        buttons.addChild("div","button big",null,"同步时钟").addEventListener("click", function(){
+                            login(function () {setPara(0x42,"EqmTime")});
+                        });
+                    }
+                }
+                t.update = function() {
+                    for(var i=0; i<this.rows.length; i++) {
+                        var r=this.rows[i];
+                        if(typeof r.d !== "undefined" && r.d!==null) {  //严格模式检查r.d的值是否存在，这是后面的程序执行的基础
+                            if(r.d.vtype!=10) {
+                                if(r.d.valueText.length>r.cells.length-1) this.setCols(r.d.valueText.length+1);
+                                for(var j = 0;j<r.d.valueText.length;j++) {
+                                    var s = r.d.valueText[j];
+                                    if(typeof s =="string") {
+                                        r.cells[j+1].text(s.replace(/!$/,"")).back(/!$/.test(s)?"red":"");  //显示内容以感叹号结尾解释为告警，设置红底
+                                        if(r.d.cid2==0x46 || r.d.cid2==0xD2||r.d.cid2==0x4D) {
+                                            r.cells[j+1].style.cursor="pointer"; //参数，显示指针光标
+                                            r.cells[j+1].onclick=function () {
+                                                var di = this.parentNode.d;
+                                                setParamater(di, this.cellIndex-1, this.innerText, this);
+                                            }
+                                        }
+                                        this.filled = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                el("#umenu0").onclick();
+            }
+            function saveSetting(){
+                for(var i=0;i<setup.length;i++) {
+                    if(setup[i].title=="口令") {
+                        nPwd = el("#comSetting"+i).innerText.trim();
+                        if(nPwd.length==0 || nPwd.slice(0,1)=="*");    //不修改
+                        else if(nPwd.length>3 && goodPwd(nPwd)) setup[i].value = entyp(nPwd);
+                        else alert("无效口令，请重新设置");
+                    }
+                    else if(setup[i].unit!=undefined && setup[i].unit.indexOf("|")>=0){
+                        setup[i].value = el("#comSetting"+i).optionId;
+                    }
+                    else setup[i].value = el("#comSetting"+i).innerText.trim();
+                }
+                localStorage.setItem("comSetting",JSON.stringify(setup));
+                page=0;
+                showHeadMsg();
+                eqm.config.chkConfig();
+                showPage();
+            }
+            //将十六进制表示的颜色值的亮度提高一倍
+            function highlight(c){
+                if(/^#/.test(c) && c.length==7){
+                    var cc = parseInt(c.slice(1),16);
+                    if(typeof(cc)=="number"){
+                        return "#"+(cc*2).toHex(6);
+                    }
+                }
+                return c;
+            }
+            function createTimeTable(p){
+                var timeTables=["031208000A000B000C000E000F0011001300180018001800040302010302010203000000","071008000A000B000C000E000F0011001300180018001800040302010302010203000000"];
+                var title="峰谷时段表";
+                if(eqm.DiscountSchedule!=undefined){
+                    timeTables = eqm.DiscountSchedule.valueText;
+                    title=eqm.DiscountSchedule.caption;
+                }                
+                var phead = el("#periodHead");
+                var cap=phead.children[0];
+                var saveBt=phead.children[1].text("保存修改");
+                saveBt.onclick=function() {
+                    while(tb.rows.length/2<timeTables.length) timeTables.pop();
+                    for(var i=0;i<tb.rows.length/2;i++) {
+                        var msg="";
+                        var r=tb.rows[i*2];
+                        msg+=Number(r.cells[1].innerText).toHex(2);
+                        msg+=Number(r.cells[3].innerText).toHex(2);
+                        r=tb.rows[i*2+1];
+                        var k=1;
+                        for(var j=1,v=r.cells[0].periodValue;j<48;j++){
+                            if(v!=r.cells[j].periodValue) {
+                                msg+=(j/2).toHex(2);
+                                msg+=((j%2)*30).toHex(2);
+                                v=r.cells[j].periodValue;
+                                k++;
+                                if(k>12) break;
+                            }
+                        }
+                        while (k<12) {msg+="1800";k++}
+                        k=0;
+                        for(var j=0,v=0;j<48;j++){
+                            if(v!=r.cells[j].periodValue) {
+                                msg+=r.cells[j].periodValue.toHex(2);
+                                v=r.cells[j].periodValue;
+                                k++;
+                                if(k>12) break;
+                            }
+                        }
+                        while (k<12) {msg+="00";k++}
+                        timeTables[i]=msg;
+                    }
+                    eqm.DiscountSchedule.newCode=[];
+                    eqm.DiscountSchedule.newCode[0]=timeTables.length.toHex(2)+timeTables.join("");
+                    login(function () {setPara(0x40,"DiscountSchedule");el("#periodHead").children[1].hide();});
+                }
+                var lgs=phead.children[2];
+                var tb=el("#timetable");
+                // 获取生效日期
+                timeTables.startDate = function(index) {
+                    var s = this[index].slice(0,4);
+                    return parseInt(s.slice(0,2),16).toFix()+parseInt(s.slice(2,4),16).toFix();
+                }
+                 // 获取时段开始时间（分钟）
+                timeTables.periodStart = function(tId, pId) {
+                    var s = this[tId].slice(pId*4,pId*4+4);
+                    return pId == 0 ? 0 : parseInt(s.slice(0,2),16)*60+parseInt(s.slice(2,4),16);
+                }
+                 // 获取时段类型值（峰/谷等）
+                timeTables.periodValue = function(tId, pId) {
+                    return parseInt(this[tId].slice(48+pId*2,48+pId*2+2),16);
+                }
+                cap.text(title+"("+timeTables.length+"组)");
+                lgs.clear();
+                tb.clear();
+                saveBt.hide();
+                periodValues.forEach(function(value,index,array) {
+                    var e = lgs.addChild("span","legend","lg"+index,value.text).back(highlight(value.color)).color("silver");
+                });
+                //timeTables 中的每个元素是十六进制字符串，前 4 个字符代表「生效日期」（前 2 位 = 月份，后 2 位 = 日期）。
+                for(var i=0;i<timeTables.length*2;i++){
+                    var r = tb.insertRow(i);
+                    if(i % 2 == 0) {
+                        r.style.height="1.5em";
+                        r.insertCell(0).text("生效日期：");
+                        r.cells[0].colSpan="5";// 该单元格跨5列，让标签占据足够宽度
+                        var d = timeTables[i/2];
+                        // 提取月份：取d的前2个字符（十六进制）→ 转十进制
+                        r.insertCell(1).text(parseInt(d.slice(0,2),16).toFix());
+                        r.cells[1].colSpan="2";// 月份单元格跨2列
+                        r.cells[1].style.cursor="pointer";
+                        r.cells[1].onclick = function() {var d = Number(this.innerText)+1; if(d>12) d=1; this.text(d.toFix());saveBt.show()}
+                        r.insertCell(2).text("月");
+                        r.cells[2].colSpan="2";
+                        r.insertCell(3).text(parseInt(d.slice(2,4),16).toFix());
+                        r.cells[3].colSpan="2";
+                        r.cells[3].style.cursor="pointer";
+                        r.cells[3].onclick = function() {var d = Number(this.innerText)+1; if(d>32) d=1; this.text(d.toFix());saveBt.show()}
+                        r.insertCell(4).text("日");
+                        r.cells[4].colSpan="2";
+                    }
+                    else {  
+                        r.back("#404040");
+                        for(var j=0,k=0;j<48;j++){
+                            r.insertCell(j).className="grid";
+                            r.cells[j].style.width=100/48+"%";
+                                // timeTables.periodStart：自定义方法，获取第(tId)组第(pId)段的起始时间（分钟）
+                                // (i-1)/2：当前组索引（i是奇数，i-1是偶数，除以2得到组索引）
+                            while(j*30>=timeTables.periodStart((i-1)/2,k+1)) k++;
+
+                                // 3. 获取当前时段类型值（pval）并设置单元格属性
+                                // timeTables.periodValue：自定义方法，获取第(tId)组第(k)段的类型值（0-4，对应峰/谷等）
+                            var pval = timeTables.periodValue((i-1)/2,k); 
+                            r.cells[j].periodValue=pval;
+                            r.cells[j].back(highlight(periodValues[pval].color));
+                            r.cells[j].style.cursor="pointer";
+                            r.cells[j].onclick = function() {
+                                if(this.parentNode.rowIndex % 2 >0){
+                                    this.periodValue++;
+                                    if(this.periodValue>4) this.periodValue=0;
+                                    this.back(highlight(periodValues[this.periodValue].color));
+                                    saveBt.show();
+                                }
+                            };
+                        }
+                    }
+                }
+                for(var i=0;i<=12;i++) {
+                    tb.addChild("span","tlabel smallfont",null,(i*2).toFix()+":00").moveH((i-1)*100/12+"%",null,100/6+"%").txtAlign("center");
+                }
+            }
+            function pass(s) {
+                var ps = setupOf("口令");
+                if(ps==undefined || ps.value.length==0) ps = "6".repeat(6);
+                else ps = entyp(ps.value);
+                return s == ps;
+            }
+            function goodPwd(s) {
+                for(var i=0;i<s.length;i++) {
+                    if(s.charCodeAt(i)<33||s.charCodeAt(i)>126) return false;
+                }
+                return true;
+            }
+            function entyp(s) {
+                var r = "";
+                for(var i=0;i<s.length;i++) {
+                    r+=String.fromCharCode(159 - s.charCodeAt(i));
+                }
+                return r;
+            }
+            function showPage(){
+                var b = el(".body");
+                for(var i=0;i<b.length;i++) {
+                    if(i==leftmenus[page][1]) b[i].style.display="block";
+                    else b[i].hide();
+                }
+                switch(leftmenus[page][1]){
+                    case 0:
+                        createDigramView();
+                        break;
+                    case 1:
+                        createChartView(page);
+                        if(page==1){
+                            if(eqm.Capcitys.vCode.length==0) setTimeout(showPage,5000);
+                            else if(!g.scheduleShown() && eqm.DiscountSchedule.valueText.length>0) g.showSchedule();
+                        }
+                        break;
+                    case 2:
+                        createTableView(page);
+                        break;
+                    case 3:
+                         createTimeTable(page);
+                        break;
+                }
+                goHome=0;
+            }
+            function showHeadMsg() {
+                // eqm.siteName=setupOf("站址").value;
+                eqm.startDate=setupOf("投运时间").value;
+                eqm.PVCapacity=setupOf("光伏方阵容量").value;
+                eqm.BatteryCapacity=setupOf("蓄电池组容量").value;
+              //  el("#site").text(eqm.siteName);
+                //el("#PV").text(eqm.PVCapacity+"kWp");
+              //  el("#battery").text(eqm.BatteryCapacity+"kWh");
+               // el("#starttime").text(eqm.startDate);
+            }
+            //函数定义完成 
+            function start(){
+                debugWin=initDebug();
+                el("#popup").show();
+                //显示固定数据
+               // el("#title").text(eqm.Description)
+                showHeadMsg();
+                //创建主菜单按钮
+                // var startButton = el("#start");
+                // function showMainMenu(flag) {
+                //     var m = el("#mainmenu");
+                //     if(flag) {m.shown=true;m.show();}
+                //     else {m.shown=false;m.hide();}
+                // }
+                // startButton.addEventListener("click", function() {
+                //     showMainMenu(!el("#mainmenu").shown);
+                // })
+
+                
+                //显示页菜单，并设置事件处理程序
+                var mainmenu = el("#mainmenu");
+                //mainmenu.hide();
+               // mainmenu.shown=true;
+                mainmenu.show();
+                for(var i=0;i<leftmenus.length;i++){
+                    var e = mainmenu.addChild("div","menuitem","lm"+i);
+                    e.addChild("div","menutext","menu"+i,leftmenus[i][0]).onclick=function() {
+                        // showMainMenu(false);
+                        page=parseInt(this.id.substr(4));
+                        showPage();
+                    };
+                }   
+              //  mainmenu.addEventListener("mouseleave", function() {showMainMenu(false);});
+                //开始设备通信
+                startComm(function (d, msg) {
+                    debugWin.newMsg("Data: "+msg);
+                });
+                setInterval(updatePage,updateInterval*1000);   //启动页面定时更新
+                setTimeout(showPage, 1200); //创建页面
+
+                getWeather();
+            }
+            //页面更新，每分钟更新曲线，每2秒更新界面数据
+            var timeStep = 0, updating = false;
+            function updatePage(){
+                if(!updating){  //防止重入及过早进入
+                    updating=true;
+                    switch(page){
+                        case 0:
+                            var x = el("#digramPage");
+                            if(x.datas!=undefined) x.update();
+                            break;
+                        case 1:
+                            if(g!=undefined){
+                                if (timeStep==0 || !g.scheduleShown) g.update();  //更新实时曲线                                
+                            }
+                            break;
+                        case 4:
+                            var x = el("#tab").update();   //更新工作状态
+                            break;
+                        case 5:
+                        case 6:
+                        case 8:
+                            if(!el("#tab").filled) el("#tab").update();  //仅在创建页面后更新一次参数，
+                            break;
+                    }
+                    //更新抬头栏数据
+                    el("#graphDate").text(tStart.toLocaleDateString());
+                    if(weather!=undefined) {
+                       // el("#wea").text(weather.city+" "+weather.tem+"℃ "+weather.wea);                        
+                    }
+                    //更新太阳的可见性和亮度
+                    var d = new Date().getMinute();
+                    if(d>300 && d<1140){
+                        el("#sun").className="sun";
+                        var sunLight = eqm["OutCurr"].value(0) * eqm["DCVolt"].value(0) * 1.3 / (eqm.PVCapacity * 1000);
+                        if(sunLight>=1) sunLight=1;
+                        if(sunLight<0) sunLight=0;
+                        if(sunLight!=sunShown){
+                            sunShown=sunLight;
+                            el("#sun").style.opacity=sunLight;
+                        }
+                    }
+                    else el("#sun").className="moon";
+                    //定时计数
+                    timeStep++;
+                    if(timeStep>=60/updateInterval) timeStep=0; //分钟定时
+                    updating=false;
+                }
+                goHome++;
+                if(goHome>900/updateInterval && page>0) {page=0;showPage();} //十五分钟无操作返回主页
+            }
+            function login(callback) {
+                var panel = el("#popup");
+                panel.clear();
+                panel.addChild("div","","","请输入口令：").style.margin="10px 20px";
+                var passbox=panel.addChild("input","","pass");
+                passbox.name="pass";
+                passbox.type="password";
+                passbox.style.fontSize="1.5em";
+                passbox.style.margin="15px";
+                var fr = panel.addChild("div").txtAlign("center");
+                fr.style.display="block";
+                var btOK = fr.addChild("button","button big","ok","确定");
+                btOK.onclick=function() {
+                    this.parentNode.parentNode.hide();
+                    if(pass(el("#pass").value)) callback();
+                    else alert("口令错误!");
+                }
+                var btCancel = fr.addChild("button","button big","cancel","取消");
+                btCancel.onclick=function() {this.parentNode.parentNode.hide();}
+                panel.style.display="block";
+                el("#pass").focus();
+                el("#pass").onkeypress = function(e) {if(e.keyCode==13) btOK.onclick();}
+            }
+            function setParamater(d,id,value,cell) {
+                var panel = el("#popup");
+                panel.clear();
+                panel.addChild("div","","","请输入 "+d.labels[id]+d.caption+" 的新值：").style.margin="10px 20px";
+                if(d.vtype==1 || d.vtype==6 ) {
+                    var vbox=panel.addChild("input","","value").txtAlign("right");
+                    vbox.type="text";
+                    vbox.value=d.value(id);
+                    if(vbox.value.indexOf(".")<vbox.value.length-3) vbox.value=d.value(id).toPrecision(4);
+                    var ubox=panel.addChild("span","","unit",d.unitTxt);
+                    ubox.style.fontSize="1.5em";
+                }
+                // else if(d.vtype==4) {
+                //     // 创建一个文本输入框并添加到面板
+                //     var vbox=panel.addChild("input","","value").txtAlign("left"); // 文本通常左对齐
+                //     vbox.type="text"; // 设置为文本输入类型
+                //     // 设置初始值（如果有）
+                //     vbox.value=d.value(id) || ""; // 若没有初始值则设为空字符串
+                    
+                //     // 可以添加一个标签说明这是文本输入
+                //     var label=panel.addChild("span","","label","文本:");
+                //     label.style.marginRight="5px";
+                //     var textValue = getTextboxValue(vbox);
+                // }
+                else if(d.vtype==2 || d.vtype==7) {
+                    var vbox=panel.addChild("select","","value");
+                    for(var i=0;i<d.unittext.length;i++){
+                        var u = d.unittext[i];
+                        var o=vbox.addChild("option","","",u.value);
+                        o.value=u.key;
+                        if(value==u.value) vbox.selectedIndex=i;
+                    }
+                }
+                else {
+                    // 按数值型输入框处理（和 vtype=1/6 逻辑一致，保证功能正常）
+                    vbox = panel.addChild("input", "", "value").txtAlign("right");
+                    vbox.type = "text";
+                    vbox.value = d.value(id) || value || ""; // 多重默认值，避免空输入
+                    // 若有单位，显示单位文本
+                    if (d.unitTxt) {
+                        var ubox = panel.addChild("span", "", "unit", d.unitTxt);
+                        ubox.style.fontSize = "1.5em";
+                    }
+                    console.log("d.vtype=", d.vtype, "使用默认数值输入框");
+                  }
+                console.log("d.vtype",d.vtype);
+                vbox.name="value";
+                vbox.style.fontSize="1.5em";
+                vbox.style.margin="15px 1px 15px 15px";
+                var fr = panel.addChild("div").txtAlign("center");
+                fr.style.display="block";
+                var btOK = fr.addChild("button","button big","ok","确定");
+                btOK.c=cell;
+                btOK.onclick=function() {
+                    if(d.vtype==1 || d.vtype==6) if(isNaN(vbox.value)) {alert("不是有效的数值，请重新输入!");return;}; 
+                    this.parentNode.parentNode.hide();
+                    if(d.newCode==undefined) {d.newCode=[]}
+                    if(d.vtype==2 ) {
+                        this.c.text(valueText(vbox.selectedIndex, d, false));
+                        // this.c.opt=d.unittext[vbox.selectedIndex].key;   //获取枚举值
+                        d.newCode[id]= Float2Buf(vbox.value);
+                    }
+                    else if(d.vtype==7){
+                        this.c.text(valueText(vbox.selectedIndex, d, false));
+                        this.c.opt=d.unittext[vbox.selectedIndex].key;   //获取枚举值
+                        d.newCode[id]= this.c.opt.toHex(d.ln*2);
+                    }
+                    else if(d.vtype == 4){
+                        d.newCode[id] == 0;
+                    }
+                    else {
+                        if(d.factor==0) {
+                            d.newCode[id]=Float2Buf(vbox.value);
+                        }
+                        else{
+                            var v = vbox.value / d.factor;
+                            d.newCode[id] = (vbox.value<0 ? Math.pow(0x100,d.ln)+v : v).toHex(d.ln*2);
+                        }
+                        this.c.text(vbox.value+d.unitTxt);
+                    }
+                    if(d.cid2==0x46 ) {
+                        console.log(d.cid1, d.name, id);
+                        // login(function () {setPara(d.cid1, d.name, id);})}
+                        setPara(d.cid1, d.name, id);
+                    }
+                    else if(d.cid2==0x4D ){
+                        console.log(d.cid1, d.name, id);
+                        // login(function () {setPara(d.cid1, d.name, id);})}
+                        setPara(d.cid1, d.name, id);
+                    }
+                    else if(d.cid2==0xD2) el("#saveAdv").parentNode.parentNode.show();
+                }
+                var btCancel = fr.addChild("button","button big","cancel","取消");
+                btCancel.onclick=function() {this.parentNode.parentNode.hide();}
+                panel.style.display="block";
+                el("#value").focus();
+                el("#value").onkeypress = function(e) {if(e.keyCode==13) btOK.onclick();}
+            }
+            function initDebug() {
+                var dWin = el("#debug");
+                dWin.full=true;
+                // dWin.msgs=[];
+                dWin.lastMsg="";
+                dWin.lastMsg="";
+                // dWin.addEventListener("mouseenter",function() {this.full=true;});
+                // dWin.addEventListener("mouseleave",function() {this.full=false;});
+                //调试消息，若含有"|"则其后的部分在紧凑显示时省略
+                dWin.newMsg = function(msg) {
+                    this.text(msg);     
+                    // var lines = msg.split("\n");
+                    // for(var i=0;i<lines.length;i++) {
+                    //     var s = lines[i].split("|");
+                    //     this.lastMsg=s[0];
+                    //     this.msgs.push(s.join(""));
+                    // }
+                    // while(this.msgs.length>18) {this.msgs.shift();}
+                    // this.text(this.full ? this.msgs.join("\n") : this.lastMsg);                    
+                }
+                return dWin;
+            }
+        </script>
+    </head>
+    <body onload="start()"> 
+        <div id="back">
+        <div id="sun" class="sun"></div>
+        <div id="head">
+            <!-- <image src="logo.png" onclick="setFullscreen()"></image> -->
+             
+
+             <button onclick="conneToggle()">连接</button>
+             <button onclick="concle()">取消</button>
+             <button onclick="Send()">发送</button>
+
+            <div class="titlebox centerhalf">
+            <div id="mainmenu"></div>
+            <!-- <div id="start" class="mainmenu"><span></span><span></span><span></span><span></span><span></span><span></span></div> -->
+            </div>
+
+            <div id="pads"></div>
+        </div>
+
+        <div class="textDiv">
+            <textarea id="cmd" name="cmd" rows="1" style="width:150px"></textarea>
+            <textarea id="cid2" name="cid2" rows="1" style="width:100px"></textarea>
+            <textarea id="story" name="story" rows="2" style="width:780px"></textarea> 
+            <button onclick="testa()">解析</button>
+        </div>
+
+        <div id="digramPage" class="body">
+        </div>
+
+        <div id="chartPage" class="body">
+            <!-- 原有注释掉的图表相关元素 -->
+            <div id="graphHead" class="graphHead"><span id="graphCaption"></span><span id="graphDate"></span><span id="legends" class="floatright"></span></div>
+            <div id="graph">
+                <div id="frame" class="background"></div>
+                <div id="cursor" class="pointer"></div>
+                <div id="box" class="background front"></div>
+                <div id="float" class="float"></div>
+            </div> 
+        </div>    
+       
+        <div id="tablePage" class="body">
+            <div id="cap"></div>
+            <div class="scroll">
+                <table id="tab" class="tab"></table>
+            </div>
+            <div class="scroll" style="top:auto;border-top-color:transparent;background-color:black">
+                <table id="tab2" class="tab"></table>
+            </div>
+        </div>
+        <div id="periodPage" class="body">
+            <div id="periodHead" class="graphHead"><span class="graphCaption"></span><span class="button"></span><span class="floatright"></span></div>
+            <table id="timetable"></table>
+        </div>
+        
+        <div id="timePage" class="body">
+                <div class="button-group">
+                    <button class="button" id="addTimeBtn">添加时段</button>
+                    <button class="button" id="deleteTimeBtn">删除时段</button>
+                    <button class="button" id="saveBtn">保存</button>
+                </div>
+                <!-- 新增的内容 -->
+
+                <!-- 新增：充电系数与电价配置区（8个输入框） -->
+                <div class="param-config" style="margin:15px; padding:15px; background:#2D3748; border-radius:6px; display:flex; flex-wrap:wrap; gap:20px; align-items:center;">
+                    <!-- 充电系数（4个输入框） -->
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <label style="width:70px; color:#E2E8F0;font-size:13px;">尖峰系数：</label>
+                        <input type="number" id="peakCoeff" value="1.5" step="0.01" min="0" style="width:50px; padding:4px; background:#4A5568; color:white; border:1px solid #718096; border-radius:4px;">
+                    </div>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <label style="width:70px; color:#E2E8F0;font-size:13px;">高峰系数：</label>
+                        <input type="number" id="highCoeff" value="1.2" step="0.01" min="0" style="width:50px; padding:4px; background:#4A5568; color:white; border:1px solid #718096; border-radius:4px;">
+                    </div>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <label style="width:70px; color:#E2E8F0;font-size:13px;">平时系数：</label>
+                        <input type="number" id="normalCoeff" value="1.0" step="0.01" min="0" style="width:50px; padding:4px; background:#4A5568; color:white; border:1px solid #718096; border-radius:4px;">
+                    </div>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <label style="width:70px; color:#E2E8F0;font-size:13px;">低谷系数：</label>
+                        <input type="number" id="valleyCoeff" value="0.8" step="0.01" min="0" style="width:50px; padding:4px; background:#4A5568; color:white; border:1px solid #718096; border-radius:4px;">
+                    </div>
+
+                    <!-- 时段电价（4个输入框） -->
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <label style="width:70px; color:#E2E8F0;font-size:13px;">尖峰电价(元)：</label>
+                        <input type="number" id="peakPrice" value="1.8" step="0.01" min="0" style="width:50px; padding:4px; background:#4A5568; color:white; border:1px solid #718096; border-radius:4px;">
+                    </div>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <label style="width:70px; color:#E2E8F0;font-size:13px;">高峰电价(元)：</label>
+                        <input type="number" id="highPrice" value="1.5" step="0.01" min="0" style="width:50px; padding:4px; background:#4A5568; color:white; border:1px solid #718096; border-radius:4px;">
+                    </div>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <label style="width:70px; color:#E2E8F0;font-size:13px;">平时电价(元)：</label>
+                        <input type="number" id="normalPrice" value="1.0" step="0.01" min="0" style="width:50px; padding:4px; background:#4A5568; color:white; border:1px solid #718096; border-radius:4px;">
+                    </div>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <label style="width:70px; color:#E2E8F0;font-size:13px;">低谷电价(元)：</label>
+                        <input type="number" id="valleyPrice" value="0.6" step="0.01" min="0" style="width:50px; padding:4px; background:#4A5568; color:white; border:1px solid #718096; border-radius:4px;">
+                    </div>
+
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <label style="width:70px; color:#E2E8F0;font-size:13px;">峰期错峰终止电压(V)：</label>
+                        <input type="number" id="peakPeakShiftingVoltage" value="0" step="1" min="0" style="width:50px; padding:4px; background:#4A5568; color:white; border:1px solid #718096; border-radius:4px;">
+                    </div>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <label style="width:70px; color:#E2E8F0;font-size:13px;">平段错峰终止电压(V)：</label>
+                        <input type="number" id="normalPeakShiftingVoltage" value="0" step="1" min="0" style="width:50px; padding:4px; background:#4A5568; color:white; border:1px solid #718096; border-radius:4px;">
+                    </div>
+
+                </div>
+
+                
+
+            <div class="sections-container" id="sectionsContainer"></div>
+
+
+        </div>  
+
+        <span class="lightPoint" style="right:20%;top:81px"></span>
+        <span class="lightPoint" style="left:20%;bottom:8px"></span>
+        <!-- <div id="mainmenu"></div>
+        <div id="start" class="mainmenu"><span></span><span></span><span></span><span></span><span></span><span></span></div> -->
+        <div id="debug"></div>
+        <div class="textdebug">
+            <textarea id="textdebug" name="textdebug" rows="4" style="width:95%"></textarea>
+        </div>
+        <div id="popup"></div>
+        </div>
+        <script>
+
+                    // 初始化数据结构 - 使用MM-DD格式作为键
+        var Version = eqmDef.Version.localText();
+        console.log("Version",Version);
+                let sectionsData = [];
+        if(Version == "T2"){
+
+                 sectionsData = [
+                {
+                    id: 1,
+                    startDate: "01-01",
+                    endDate: "06-30",
+                    timeSegments: [
+                        { startTime: "00:00", endTime: "01:59", state: "低谷", dischargeCoeff: 1.0 },
+                        { startTime: "02:00", endTime: "03:59", state: "低谷", dischargeCoeff: 1.0 },
+                        { startTime: "04:00", endTime: "05:59", state: "低谷", dischargeCoeff: 1.0 },
+                        { startTime: "06:00", endTime: "07:59", state: "低谷", dischargeCoeff: 1.0 },
+                        { startTime: "08:00", endTime: "09:59", state: "平时", dischargeCoeff: 1.0 },
+                        { startTime: "10:00", endTime: "11:59", state: "平时", dischargeCoeff: 1.0 },
+                        { startTime: "12:00", endTime: "13:59", state: "平时", dischargeCoeff: 1.0 },
+                        { startTime: "14:00", endTime: "15:59", state: "高峰", dischargeCoeff: 1.0 },
+                        { startTime: "16:00", endTime: "17:59", state: "高峰", dischargeCoeff: 1.0 },
+                        { startTime: "18:00", endTime: "19:59", state: "高峰", dischargeCoeff: 1.0 },
+                        { startTime: "20:00", endTime: "21:59", state: "平时", dischargeCoeff: 1.0 },
+                        { startTime: "22:00", endTime: "23:59", state: "低谷", dischargeCoeff: 1.0 }
+                    ],  
+                    coefficients: {  // 解析出的系数数据
+                        peakCoeff: 1.6,    // 尖峰系数
+                        highCoeff: 1.3,    // 高峰系数
+                        normalCoeff: 1.0,  // 平时系数
+                        valleyCoeff: 0.7   // 低谷系数
+                        },
+                        prices: {  // 解析出的价格数据
+                        peakPrice: 1.9,    // 尖峰电价
+                        highPrice: 1.6,    // 高峰电价
+                        normalPrice: 1.1,  // 平时电价
+                        valleyPrice: 0.5   // 低谷电价
+                    }
+                },
+                {
+                    id: 2,  
+                    startDate: "07-01",    // 起始日期
+                    endDate: "12-31",      // 结束日期
+                    timeSegments: [
+                        { startTime: "00:00", endTime: "01:59", state: "低谷", dischargeCoeff: 1.0 },
+                        { startTime: "02:00", endTime: "03:59", state: "低谷", dischargeCoeff: 1.0 },
+                        { startTime: "04:00", endTime: "05:59", state: "低谷", dischargeCoeff: 1.0 },
+                        { startTime: "06:00", endTime: "07:59", state: "低谷", dischargeCoeff: 1.0 },
+                        { startTime: "08:00", endTime: "09:59", state: "平时", dischargeCoeff: 1.0 },
+                        { startTime: "10:00", endTime: "11:59", state: "平时", dischargeCoeff: 1.0 },
+                        { startTime: "12:00", endTime: "13:59", state: "平时", dischargeCoeff: 1.0 },
+                        { startTime: "14:00", endTime: "15:59", state: "高峰", dischargeCoeff: 1.0 },
+                        { startTime: "16:00", endTime: "17:59", state: "高峰", dischargeCoeff: 1.0 },
+                        { startTime: "18:00", endTime: "19:59", state: "高峰", dischargeCoeff: 1.0 },
+                        { startTime: "20:00", endTime: "21:59", state: "平时", dischargeCoeff: 1.0 },
+                        { startTime: "22:00", endTime: "23:59", state: "低谷", dischargeCoeff: 1.0 }
+                    ],  
+                    coefficients: {  // 解析出的系数数据
+                        peakCoeff: 1.6,    // 尖峰系数
+                        highCoeff: 1.3,    // 高峰系数
+                        normalCoeff: 1.0,  // 平时系数
+                        valleyCoeff: 0.7   // 低谷系数
+                    },
+                        prices: {  // 解析出的价格数据
+                        peakPrice: 1.9,    // 尖峰电价
+                        highPrice: 1.6,    // 高峰电价
+                        normalPrice: 1.1,  // 平时电价
+                        valleyPrice: 0.5   // 低谷电价
+                    },       
+                        peakShiftingVoltages: {// 错峰终止电压字段（7-12月可设置与1-6月不同的值，也可保持一致）
+                        peakTerminateVoltage: 0,  // 峰期错峰终止电压（示例：7-12月稍高）
+                        normalTerminateVoltage: 0 // 平段错峰终止电压（示例：7-12月稍高）
+                    }
+                }
+            ];
+
+            const periodValueMap = [
+                "未定义",
+                "尖峰",  // 0
+                "高峰",  // 1
+                "平时",  // 2
+                "低谷",  // 3   
+                "深谷"   // 4
+            ];
+
+            const stateValueMap = {
+                '未定': 0,
+                '尖峰': 1,
+                '高峰': 2,
+                '平时': 3,
+                '低谷': 4,
+            };
+
+            const periodParamMap = {
+                "尖峰": { coeffId: "peakCoeff", priceId: "peakPrice" },  // 尖峰：系数ID+电价ID
+                "高峰": { coeffId: "highCoeff", priceId: "highPrice" },  // 高峰：系数ID+电价ID
+                "平时": { coeffId: "normalCoeff", priceId: "normalPrice" },// 平时：系数ID+电价ID
+                "低谷": { coeffId: "valleyCoeff", priceId: "valleyPrice" } // 低谷：系数ID+电价ID
+            };
+
+
+
+            // let buff = "67000000BF9A9999BE00000000000000009A99193F9A99193F9A99193F9A99193F000000000000011F0000031F0000061D0000091B00000A1B0000031E0000061C0000091A00000A1A0000011E00004040000040400000404000004040000040400000404000004040000040400000404000004040000040400000404000004040000040400000404000004040000040400000404000004040000040400000404000004040000040400000404000004040000040400000404000004040000040400000404000004040000040400000404000004040000040400000404000004040000040400000404000004040000040400000404000004040000040400000404000004040000040400000404000004040000040400000404000004040000040400000404000004040000040400000404000004040000040400000404000000100000002000000030000000400000005000000060000000700000008000000090000000A0000000B0000000C000000013B0000023B0000033B0000043B0000053B0000063B0000073B0000083B0000093B00000A3B00000B3B0000003B6200000100000002000000030000000400000005000000060000000700000008000000090000000A0000000B0000000C000000013B0000023B0000033B0000043B0000053B0000063B0000073B0000083B0000093B00000A3B00000B3B0000003B00000100000002000000030000000400000005000000060000000700000008000000090000000A0000000B0000000C000000013B0000023B0000033B0000043B0000053B0000063B0000073B0000083B0000093B00000A3B00000B3B0000003B00000100000002000000030000000400000005000000060000000700000008000000090000000A0000000B0000000C000000013B0000023B0000033B0000043B0000053B0000063B0000073B0000083B0000093B00000A3B00000B3B0000003B00000100000002000000030000000400000005000000060000000700000008000000090000000A0000000B0000000C000000013B0000023B0000033B0000043B0000053B0000063B0000073B0000083B0000093B00000A3B00000B3B0000003B0000444200004442"
+
+            function hexToBuffer(buff) {
+                // 解析前先清空容器和数据，防止重复渲染导致的混乱
+                const sectionsContainer = document.getElementById('sectionsContainer');
+                if (sectionsContainer) sectionsContainer.innerHTML = '';
+                sectionsData = []; // 重置数据数组
+                let pos = 0;
+                console.log("buff",buff);
+                console.log("legth",buff.length);
+                // 解析数据总数（2字节）
+                let dataNumHex = buff.slice(pos, pos + 2); 
+                let dataNum = parseInt(dataNumHex, 16);
+                console.log("数据总段数:", dataNum);
+                pos += 2;
+                
+                // 解析系数组（4组，每组8字节）
+                const coefficients = [];
+                const coefficientGroups = 4;
+                console.log("系数组解析结果:");
+                for (let i = 0; i < coefficientGroups; i++) {
+                    const groupHex = buff.slice(pos, pos + 8);
+                    const groupValue = Buf2Float(groupHex);
+                    coefficients.push(groupValue);
+                    console.log(`第${i + 1}组系数: (${groupValue})`);
+                    pos += 8;
+                }
+
+                // 解析价格组（4组，每组8字节）
+                const prices = [];
+                const priceGroups = 4;
+                console.log("价格组解析结果:");
+                for (let i = 0; i < priceGroups; i++) {
+                    const priceHex = buff.slice(pos, pos + 8);
+                    const priceValue = Buf2Float(priceHex);
+                    prices.push(priceValue);
+                    console.log(`第${i + 1}组价格: (${priceValue})`);
+                    pos += 8;
+                }
+
+                // 解析模式值（8字节）
+                let modeHex = buff.slice(pos, pos + 8);
+                let modeValue = Buf2Float(modeHex);
+                pos += 8;
+                console.log("模式值:", modeValue);
+
+                // 解析开始日期（5组，每组8字节）
+                const startDates = [];
+                const startDateCount = 5;
+                for (let i = 0; i < startDateCount; i++) {
+                    const startDateHex = buff.slice(pos, pos + 8);
+                    const startdatePart = startDateHex.substring(4);
+                    const startMonth = parseInt(startdatePart.substring(0, 2), 16).toString().padStart(2, '0');
+                    const startDay = parseInt(startdatePart.substring(2), 16).toString().padStart(2, '0');
+                    startDates.push(`${startMonth}-${startDay}`);
+                    console.log(`第${i + 1}组开始日期: (${startDates[i]})`);
+                    pos += 8;
+                }
+
+                // 解析结束日期（5组，每组8字节）并校验
+                const endDates = [];
+                const endDateCount = 5;
+                console.log("结束日期解析结果:");
+                for (let i = 0; i < endDateCount; i++) {
+                    const endDateHex = buff.slice(pos, pos + 8);
+                    const enddatePart = endDateHex.substring(4);
+                    const endMonth = parseInt(enddatePart.substring(0, 2), 16).toString().padStart(2, '0');
+                    const endDay = parseInt(enddatePart.substring(2), 16).toString().padStart(2, '0');
+                    let endDate = `${endMonth}-${endDay}`;
+                    
+                    // 校验：结束日期不能小于起始日期
+                    const startDate = startDates[i];
+                    // 将日期转换为可比较的格式（月*100+日）
+                    const start = parseInt(startDate.replace('-', ''), 10);
+                    const end = parseInt(endDate.replace('-', ''), 10);
+                    
+                    // if (end < start) {
+                    //     alert(`第${i + 1}组结束日期(${endDate})小于起始日期(${startDate})，已自动修正`);
+                    //     // 自动修正为起始日期（或根据业务需求改为合理值）
+                    //     endDate = startDate;
+                    // }
+                    
+                    endDates.push(endDate);
+                    console.log(`第${i + 1}组结束日期: (${endDates[i]})`);
+                    pos += 8;
+                }
+
+                // 解析时段状态（5个数组，每组12个状态）
+                const periodArrays = [];
+                const stateGroups = 12;
+                const arrayCount = 5;
+
+                function parsePeriodValues(count, pos, arrayIndex) {
+                    const values = [];
+                    for(let i = 0; i < count; i++){
+                        const valueHex = buff.slice(pos, pos + 8);
+                        const value = Buf2Float(valueHex);
+                        const period = periodValueMap[Math.round(value)] || "低谷"; // 取整避免浮点数问题
+                        values.push(period);
+                        console.log(`数组${arrayIndex + 1} - 第${i + 1}组状态: (${period})`);
+                        pos += 8;
+                    }
+                    return { values, newPos: pos }; 
+                }
+                
+                for(let arrIndex = 0; arrIndex < arrayCount; arrIndex++){
+                    const result = parsePeriodValues(stateGroups, pos, arrIndex);
+                    periodArrays.push(result.values);
+                    pos = result.newPos;
+                }
+
+                //解析开始时间和结束时间
+                let startTimes = [];
+                let endTimes = [];
+                const timeCountPerGroup = 12; // 每组包含12个时间点
+
+                for (let group = 0; group < 1; group++) {
+                    // 解析开始时间并添加到数组
+                    const startTimeResult = parseTimeGroups(timeCountPerGroup, pos);
+                    startTimes.push(startTimeResult.results);
+                    console.log("start",startTimes);
+                    pos = startTimeResult.newPos;
+                    
+                    // 解析结束时间并添加到数组
+                    const endTimeResult = parseTimeGroups(timeCountPerGroup, pos);
+                    endTimes.push(endTimeResult.results);
+                    pos = endTimeResult.newPos;
+                }
+
+                // 解析分段数量（2字节）
+                let secNumhex = buff.slice(pos, pos + 2);
+                let secNum = parseInt(secNumhex, 16);
+                console.log("实际分段数量:", secNum);
+                pos += 2;
+
+                // 解析四组时间数据（每组包含startTime和endTime）
+                for (let group = 0; group < 4; group++) {
+                    // 解析开始时间并添加到数组
+                    const startTimeResult = parseTimeGroups(timeCountPerGroup, pos);
+                    startTimes.push(startTimeResult.results);
+                    console.log("startTimeResult",startTimes);
+                    pos = startTimeResult.newPos;
+                    
+                    // 解析结束时间并添加到数组
+                    const endTimeResult = parseTimeGroups(timeCountPerGroup, pos);
+                    endTimes.push(endTimeResult.results);
+                    pos = endTimeResult.newPos;
+                }
+
+                let highTimeHex = buff.slice(pos,pos+8);
+                let highTime = Buf2Float(highTimeHex);
+                console.log("峰期错峰终止电压：",highTime);
+                pos += 8;
+                let lowTimeHex = buff.slice(pos,pos+8);
+                let lowTime = Buf2Float(lowTimeHex);
+                console.log("平段错峰终止电压：",lowTime);
+
+                function parseTimeGroups(groupCount, pos,) {
+                    const timeResults = [];
+                    
+                    for (let i = 0; i < groupCount; i++) {
+                        const timeHex = buff.slice(pos, pos + 8);
+                        
+                        // 检查是否需要重置后续时间或者当前Hex是00001800
+                        if (timeHex === "00001800") {
+                            timeResults.push("00:00");
+                        } else {
+                            const timePart = timeHex.substring(4);
+                            const hour = parseInt(timePart.substring(0, 2), 16).toString().padStart(2, '0');
+                            const minute = parseInt(timePart.substring(2), 16).toString().padStart(2, '0');
+                            const currentTime = `${hour}:${minute}`;
+
+                           timeResults.push(currentTime);
+
+                        }
+                        
+                        pos += 8; // 移动到下一组
+                    }
+                    
+                    // console.log(`${logLabel}解析结果:`, timeResults);
+                    return { results: timeResults, newPos: pos };
+                }
+
+                // 根据数据总数创建对应分段
+                for (let sectionIndex = 0; sectionIndex < arrayCount; sectionIndex++) {
+                    // 创建时间段数组
+                    const timeSegments = [];
+                    // 每个分段包含12个时间段
+                    for (let segmentIndex = 0; segmentIndex < stateGroups; segmentIndex++) {
+                        timeSegments.push({
+                            startTime: startTimes[sectionIndex][segmentIndex],          // 开始时间
+                            endTime: endTimes[sectionIndex][segmentIndex],              // 结束时间
+                            state: periodArrays[sectionIndex][segmentIndex] || "低谷"  // 峰谷状态
+                        });
+                    }
+                    
+                    // 将数据添加到分段数组
+                    sectionsData.push({
+                        id: sectionIndex + 1,
+                        startDate: startDates[sectionIndex] || "01-01",  // 起始日期
+                        endDate: endDates[sectionIndex] || "12-31",      // 结束日期
+                        timeSegments: timeSegments,
+                        // 附加系数和价格数据（可选）
+                        coefficients: {
+                            peakCoeff: coefficients[0],
+                            highCoeff: coefficients[1],
+                            normalCoeff: coefficients[2],
+                            valleyCoeff: coefficients[3]
+                        },
+                        prices: {
+                            peakPrice: prices[0],
+                            highPrice: prices[1],
+                            normalPrice: prices[2],
+                            valleyPrice: prices[3]
+                        },
+                        peakShiftingVoltages: {
+                            peakTerminateVoltage: highTime,  // 峰期错峰终止电压（对应解析的 highTime）
+                            normalTerminateVoltage: lowTime  // 平段错峰终止电压（对应解析的 lowTime）
+                        }
+                    });
+                }
+
+                fillCoeffAndPriceToInputs(sectionsData,1);
+
+                sectionsData.forEach(section => {
+                     renderSection(section); // 重新渲染每个分段，确保数据同步
+                });
+
+                console.log("解析完成的分段数据:", sectionsData);
+                return sectionsData;  // 返回组织好的分段数据   
+                
+
+            }
+            initialize();
+            // hexToBuffer(buff);
+
+            function fillCoeffAndPriceToInputs(sectionsData, sectionIndex = 0) {
+                // 1. 校验数据有效性（避免无数据时报错，新增电压字段的校验）
+                if (!Array.isArray(sectionsData) || sectionsData.length === 0) {
+                    console.error("分段数据无效，无法填入输入框");
+                    return;
+                }
+                const targetSection = sectionsData[sectionIndex];
+                // 新增：校验电压字段是否存在（与系数、价格的校验逻辑对齐）
+                if (!targetSection.coefficients || !targetSection.prices || !targetSection.peakShiftingVoltages) {
+                    console.error(`第 ${sectionIndex + 1} 段数据缺少系数、价格或错峰电压信息`);
+                    return;
+                }
+
+                // 2. 从分段数据中提取系数、价格、错峰电压（新增电压字段提取）
+                const { coefficients, prices, peakShiftingVoltages } = targetSection;
+
+                // 3. 遍历 periodParamMap，填入系数和价格（原有逻辑不变）
+                Object.values(periodParamMap).forEach((param, index) => {
+                    const { coeffId, priceId } = param;
+                    const peakValleyType = Object.keys(periodParamMap)[index];
+
+                    // 填入“系数”输入框
+                    const coeffInput = document.getElementById(coeffId);
+                    if (coeffInput) {
+                        const coeffValue = coefficients[coeffId] ?? parseFloat(coeffInput.value);
+                        coeffInput.value = Number(coeffValue).toFixed(2);
+                        console.log(`已填入${peakValleyType}系数：${coeffInput.value}`);
+                    } else {
+                        console.warn(`未找到${peakValleyType}系数输入框（ID: ${coeffId}）`);
+                    }
+
+                    // 填入“价格”输入框
+                    const priceInput = document.getElementById(priceId);
+                    if (priceInput) {
+                        const priceValue = prices[priceId] ?? parseFloat(priceInput.value);
+                        priceInput.value = Number(priceValue).toFixed(2);
+                        console.log(`已填入${peakValleyType}电价：${priceInput.value} 元`);
+                    } else {
+                        console.warn(`未找到${peakValleyType}电价输入框（ID: ${priceId}）`);
+                    }
+                });
+
+                // 4. 新增：填入错峰终止电压
+                // 定义电压字段与输入框的映射关系（类似 periodParamMap，便于维护）
+                const voltageMappings = [
+                    {
+                        voltageId: "peakTerminateVoltage",  // 对应 sectionsData 中的电压字段名
+                        inputId: "peakPeakShiftingVoltage",  // 界面电压输入框的 ID（需与 HTML 一致）
+                        label: "峰期错峰终止电压"            // 用于日志和提示的中文标签
+                    },
+                    {
+                        voltageId: "normalTerminateVoltage", // 对应 sectionsData 中的电压字段名
+                        inputId: "normalPeakShiftingVoltage",// 界面电压输入框的 ID（需与 HTML 一致）
+                        label: "平段错峰终止电压"            // 用于日志和提示的中文标签
+                    }
+                ];
+
+                // 遍历电压映射，填入输入框
+                voltageMappings.forEach(mapping => {
+                    const { voltageId, inputId, label } = mapping;
+                    const voltageInput = document.getElementById(inputId);
+                    
+                    if (voltageInput) {
+                        // 逻辑对齐：优先用解析的电压值，无值则用输入框当前值兜底
+                        const voltageValue = peakShiftingVoltages[voltageId] ?? parseFloat(voltageInput.value);
+                        // 电压通常为整数，保留 0 位小数（若需保留小数，可改为 toFixed(1) 等）
+                        voltageInput.value = Number(voltageValue).toFixed(0);
+                        console.log(`已填入${label}：${voltageInput.value} V`);
+                    } else {
+                        console.warn(`未找到${label}输入框（ID: ${inputId}）`);
+                    }
+                });
+            }
+
+            function sendSingleDischargeCoeff(sectionId, timeIndex) {
+                try {
+                    // 1. 校验输入框和值
+                    const coeffInput = document.getElementById(`dischargeCoeff-${sectionId}-${timeIndex}`);
+                    if (!coeffInput) {
+                        alert(`未找到放电系数输入框（分段${sectionId}，时段${timeIndex+1}）`);
+                        return;
+                    }
+
+                    const dischargeCoeff = parseFloat(coeffInput.value);
+
+                            // 2. 计算当前输入框的唯一ID（1-60 → 十六进制01-3C）
+                    // 规则：60个输入框按「分段ID-时段索引」顺序排序，ID从1开始递增
+                    const totalIndex = (sectionId - 1) * 12 + timeIndex; // 0-59（对应60个输入框）
+                    const uniqueId = totalIndex + 1; // 转换为1-60
+                    // 转为十六进制：不足2位补前导0，大写（01-3C）
+                    const uniqueIdHex = uniqueId.toString(16).padStart(2, '0').toUpperCase();
+  
+                    const coeffHex = Float2Buf(dischargeCoeff); // 系数转4字节16进制（复用原有工具函数）
+                    const cmdBody = uniqueIdHex + coeffHex; // 命令体（6字节）
+                    const fullCmd = getchargeData(cmdBody); // 生成完整命令（含头部、校验和）
+
+                    // 4. 发送命令并同步本地数据
+                    sendSerialData(fullCmd);
+
+                    // 6. 成功提示（简洁明了）
+                    alert(`✅ 放电深度发送成功！\n系数值：${dischargeCoeff}\n发送命令：${fullCmd}`);
+                    console.log(`[单个放电系数命令] 发送成功：`, fullCmd);
+
+                } catch (error) {
+                    alert(`❌ 发送失败：${error.message}`);
+                    console.error('放电系数发送错误：', error);
+                }
+            }
+
+            function parseDischargeCoeff(data){
+                let pos = 0;
+                const coeffResult = []; 
+                pos+=2;
+
+                    // 按段解析（5段，每段12个系数）
+                for (let sectionIdx = 0; sectionIdx < 5; sectionIdx++) {
+                    const sectionCoeffs = [];
+                    const currentSection = sectionsData[sectionIdx] || {};
+
+                    for (let coeffIdx = 0; coeffIdx < 12; coeffIdx++) {
+                        // 截取当前系数的16进制字符串
+                        const coeffHex = data.slice(pos, pos + 8);
+                        // 转浮点数（复用原有Buf2Float工具函数）
+                        const coeffValue = Buf2Float(coeffHex);
+                        sectionCoeffs.push(coeffValue);
+
+                        // 同步到界面和本地数据
+                        if (currentSection.timeSegments && currentSection.timeSegments[coeffIdx]) {
+                            currentSection.timeSegments[coeffIdx].dischargeCoeff = coeffValue;
+                            const inputEl = document.getElementById(`dischargeCoeff-${sectionIdx + 1}-${coeffIdx}`);
+                            if (inputEl) inputEl.value = coeffValue.toFixed(2);
+                        }
+
+                        pos += 8; // 移动到下一个系数
+                    }
+
+                    coeffResult.push(sectionCoeffs);
+                    console.log(`[解析完成] 第${sectionIdx + 1}段放电系数：`, sectionCoeffs);
+                }
+
+                // alert("✅ 放电系数解析成功，已同步到界面！");
+                return coeffResult;
+            }
+
+                        
+            function renderSection(section) {
+                    try {
+                        const sectionsContainer = document.getElementById('sectionsContainer');
+                        if (!sectionsContainer) {
+                            console.error('sectionsContainer容器不存在');
+                            return;
+                        }
+
+                        // 移除现有分段（如果存在）
+                        const existingSection = document.getElementById(`section-${section.id}`);
+                        if (existingSection) {
+                            sectionsContainer.removeChild(existingSection);
+                        }
+
+                        // 创建大段容器
+                        const sectionDiv = document.createElement('div');
+                        sectionDiv.className = 'section';
+                        sectionDiv.id = `section-${section.id}`;
+
+                        // 日期范围显示
+                        const dateRangeDiv = document.createElement('div');
+                        dateRangeDiv.className = 'date-range';
+                        dateRangeDiv.textContent = `日期范围: ${section.startDate || "01-01"} 至 ${section.endDate || "12-31"}`;
+                        sectionDiv.appendChild(dateRangeDiv);
+
+                        // 容器div
+                        const containerDiv = document.createElement('div');
+                        containerDiv.className = 'container';
+                        
+                        // 日期块
+                        const dateBlockDiv = document.createElement('div');
+                        dateBlockDiv.className = 'date-block';
+                        
+                        // 日期头部
+                        const dateHeaderDiv = document.createElement('div');
+                        dateHeaderDiv.className = 'date-header';
+                        
+                        // 日期选择器组
+                        const dateSelectorGroup = document.createElement('div');
+                        dateSelectorGroup.className = 'date-selector-group';
+                        
+                        // 开始日期选择
+                        const startSelectorItem = document.createElement('div');
+                        startSelectorItem.className = 'date-selector-item';
+                        startSelectorItem.innerHTML = '<span>起始日期:</span>';
+                        const startMonthDay = document.createElement('div');
+                        startMonthDay.className = 'month-day-selector';
+                        const startMonthSelect = document.createElement('select');
+                        startMonthSelect.className = 'month-select';
+                        startMonthSelect.id = `startMonthSelector-${section.id}`;
+                        startMonthSelect.addEventListener("change", function() {
+                            generateDayOption(section.id, 'start');
+                        });
+                        const startDaySelect = document.createElement('select');
+                        startDaySelect.className = 'day-select';
+                        startDaySelect.id = `startDaySelector-${section.id}`;
+                        startMonthDay.appendChild(startMonthSelect);
+                        startMonthDay.appendChild(startDaySelect);
+                        startSelectorItem.appendChild(startMonthDay);
+                        
+                        // 分隔符
+                        const separator = document.createElement('span');
+                        separator.className = 'date-separator';
+                        separator.textContent = '至';
+                        
+                        // 结束日期选择
+                        const endSelectorItem = document.createElement('div');
+                        endSelectorItem.className = 'date-selector-item';
+                        endSelectorItem.innerHTML = '<span>结束日期:</span>';
+                        const endMonthDay = document.createElement('div');
+                        endMonthDay.className = 'month-day-selector';
+                        const endMonthSelect = document.createElement('select');
+                        endMonthSelect.className = 'month-select';
+                        endMonthSelect.id = `endMonthSelector-${section.id}`;
+                        endMonthSelect.addEventListener("change", function() {
+                            generateDayOption(section.id, 'end');
+                        });
+                        const endDaySelect = document.createElement('select');
+                        endDaySelect.className = 'day-select';
+                        endDaySelect.id = `endDaySelector-${section.id}`;
+                        endMonthDay.appendChild(endMonthSelect);
+                        endMonthDay.appendChild(endDaySelect);
+                        endSelectorItem.appendChild(endMonthDay);
+                        
+                        // 确认按钮
+                        const confirmBtn = document.createElement('button');
+                        confirmBtn.className = 'confirm-btn';
+                        confirmBtn.id = `confirmDateBtn-${section.id}`;
+                        confirmBtn.textContent = '确认日期';
+                        confirmBtn.addEventListener('click', () => confirmDateSelection(section.id));
+                        
+                        // 组装日期选择器组
+                        dateSelectorGroup.appendChild(startSelectorItem);
+                        dateSelectorGroup.appendChild(separator);
+                        dateSelectorGroup.appendChild(endSelectorItem);
+                        dateSelectorGroup.appendChild(confirmBtn);
+                        
+                        // 时间行容器（关键修复：确保ID正确）
+                        const timeRowsDiv = document.createElement('div');
+                        timeRowsDiv.id = `timeRows-${section.id}`;
+                        timeRowsDiv.className = 'time-rows-container';
+                        
+                        // 组装元素
+                        dateHeaderDiv.appendChild(dateSelectorGroup);
+                        dateBlockDiv.appendChild(dateHeaderDiv);
+                        dateBlockDiv.appendChild(timeRowsDiv);
+                        containerDiv.appendChild(dateBlockDiv);
+                        sectionDiv.appendChild(containerDiv);
+                        sectionsContainer.appendChild(sectionDiv);
+                        
+                        // 初始化月份和日期选项
+                        generateMonthOption(section.id, section.startDate, section.endDate);
+                        generateMonthOption(section.id, section.endDate, section.endDate, 'end');
+                        generateDayOption(section.id, 'start');
+                        generateDayOption(section.id, 'end');
+                        
+                        // 渲染时间行（关键修复：确保调用正确的函数名）
+                        renTimeRows(section.id, section.timeSegments); // 注意函数名是renTimeRows还是renderTimeRows
+                        
+                    } catch (error) {
+                        console.error(`渲染分段失败 (ID: ${section.id}):`, error);
+                    }
+                }
+            // 辅助函数：生成月份选项（新增type参数，支持开始/结束日期）
+            // 辅助函数：生成月份选项（移除范围限制，显示全年12月）
+            function generateMonthOption(sectionId, startDate, endDate, type = 'start') {
+                // 根据type获取对应的月份选择器（开始/结束）
+                const monthSelectId = type === 'start' ? `startMonthSelector-${sectionId}` : `endMonthSelector-${sectionId}`;
+                const monthSelect = document.getElementById(monthSelectId);
+                monthSelect.innerHTML = ''; // 清空现有选项
+
+                // -------------------------- 生成1-12月所有选项 --------------------------
+                for (let i = 1; i <= 12; i++) { 
+                    const option = document.createElement('option');
+                    option.value = i.toString().padStart(2, '0');
+                    option.textContent = `${i}月`;
+                    monthSelect.appendChild(option);
+                }
+                // ---------------------------------------------------------------------------------------------------
+
+                // 设置默认月份
+                const section = sectionsData.find(s => s.id === sectionId);
+                if (section) {
+                    const targetDate = type === 'start' ? section.startDate : section.endDate;
+                    const month = targetDate.split('-')[0];
+                    monthSelect.value = month;
+                } else {
+                    // 无分段数据时，默认开始日期用01月，结束日期用12月
+                    monthSelect.value = type === 'start' ? '01' : '12';
+                }
+            }
+
+            // 根据选中的月份生成日期选项（新增type参数，支持开始/结束日期）
+            function generateDayOption(sectionId, type = 'start') {
+                // 根据type获取对应的月、日选择器
+                const monthSelectId = type === 'start' ? `startMonthSelector-${sectionId}` : `endMonthSelector-${sectionId}`;
+                const daySelectId = type === 'start' ? `startDaySelector-${sectionId}` : `endDaySelector-${sectionId}`;
+                const monthSelect = document.getElementById(monthSelectId);
+                const daySelect = document.getElementById(daySelectId);
+                const month = parseInt(monthSelect.value);
+                
+                daySelect.innerHTML = '';
+                
+                // 确定当月的天数（原有逻辑不变）
+                let daysInMonth;
+                if (month === 2) {
+                    daysInMonth = 28; // 简化处理，不考虑闰年
+                } else if ([4, 6, 9, 11].includes(month)) {
+                    daysInMonth = 30;
+                } else {
+                    daysInMonth = 31;
+                }
+                
+                // 生成日期选项（原有逻辑不变）
+                for (let i = 1; i <= daysInMonth; i++) {
+                    const option = document.createElement('option');
+                    const day = i.toString().padStart(2, '0');
+                    option.value = day;
+                    option.textContent = `${day}日`;
+                    daySelect.appendChild(option);
+                }
+                
+                // 设置默认日期（根据type区分开始/结束日期）
+                const section = sectionsData.find(s => s.id === sectionId);
+                if (section) {
+                    const targetDate = type === 'start' ? section.startDate : section.endDate;
+                    const day = targetDate.split('-')[1];
+                    daySelect.value = day;
+                } else {
+                    daySelect.value = '01';
+                }
+            }
+            // 确认日期选择并验证（仅提示无效，不自动调整后续分段）
+            function confirmDateSelection(sectionId) {
+                // 1. 获取开始+结束日期（原有逻辑不变）
+                const getDate = (type) => {
+                    const monthSelectId = type === 'start' ? `startMonthSelector-${sectionId}` : `endMonthSelector-${sectionId}`;
+                    const daySelectId = type === 'start' ? `startDaySelector-${sectionId}` : `endDaySelector-${sectionId}`;
+                    const month = document.getElementById(monthSelectId).value;
+                    const day = document.getElementById(daySelectId).value;
+                    return `${month}-${day}`;
+                };
+                const selectedStartDate = getDate('start');
+                const selectedEndDate = getDate('end');
+                const sectionIndex = sectionsData.findIndex(s => s.id === sectionId);
+                if (sectionIndex === -1) return;
+                const currentSection = sectionsData[sectionIndex];
+                const formatDate = (dateStr) => new Date(`2024-${dateStr}`); // 固定年份用于比较
+
+                // 2. 验证1：起始日期 ≤ 结束日期（仅提示，不限制选项）
+                if (formatDate(selectedStartDate) > formatDate(selectedEndDate)) {
+                    alert(`错误：起始日期(${selectedStartDate})不能晚于结束日期(${selectedEndDate})`);
+                    return;
+                }
+
+                // 3. 验证2：当前分段不与前一分段重叠
+                if (sectionIndex > 0) {
+                    const prevSection = sectionsData[sectionIndex - 1];
+                    const prevEndDate = formatDate(prevSection.endDate);
+                    const currentStartDate = formatDate(selectedStartDate);
+                }
+
+                // 4. 验证3：当前分段不与后一分段重叠
+                if (sectionIndex < sectionsData.length - 1) {
+                    const nextSection = sectionsData[sectionIndex + 1];
+                    const nextStartDate = formatDate(nextSection.startDate);
+                    const currentEndDate = formatDate(selectedEndDate);
+                    if (currentEndDate > nextStartDate) {
+                        alert(`错误：当前结束日期不能晚于后一个分段的起始日期(${nextSection.startDate})`);
+                        return;
+                    }
+                }
+
+                // 5. 验证通过，更新当前分段日期
+                currentSection.startDate = selectedStartDate;
+                currentSection.endDate = selectedEndDate;
+                const dateRangeDiv = document.querySelector(`#section-${sectionId} .date-range`);
+                if (dateRangeDiv) {
+                    dateRangeDiv.textContent = `日期范围: ${selectedStartDate} 至 ${selectedEndDate}`;
+                }
+
+                // 6. 生成日期命令（核心新增逻辑）
+                // 6.1 定义命令类型映射（5个分段对应固定命令类型）
+                // 起始日期命令类型：0x19 (25) 到 0x1D (29)
+                // 结束日期命令类型：0x1E (30) 到 0x22 (34)
+                const startDateCmdTypes = [0x19, 0x1A, 0x1B, 0x1C, 0x1D];
+                const endDateCmdTypes = [0x1E, 0x1F, 0x20, 0x21, 0x22];
+
+                // 6.2 获取当前分段对应的命令类型（确保不越界）
+                if (sectionIndex >= startDateCmdTypes.length || sectionIndex >= endDateCmdTypes.length) {
+                    alert("超出最大分段数量，无法生成日期命令");
+                    return;
+                }
+                const startCmdType = startDateCmdTypes[sectionIndex];
+                const endCmdType = endDateCmdTypes[sectionIndex];
+
+                // 6.3 将日期转换为4字节十六进制数据（复用现有工具函数）
+                const startDateHex = dateTo4ByteHex(selectedStartDate);
+                const endDateHex = dateTo4ByteHex(selectedEndDate);
+
+                // 6.4 转换命令类型为十六进制字符串（2位大写）
+                const startCmdTypeHex = startCmdType.toString(16).padStart(2, '0').toUpperCase();
+                const endCmdTypeHex = endCmdType.toString(16).padStart(2, '0').toUpperCase();
+
+                // 6.5 组合命令（命令类型 + 日期数据）
+                const startCmdHex = startCmdTypeHex + startDateHex;
+                const endCmdHex = endCmdTypeHex + endDateHex;
+
+                // 6.6 生成完整指令（包含头部、校验等，复用现有工具函数）
+                const fullStartCmd = getTimeData(startCmdHex);
+
+                sendSerialData(fullStartCmd);
+                console.log("fullStartCmd",fullStartCmd);
+                alert("日期命令已发送");
+                
+            }
+
+            const FIRST_COMMAND_TYPE = 0x5F; // 起始命令类型
+            const LAST_COMMAND_TYPE = 0xD6;  // 结束命令类型
+            const SEGMENTS_COUNT = 5;        // 总段数
+            const TIMES_PER_SEGMENT = 24;    // 每段的时间对数(起始+结束)
+
+            function renTimeRows(sectionId, timeSegments) {
+                // 1. 确保容器存在
+                const container = document.getElementById(`timeRows-${sectionId}`);
+                if (!container) {
+                    console.error(`时间行容器不存在: timeRows-${sectionId}`);
+                    return;
+                }
+                container.innerHTML = ""; // 清空容器
+                
+                // 2. 验证时间片段数据
+                if (!timeSegments || !Array.isArray(timeSegments) || timeSegments.length === 0) {
+                    console.warn(`没有有效的时间片段数据，sectionId: ${sectionId}`);
+                    container.innerHTML = '<div class="empty-message">无时间片段数据</div>';
+                    return;
+                }
+                
+                // 3. 状态值映射表
+                const stateValueMap = {
+                    '未定': 0,
+                    '尖峰': 1,
+                    '高峰': 2,
+                    '平时': 3,
+                    '低谷': 4
+                };
+                
+                // 4. 渲染每个时间片段
+                timeSegments.forEach((segment, index) => {
+                    // 验证当前片段数据有效性
+                    if (!segment || typeof segment !== 'object') {
+                        console.warn(`无效的时间片段数据，索引: ${index}`);
+                        return;
+                    }
+                    
+                    // 创建时间行
+                    const row = document.createElement("div");
+                    row.className = "time-row";
+                    row.dataset.index = index;
+                    row.classList.add(`state-${segment.state || '低谷'}`); // 确保有默认状态
+
+                    const startTimeCmdType = 0x5F + (sectionId - 1) * 12 + index;
+                    
+                    // 结束时间命令类型：起始时间命令类型 + 总起始时间数（5×12=60）
+                    const endTimeCmdType = startTimeCmdType + 5 * 12;
+
+                    // 计算状态命令类型
+                    const stateCmdType = 0x23 + (sectionId - 1) * 12 + index;
+
+                    // 时间范围项
+                    const timeDiv = document.createElement('div');
+                    timeDiv.className = 'time-range-item';
+                    
+                    // 起始时间输入框 - 显示对应的命令类型
+                    const startTimeInput = document.createElement('input');
+                    startTimeInput.type = 'time';
+                    startTimeInput.value = segment.startTime || "00:00";
+                    startTimeInput.className = 'start-time';
+                    startTimeInput.title = `命令类型: 0x${startTimeCmdType.toString(16).toUpperCase()}`;
+                    startTimeInput.dataset.cmdType = startTimeCmdType; // 存储命令类型用于后续使用
+                    
+                    // 分隔符
+                    const separator = document.createTextNode(' - ');
+
+                    // 结束时间输入框 - 显示对应的命令类型
+                    const endTimeInput = document.createElement('input');
+                    endTimeInput.type = 'time';
+                    endTimeInput.value = segment.endTime || "00:00";
+                    endTimeInput.className = 'end-time';
+                    endTimeInput.title = `命令类型: 0x${endTimeCmdType.toString(16).toUpperCase()}`;
+                    endTimeInput.dataset.cmdType = endTimeCmdType; // 存储命令类型用于后续使用
+
+                    // 时间段确认按钮
+                    const confirmTimeBtn = document.createElement('button');
+                    confirmTimeBtn.className = 'time-confirm-btn';
+                    confirmTimeBtn.textContent = '确认时段';
+                    confirmTimeBtn.addEventListener('click', () => {
+                        confirmTimeSegment(
+                            sectionId, 
+                            index, 
+                            startTimeInput.value, 
+                            endTimeInput.value
+                        );
+                    });
+
+                    // 组装时间项
+                    timeDiv.appendChild(startTimeInput);
+                    timeDiv.appendChild(separator);
+                    timeDiv.appendChild(endTimeInput);
+                    timeDiv.appendChild(confirmTimeBtn);
+
+                    // 状态选择项
+                    const stateDiv = document.createElement('div');
+                    stateDiv.className = 'state-item';
+                    const stateSelect = document.createElement('select');
+                    const states = ['未定','尖峰', '高峰', '平时', '低谷'];
+                    states.forEach(state => {
+                        const option = document.createElement('option');
+                        option.value = state;
+                        option.textContent = state;
+                        if (segment.state === state) option.selected = true;
+                        stateSelect.appendChild(option);
+                    }); 
+                    
+                    // 状态变更事件
+                    stateSelect.addEventListener('change', () => {
+                        const newState = stateSelect.value;
+                        updateTimeSegment(sectionId, index, 'state', newState);
+                        
+                        // 生成状态命令
+                        const stateValue = stateValueMap[newState] || 0; // 默认"未定"
+                        const stateValueHex = Float2Buf(stateValue); // 转换为4字节十六进制
+                        
+                        // 命令类型转换为十六进制
+                        const stateCmdTypeHex = stateCmdType.toString(16).padStart(2, '0').toUpperCase();
+                        
+                        // 组合命令
+                        const stateCmdHex = stateCmdTypeHex + stateValueHex;
+                        
+                        // 生成完整指令
+                        const fullStateCmd = getTimeData(stateCmdHex);
+
+                        sendSerialData(fullStateCmd);
+                        console.log("发送状态命令:", fullStateCmd);
+                        alert("状态命令已发送");
+                    });
+                    
+                    // 显示状态命令类型提示
+                    const stateCmdHint = document.createElement('div');
+                    stateCmdHint.className = 'state-cmd-hint';
+                    
+                    stateDiv.appendChild(stateSelect);
+                    stateDiv.appendChild(stateCmdHint);
+
+                    // 4. 新增：放电系数区域（输入框+独立发送按钮）
+                    const dischargeCoeffDiv = document.createElement('div');
+                    dischargeCoeffDiv.className = 'discharge-coeff-item';
+
+                    // 放电系数输入框
+                    const dischargeCoeffInput = document.createElement('input');
+                    dischargeCoeffInput.type = 'number';
+                    dischargeCoeffInput.placeholder = '放电深度';
+                    dischargeCoeffInput.id = `dischargeCoeff-${sectionId}-${index}`;
+                    dischargeCoeffInput.className = 'discharge-coeff-input';
+                    // 初始化值（本地数据优先，默认1.0）
+                    dischargeCoeffInput.value = segment.dischargeCoeff ? segment.dischargeCoeff.toFixed(2) : 1.0;
+
+                    // 独立发送按钮
+                    const sendCoeffBtn = document.createElement('button');
+                    sendCoeffBtn.className = 'send-coeff-btn';
+                    sendCoeffBtn.id = `sendCoeffBtn-${sectionId}-${index}`;
+                    sendCoeffBtn.textContent = '发送';
+                    sendCoeffBtn.addEventListener('click', () => {
+                        sendSingleDischargeCoeff(sectionId, index);
+                    });
+
+                    dischargeCoeffDiv.appendChild(dischargeCoeffInput);
+                    dischargeCoeffDiv.appendChild(sendCoeffBtn);
+
+                    row.appendChild(timeDiv);
+                    row.appendChild(stateDiv);
+                    row.appendChild(dischargeCoeffDiv); // 新增此行
+                    container.appendChild(row);
+
+                    // 禁用第一个时段的起始时间
+                    if (index === 0) {
+                        startTimeInput.disabled = true;
+                    }
+
+                    // 时间输入框修改事件
+                    startTimeInput.addEventListener('change', () => {
+                        updateTimeSegment(sectionId, index, 'startTime', startTimeInput.value);
+                    });
+                    endTimeInput.addEventListener('change', () => {
+                        updateTimeSegment(sectionId, index, 'endTime', endTimeInput.value);
+                    });
+                });
+            }
+
+            const FIRST_START_CMD_TYPE = 0x5F; // 起始时间命令类型起始值（从0x5F开始）
+            const FIRST_END_CMD_TYPE = 0x5F + SEGMENTS_COUNT * TIMES_PER_SEGMENT; // 结束时间命令类型起始值（所有起始时间之后）
+            const LAST_CMD_TYPE = FIRST_END_CMD_TYPE + SEGMENTS_COUNT * TIMES_PER_SEGMENT - 1; // 所有命令类型最大值
+
+            function confirmTimeSegment(sectionId, timeIndex, startTimeValue, endTimeValue) {
+                try {
+
+                    const startTimeCmdType = FIRST_START_CMD_TYPE + (sectionId - 1) * TIMES_PER_SEGMENT + timeIndex;
+                    
+                    // 结束时间命令类型：起始时间命令类型 + 总起始时间数（5×12=60），确保与起始时间不重叠
+                    const endTimeCmdType = startTimeCmdType + SEGMENTS_COUNT * TIMES_PER_SEGMENT;
+
+
+                    // 1. 验证时间格式（原逻辑保留，增强严谨性）
+                    const timeReg = /^\d{2}:\d{2}$/;
+                    if (!timeReg.test(startTimeValue) || !timeReg.test(endTimeValue)) {
+                        alert(`请输入正确的时间格式（如"08:00"），当前输入：${startTimeValue}/${endTimeValue}`);
+                        return;
+                    }
+
+                    // 2. 验证命令类型有效性（修正范围判断，确保不超出5段×12个的规则）
+                    const isStartCmdValid = startTimeCmdType >= FIRST_START_CMD_TYPE && startTimeCmdType < FIRST_END_CMD_TYPE;
+                    const isEndCmdValid = endTimeCmdType >= FIRST_END_CMD_TYPE && endTimeCmdType <= LAST_CMD_TYPE;
+                    if (!isStartCmdValid || !isEndCmdValid) {
+                        alert(`命令类型超出范围！\n` +
+                            `规则：5段×12个起始时间（0x5F-0x9A）、5段×12个结束时间（0x9B-0xD6）\n` +
+                            `当前：段${sectionId}第${timeIndex+1}个时间\n` +
+                            `起始命令类型: 0x${startTimeCmdType.toString(16).toUpperCase()}（${isStartCmdValid ? '有效' : '无效'}）\n` +
+                            `结束命令类型: 0x${endTimeCmdType.toString(16).toUpperCase()}（${isEndCmdValid ? '有效' : '无效'}）`);
+                        return;
+                    }
+
+                    // 3. 验证分段数据存在性（原逻辑保留）
+                    const section = sectionsData.find(s => s.id === sectionId);
+                    if (!section || !section.timeSegments || timeIndex >= section.timeSegments.length) {
+                        alert(`未找到段${sectionId}的第${timeIndex+1}个时间段数据，请检查数据配置`);
+                        return;
+                    }
+                    const segment = section.timeSegments[timeIndex];
+                    let isValid = true;
+
+
+                    // 5. 转换命令类型为2位十六进制（补0 uppercase，确保格式统一）
+                    const startCommandTypeHex = startTimeCmdType.toString(16).padStart(2, '0').toUpperCase();
+                    
+                    // 6. 生成时间数据的4字节十六进制（依赖原有工具函数，确保格式正确）
+                    const startTimeDataHex = timeTo4ByteHex(startTimeValue);
+                    
+                    // 7. 组合命令（命令类型[2字节] + 时间数据[4字节]，共6字节）
+                    const startCmdHex = startCommandTypeHex + startTimeDataHex;
+                    
+                    // 8. 生成完整指令（含头部、校验等，复用原有工具函数）
+                    const fullStartCmd = getTimeData(startCmdHex);
+
+                    // 9. 延迟发送指令（先发送起始时间，1秒后发送结束时间，避免设备接收紊乱）
+                    console.log(`段${sectionId}第${timeIndex+1}个时间段指令：`, {
+                        起始时间命令: fullStartCmd,
+                    });
+                    sendSerialData(fullStartCmd);
+
+                    // 10. 同步更新本地数据（确保页面显示与实际发送一致）
+                    segment.startTime = startTimeValue;
+                    segment.endTime = endTimeValue;
+                    alert(`时间段更新成功：${startTimeValue} - ${endTimeValue}`);
+
+                } catch (error) {
+                    alert(`时间段确认失败：${error.message}`);
+                    console.error('时间段确认错误详情：', error);
+                }
+            }
+            function updateTimeSegment(sectionId, index, field, value) {
+                const section = sectionsData.find(s => s.id === sectionId);
+                if (!section || !section.timeSegments[index]) return;
+
+                // 找到当前分段在数组中的索引
+                const sectionIndex = sectionsData.findIndex(s => s.id === sectionId);
+                if (sectionIndex === -1) return;
+
+                    // 新增：放电系数更新（无需时间校验）
+                if (field === 'dischargeCoeff') {
+                    section.timeSegments[index][field] = parseFloat(value);
+                    return;
+                }
+
+                // 处理起始时间验证（确保不大于上一个时段的起始时间）
+                if (field === 'startTime') {
+                    // 只有非第一个时段需要验证起始时间
+                    if (index > 0) {
+                        const prevSegment = section.timeSegments[index - 1];
+                        const prevStartTime = prevSegment.startTime;
+                        const prevEndTime = prevSegment.endTime; // 获取上一时段的结束时间
+                        
+                        // 验证1：当前起始时间不能大于上一个时段的起始时间（原有逻辑保留）
+                        if (isTimeGreater(value, prevStartTime)) {
+                            alert(`起始时间不能大于上一个时段的起始时间(${prevStartTime})`);
+                            resSubsequentTimes(sectionIndex, index);
+                            renTimeRows(sectionId, section.timeSegments);
+                            return;
+                        }
+                        
+                        // 新增验证2：当前起始时间不能小于上一个时段的结束时间
+                        // if (isTimeGreater(value, prevEndTime)) {
+                        //     alert(`起始时间不能小于上一个时段的结束时间(${prevEndTime})`);
+                        //     // 重置当前及后续时段
+                        //     resSubsequentTimes(sectionIndex, index);
+                        //     // 重新渲染视图
+                        //     renTimeRows(sectionId, section.timeSegments);
+                        //     return;
+                        // }
+                    }
+                }
+
+                // 处理结束时间验证（确保不小于当前起始时间）
+                if (field === 'endTime') {
+                    const startTime = section.timeSegments[index].startTime;
+                    if (isTimeGreater(value, startTime)) {
+                        alert(`结束时间不能小于起始时间(${startTime})`);
+                        resSubsequentTimes(sectionIndex, index);
+                        renTimeRows(sectionId, section.timeSegments);
+                        return;
+                    }
+                }
+
+                // 验证通过，更新数据
+                section.timeSegments[index][field] = value;
+                
+                // 当修改结束时间时，自动同步下一个时段的起始时间
+                if (field === 'endTime' && index < section.timeSegments.length - 1) {
+                    section.timeSegments[index + 1].startTime = value;
+                    renderTimeRows(sectionId, section.timeSegments); // 重新渲染以更新视图
+                }
+
+            }
+            
+            function resSubsequentTimes(sectionIndex, startIndex) {
+                const section = sectionsData[sectionIndex];
+                if (!section || !section.timeSegments) return;
+
+                // 从 startIndex 开始，遍历后续所有时段
+                for (let i = startIndex; i < section.timeSegments.length; i++) {
+                    // 将起始时间和结束时间都设置为"00:00"
+                    section.timeSegments[i].startTime = "00:00";
+                    section.timeSegments[i].endTime = "00:00";
+                }
+            }
+
+            function createNewSection() {
+                if (sectionsData.length >= 5) {
+                    alert("最多只能添加五个分段");
+                    return;
+                }
+                
+                const newId = sectionsData.length > 0 
+                    ? Math.max(...sectionsData.map(s => s.id)) + 1 
+                    : 1;           
+                        
+                // 新增：默认日期逻辑优化（避免新增分段日期重叠）
+                let defaultStartDate = "01-01";
+                let defaultEndDate = "12-31";
+                if (sectionsData.length > 0) {
+                    const lastSection = sectionsData[sectionsData.length - 1];
+                    defaultStartDate = lastSection.endDate; // 以上一个分段的结束日期为开始
+                    defaultEndDate = "12-31"; // 默认结束日期为12-31
+                }
+                
+                // 创建新的分段数据（新增结束日期初始化）
+                const newSection = {
+                    id: newId,
+                    startDate: defaultStartDate, // 优化后的默认开始日期
+                    endDate: defaultEndDate,     // 优化后的默认结束日期
+                    timeSegments: Array(12).fill().map(() => ({
+                        startTime: "00:00",
+                        endTime: "00:00",
+                        state: "低谷"
+                    }))
+                };
+                sectionsData.push(newSection);
+                renderSection(newSection);
+            }
+
+            function isTimeGreater(time1, time2) {
+                // 将时间转换为分钟数比较
+                const [h1, m1] = time1.split(':').map(Number);
+                const [h2, m2] = time2.split(':').map(Number);
+                return (h1 * 60 + m1) < (h2 * 60 + m2);
+            }
+
+            let currentCommandType = 0x10;
+            function getNextCommandTypeHex() {
+                const hex = currentCommandType.toString(16).padStart(2, '0').toUpperCase();
+                currentCommandType++;
+                return hex;
+            }
+
+            function saveData() {
+            try {
+                // 1. 准备两个命令的缓冲区
+                let cmd1Hex = '';  // 第一个命令
+                let cmd2Hex = '';  // 第二个命令
+                
+
+                const dataNumHex = 0x67;
+                cmd1Hex += dataNumHex.toString(16);
+                
+                // 3. 写入系数组（4组，每组4字节）- 属于第一个命令
+                if (sectionsData.length > 0) {
+                    const { coefficients } = sectionsData[0];
+                    cmd1Hex += getNextCommandTypeHex()+Float2Buf(coefficients.peakCoeff);
+                    cmd1Hex += getNextCommandTypeHex()+Float2Buf(coefficients.highCoeff);
+                    cmd1Hex += getNextCommandTypeHex()+Float2Buf(coefficients.normalCoeff);
+                    cmd1Hex += getNextCommandTypeHex()+Float2Buf(coefficients.valleyCoeff);
+                    
+                    // 4. 写入价格组（4组，每组4字节）- 属于第一个命令
+                    const { prices } = sectionsData[0];
+                    cmd1Hex += getNextCommandTypeHex()+Float2Buf(prices.peakPrice);
+                    cmd1Hex += getNextCommandTypeHex()+Float2Buf(prices.highPrice);
+                    cmd1Hex += getNextCommandTypeHex()+Float2Buf(prices.normalPrice);
+                    cmd1Hex += getNextCommandTypeHex()+Float2Buf(prices.valleyPrice);
+                } else {
+                    cmd1Hex += '00000000'.repeat(8);  // 8组×4字节默认值
+                }
+                
+                // 5. 写入模式值（4字节，固定值0）- 属于第一个命令
+                cmd1Hex += getNextCommandTypeHex()+'00000000';
+
+                // 6. 写入开始日期（5组，每组4字节）- 属于第一个命令
+                for (let i = 0; i < 5; i++) {
+                    const section = sectionsData[i];
+                    const startDate = section ? section.startDate : '01-01';
+                    cmd1Hex += getNextCommandTypeHex()+dateTo4ByteHex(startDate);
+                }
+                
+                // 7. 写入结束日期（5组，每组4字节）- 属于第一个命令
+                for (let i = 0; i < 5; i++) {
+                    const section = sectionsData[i];
+                    const endDate = section ? section.endDate : '12-31';
+                    cmd1Hex += getNextCommandTypeHex()+dateTo4ByteHex(endDate);
+                }
+                                
+                // // 8. 写入时段状态（5组×12个，每组4字节）- 属于第一个命令
+                for (let i = 0; i < 5; i++) {
+                    const section = sectionsData[i];
+                    if (section) {
+                        section.timeSegments.forEach(segment => {
+                            const stateValue = periodValueMap.indexOf(segment.state);
+                            cmd1Hex += getNextCommandTypeHex()+Float2Buf(stateValue);
+                        });
+                    } else {
+                        cmd1Hex += '00000000'.repeat(12);
+                    }
+                }
+                
+                // 9. 处理时间数据（拆分到两个命令）
+                // 9.1 第一个时间组（第1组）写入第一个命令
+                if (sectionsData[0]) {
+                    // 第一个时间组的开始时间
+                    sectionsData[0].timeSegments.forEach(segment => {
+                        cmd1Hex += getNextCommandTypeHex()+timeTo4ByteHex(segment.startTime);
+                    });
+                    // 第一个时间组的结束时间
+                    sectionsData[0].timeSegments.forEach(segment => {
+                        cmd1Hex += getNextCommandTypeHex()+timeTo4ByteHex(segment.endTime);
+                    });
+                } else {
+                    cmd1Hex += '00000000'.repeat(24);  // 12个开始+12个结束时间
+                }
+
+
+                //命令二
+                const secNumHex = 0x62;
+                cmd2Hex +=secNumHex.toString(16);
+                // // 9.2 剩余时间组（第2-5组）写入第二个命令
+                for (let i = 1; i < 5; i++) {  // 从第2组开始
+                    const section = sectionsData[i];
+                    // 开始时间
+                    if (section) {
+                        section.timeSegments.forEach(segment => {
+                            cmd2Hex += getNextCommandTypeHex()+timeTo4ByteHex(segment.startTime);
+                        });
+                    } else {
+                        cmd2Hex += '00000000'.repeat(12);
+                    }
+                    
+                    // 结束时间
+                    if (section) {
+                        section.timeSegments.forEach(segment => {
+                            cmd2Hex += getNextCommandTypeHex()+timeTo4ByteHex(segment.endTime);
+                        });
+                    } else {
+                        cmd2Hex += '00000000'.repeat(12);
+                    }
+                }
+
+                
+                const targetVoltageSection = sectionsData[1] || {}; // 取第2段（7-12月）的电压
+                const { peakShiftingVoltages = {} } = targetVoltageSection; // 解构电压对象，无则空对象
+                // 提取电压值（无值时默认0，避免Float2Buf处理undefined报错）
+                const peakTerminateVoltage = peakShiftingVoltages.peakTerminateVoltage ?? 0;
+                const normalTerminateVoltage = peakShiftingVoltages.normalTerminateVoltage ?? 0;
+
+                // 写入峰期错峰终止电压（4字节，用Float2Buf转换为十六进制）
+                cmd2Hex += getNextCommandTypeHex() + Float2Buf(peakTerminateVoltage);
+                // 写入平段错峰终止电压（4字节）
+                cmd2Hex += getNextCommandTypeHex() + Float2Buf(normalTerminateVoltage);
+                
+                // 12. 显示结果并发送两个命令
+                // alert(`数据保存成功！\n第一个命令: ${cmd1Hex}\n第二个命令: ${cmd2Hex}`);
+                // 发送第一个命令
+                const cmd1 = getTimeData(cmd1Hex);
+                console.log("cmd1",cmd1);
+                // sendSerialData(cmd1);
+
+                const cmd2 = getTimeData(cmd2Hex);
+                console.log("cmd2", cmd2);
+                // 发送第二个命令（可根据需要添加延迟）
+
+                currentCommandType = 0x10;
+                
+                } catch (error) {
+                    alert(`保存失败: ${error.message}`);
+                    console.error('保存错误:', error);
+                }
+            }
+            function dateTo4ByteHex(dateStr) {
+                const [month, day] = dateStr.split('-').map(Number);
+                const monthHex = month.toString(16).padStart(2, '0');
+                const dayHex = day.toString(16).padStart(2, '0');
+                return `0000${monthHex}${dayHex}`.toUpperCase();
+            }
+
+            // 辅助函数：将时间转换为4字节十六进制
+            function timeTo4ByteHex(timeStr) {
+                if (timeStr === '00:00') {
+                    return '00001800'.toUpperCase();
+                }
+                const [hour, minute] = timeStr.split(':').map(Number);
+                const hourHex = hour.toString(16).padStart(2, '0');
+                const minuteHex = minute.toString(16).padStart(2, '0');
+                return `0000${hourHex}${minuteHex}`.toUpperCase();
+            }
+
+            function getTimeData(cmd){
+                const head = "1201";
+                const cid = "42AA";
+                const rightcmd = cmd;
+                const length = "600A"
+                console.log("length",length);
+                const cmdWithoutChecksum = head + cid + length + rightcmd;
+                // console.log("cmdWithoutChecksum",cmdWithoutChecksum);
+                const checksum = calculateChecksum(cmdWithoutChecksum);
+                console.log("checksum",checksum);
+                const fullCommand = '~' + cmdWithoutChecksum + checksum + '\r';
+
+                return fullCommand;
+            }
+
+            function getchargeData(cmd){
+                const head = "1201";
+                const cid = "42AF";
+                const rightcmd = cmd;
+                const length = "600A"
+                console.log("length",length);
+                const cmdWithoutChecksum = head + cid + length + rightcmd;
+                // console.log("cmdWithoutChecksum",cmdWithoutChecksum);
+                const checksum = calculateChecksum(cmdWithoutChecksum);
+                console.log("checksum",checksum);
+                const fullCommand = '~' + cmdWithoutChecksum + checksum + '\r';
+
+                return fullCommand;
+            }
+
+            
+
+            function calculateLengthChecksum(hexStr) {
+
+                // 2. 计算各位数值之和（A=10, B=11, ..., F=15）
+                let sum = 0;
+                for (let i = 0; i < hexStr.length; i++) {
+                    sum += parseInt(hexStr[i], 16);
+                }
+
+                // 3. 取反加1（补码运算），并限制为8位（0-255）
+                const negated = (~sum + 1) & 0xFF; // &0xFF确保结果在0-255范围内
+                // console.log(`取反加1后的值: ${negated} (0x${negated.toString(16).toUpperCase()})`);
+
+                // 4. 转换为十六进制，取最后一位
+                const hexResult = negated.toString(16).toUpperCase();
+                const checksum = hexResult.slice(-1); // 无论结果是1位还是2位，都取最后一位
+                const length = checksum + hexStr;
+                // console.log("cmdlength",length);
+                return length;
+            }
+
+            
+            // document.addEventListener('DOMContentLoaded', () => {
+            //     initialize();
+            // });
+            document.getElementById("addTimeBtn").addEventListener("click",createNewSection);
+
+            document.getElementById("deleteTimeBtn").addEventListener("click", deleteLastSection);
+
+            document.getElementById("saveBtn").addEventListener("click",saveData);
+
+            function initialize() {
+                const sectionsContainer = document.getElementById('sectionsContainer');
+                if (!sectionsContainer) return; // 增加元素存在性检查
+                sectionsContainer.innerHTML = '';
+                
+                sectionsData.forEach(section => {
+                    renderSection(section);
+                    console.log("section",section);
+                });
+            }
+
+
+        }
+
+    //     let sectionsData = [
+    //         {
+    //             id: 1,
+    //             date: "01-01",
+    //             times: [
+    //                 { time: "00:00", state: "低谷" },
+    //                 { time: "01:13", state: "低谷" },
+    //                 { time: "10:00", state: "平时" },
+    //                 { time: "12:00", state: "平时" },
+    //                 { time: "12:00", state: "平时" },
+    //                 { time: "12:00", state: "平时" },                
+    //                 { time: "12:00", state: "平时" },
+    //                 { time: "12:00", state: "平时" },
+    //                 { time: "12:00", state: "平时" },
+    //                 { time: "14:00", state: "高峰" },
+    //                 { time: "19:00", state: "高峰" },
+    //                 { time: "00:00", state: "低谷" }
+    //             ]
+    //         },
+    //         {
+    //             id: 2,  
+    //             date: "12-31",
+    //             times: [
+    //                 { time: "00:00", state: "低谷" },
+    //                 { time: "01:13", state: "低谷" },
+    //                 { time: "10:00", state: "平时" },
+    //                 { time: "12:00", state: "平时" },
+    //                 { time: "12:00", state: "平时" },
+    //                 { time: "12:00", state: "平时" },                
+    //                 { time: "12:00", state: "平时" },
+    //                 { time: "12:00", state: "平时" },
+    //                 { time: "12:00", state: "平时" },
+    //                 { time: "14:00", state: "高峰" },
+    //                 { time: "19:00", state: "高峰" },
+    //                 { time: "00:00", state: "低谷" }
+    //             ]
+    //         }
+    //     ];
+
+
+
+
+    //     const periodValueMap = [
+    //     "尖峰",  // 0
+    //     "高峰",  // 1
+    //     "平时",  // 2
+    //     "低谷",  // 3   
+    //     "深谷"   // 4
+    //     ];
+
+    //     const timeTables =   "04050108000A000C000D000E000F00110013001800180018000403020103020102030000AB"+"081208000A000B000D000E000F0011001300180018001800040302010302010203000000"+"090108000A000B000C000E000F0011001300180018001800040302010302010203000000"+"090508000A000C000D000E000F00110013001800180018000403020103020102030000AB";   // 组2
+    //     // const timeTables = "033A67000000BF9A9999BE00000000000000009A99193F9A99193F9A99193F9A99193F000000000000011F0000031F0000061D0000091B00000A1B0000031E0000061C0000091A00000A1A0000011E00008040000040400000404000004040000040400000404000004040000040400000404000004040000040400000404000004040000040400000404000004040000040400000404000004040000040400000404000004040000040400000404000004040000040400000404000004040000040400000404000004040000040400000404000004040000040400000404000004040000040400000404000004040000040400000404000004040000040400000404000004040000040400000404000004040000040400000404000004040000040400000404000004040000040400000404000004040000040400000404000000000000002000000030000000400000018000000060000000700000008000000090000000A0000000B0000000C000000013B0000023B0000033B0000173B0000053B0000063B0000073B0000083B0000093B00000A3B00000B3B000018005C46";
+    //     // var timeTables=["031208000A000B000C000E000F0011001300180018001800040302010302010203000000","071008000A000B000C000E000F0011001300180018001800040302010302010203000000"];
+    //     if(eqm.DiscountSchedule!=undefined){
+    //         timeTables = eqm.DiscountSchedule.valueText;
+    //     }      
+           
+    //         // 解析函数
+    //     function parseTimeTablesToSectionsData() {
+    //         sectionsData = [];
+    //         const groupLength = 72; 
+    //         const totalGroups = Math.floor((timeTables.length-2) / groupLength);
+            
+    //         // 1. 验证所有组的第一个字节是否相同（获取全局大段数量）
+    //         let globalSectionCount = 0;
+    //         const firstGroupCountHex = timeTables.slice(0, 2);
+    //         globalSectionCount = parseInt(firstGroupCountHex, 16) || 0;
+            
+    //         const groupdata = timeTables.slice(2);
+    //         let lastValidDate = "00-00";
+    //         // 3. 按组解析数据（每组对应一个大段）
+    //         for (let groupIndex = 0; groupIndex < totalGroups; groupIndex++) {
+    //             const groupStart = groupIndex * groupLength;
+    //             const groupStr = groupdata.slice(groupStart, groupStart + groupLength);
+                
+    //             // 4. 解析日期（第2-3字节，MMDD）
+    //             const dateHex = groupStr.slice(0, 4);   
+    //             const month = parseInt(dateHex.slice(0, 2), 16).toString().padStart(2, "0");
+    //             const day = parseInt(dateHex.slice(2, 4), 16).toString().padStart(2, "0");
+    //             const sectionDate = `${month}-${day}`;
+
+    //               if (sectionDate < lastValidDate) {
+    //                 // 直接复制上一段的数据，id 仍然用当前索引
+    //                 const lastSection = sectionsData[sectionsData.length - 1];
+    //                 sectionsData.push({
+    //                     id:   groupIndex + 1,
+    //                     date: lastSection.date,
+    //                     times: JSON.parse(JSON.stringify(lastSection.times)) // 深拷贝
+    //                 });
+    //                 // 不再解析后面的字节，直接进入下一组
+    //                 continue;
+    //             }
+    //             lastValidDate = sectionDate;   // 更新“最近一段有效日期”
+
+    //             // 5. 解析时间（第4-25字节，11个时间点）
+    //             const timesHex = groupStr.slice(4, 48);
+    //             const periodTimes = ["00:00"]; // 固定起始时间
+    //             let shouldResetSubsequentTimes = false;
+    //             for (let j = 0; j < 11; j++) {
+    //             const timeHex = timesHex.slice(j * 4, (j + 1) * 4);
+    //             if (!timeHex) break;
+                
+    //                 if (shouldResetSubsequentTimes) {
+    //                     periodTimes.push("00:00");
+    //                 } else if (timeHex === "1800") {
+    //                     periodTimes.push("00:00");
+    //                 } else {
+    //                     const hh = parseInt(timeHex.slice(0, 2), 16).toString().padStart(2, "0");
+    //                     const mm = parseInt(timeHex.slice(2, 4), 16).toString().padStart(2, "0");
+    //                     const currentTime = `${hh}:${mm}`;
+
+    //                      const prevTime = periodTimes[periodTimes.length - 1];
+    //                     if (isTimeGreater(currentTime, prevTime)) {
+    //                         periodTimes.push("00:00");
+    //                         shouldResetSubsequentTimes = true; // 设置重置标志，后续时间都将设为00:00
+    //                     } else {
+    //                         periodTimes.push(currentTime); // 时间顺序正确，正常添加
+    //                     }
+
+    //                 }
+    //             }
+
+        
+
+    //             // 6. 解析时段类型（第26-37字节，12个类型）
+    //             const statesHex = groupStr.slice(48, 72);
+    //             const periodValues = [];
+    //             for (let j = 0; j < 12; j++) {
+    //             const valueHex = statesHex.slice(j * 2, (j + 1) * 2);
+    //             if (!valueHex) break;
+    //             const value = parseInt(valueHex, 16);
+    //             periodValues.push(periodValueMap[value] || "低谷");
+    //             }
+
+    //             // 7. 添加大段数据（每组对应一个大段）
+    //             sectionsData.push({
+    //             id: groupIndex + 1,
+    //             date: sectionDate,
+    //             times: periodTimes.map((time, index) => ({
+    //                 time: time,
+    //                 state: periodValues[index] || "低谷"
+    //             }))
+    //             });
+    //         }
+
+    //         // 8. 边界处理（保持2-5段）
+    //         while (sectionsData.length < 2) {
+    //             const newId = sectionsData.length + 1;
+    //             sectionsData.push({
+    //             id: newId,
+    //             date: "01-01",
+    //             times: Array(12).fill().map(() => ({ time: "00:00", state: "低谷" }))
+    //             });
+    //         }
+            
+    //         if (sectionsData.length > 5) {
+    //             sectionsData = sectionsData.slice(0, 5);
+    //             alert("数据超过5组，已截取前5组！");
+    //         }
+
+    //     }
+
+    //      parseTimeTablesToSectionsData(); // 解析数据到sectionsData
+    //      initialize(); // 原有初始化函数，渲染页面
+
+    //     function generateMonthOptions(sectionId) {
+    //         const monthSelect = document.getElementById(`monthSelector-${sectionId}`);
+    //         monthSelect.innerHTML = '';
+            
+    //         for (let i = 1; i <= 12; i++) {
+    //             const option = document.createElement('option');
+    //             const month = i.toString().padStart(2, '0');
+    //             option.value = month;
+    //             option.textContent = `${month}月`;
+    //             monthSelect.appendChild(option);
+    //         }
+            
+    //         // 设置当前大段的月份
+    //         const section = sectionsData.find(s =>s .id === sectionId);
+    //         if (section) {
+    //             const month = section.date.split('-')[0];
+    //             monthSelect.value = month;
+    //         } else {
+    //             monthSelect.value = '01';
+    //         }
+    //     }
+        
+    //     // 根据选中的月份生成日期选项
+    //     function generateDayOptions(sectionId) {
+    //         const monthSelect = document.getElementById(`monthSelector-${sectionId}`);
+    //         const daySelect = document.getElementById(`daySelector-${sectionId}`);
+    //         const month = parseInt(monthSelect.value);
+            
+    //         daySelect.innerHTML = '';
+            
+    //         // 确定当月的天数
+    //         let daysInMonth;
+    //         if (month === 2) {
+    //             daysInMonth = 28; // 简化处理，不考虑闰年
+    //         } else if ([4, 6, 9, 11].includes(month)) {
+    //             daysInMonth = 30;
+    //         } else {
+    //             daysInMonth = 31;
+    //         }
+            
+    //         for (let i = 1; i <= daysInMonth; i++) {
+    //             const option = document.createElement('option');
+    //             const day = i.toString().padStart(2, '0');
+    //             option.value = day;
+    //             option.textContent = `${day}日`;
+    //             daySelect.appendChild(option);
+    //         }
+            
+    //         // 设置当前大段的日期
+    //         const section = sectionsData.find(s => s.id === sectionId);
+    //         if (section) {
+    //             const day = section.date.split('-')[1];
+    //             daySelect.value = day;
+    //         } else {
+    //             daySelect.value = '01';
+    //         }
+    //     }
+        
+    //     // 获取当前选中的月日（格式：MM-DD）
+    //     function getSelectedDate(sectionId) {
+    //         const month = document.getElementById(`monthSelector-${sectionId}`).value;
+    //         const day = document.getElementById(`daySelector-${sectionId}`).value;
+    //         return `${month}-${day}`;
+    //     }
+
+        
+    //     // 确认日期选择并加载数据
+    //     function confirmDateSelection(sectionId) {
+    //         const selectedDate = getSelectedDate(sectionId);
+    //         const sectionIndex = sectionsData.findIndex(s => s.id === sectionId);
+    //         if (sectionIndex !== -1) {
+    //             if(sectionIndex > 0){
+    //                 const prevSection = sectionsData[sectionIndex - 1];
+    //                 const prevDate = new Date(prevSection.date);
+    //                 const currentDate = new Date(selectedDate);
+
+    //                 if(currentDate < prevDate){
+    //                         alert("错误,当前日期不能大于前一个日期");
+    //                         return;
+    //                 }
+    //             }
+
+    //             sectionsData[sectionIndex].date = selectedDate;
+    //         }
+    //     }
+
+    //     function resetSubsequentTimes(sectionIndex, startIndex) {
+    //         const section = sectionsData[sectionIndex];
+    //         // 从 startIndex 开始，遍历后续所有时间项
+    //         for (let i = startIndex; i < section.times.length; i++) {
+    //         section.times[i].time = "00:00";
+    //         }
+    //     }
+        function isTimeGreater(time1, time2) {
+            // 将时间转换为分钟数比较
+            const [h1, m1] = time1.split(':').map(Number);
+            const [h2, m2] = time2.split(':').map(Number);
+            return (h1 * 60 + m1) < (h2 * 60 + m2);
+        }
+        
+    //     // 渲染时间行
+    //     function renderTimeRows(sectionId) {
+    //         const container = document.getElementById(`timeRows-${sectionId}`);
+    //         container.innerHTML = "";
+            
+    //         // 如果日期不存在于数据中，则初始化一个默认时段
+    //         const section = sectionsData.find(s => s.id === sectionId);
+    //         if (!section) return;
+            
+    //         section.times.forEach((item, index) => {
+    //             const row = document.createElement("div");
+    //             row.className = "time-row";
+    //             row.dataset.index = index;
+
+    //             // 创建时间输入项
+    //             const timeDiv = document.createElement('div');
+    //             timeDiv.className = 'time-item';    
+    //             const timeInput = document.createElement('input');
+    //             timeInput.type = 'time';
+    //             timeInput.value = item.time;
+    //         if (index === 0) { 
+    //             timeInput.disabled = true; // 禁用第一个时间项
+    //         }
+            
+    //         // 只有非禁用项才绑定修改事件
+    //         if (!timeInput.disabled) {
+    //             timeInput.addEventListener('change', function() {
+    //                 updateData(sectionId, index, 'time', this.value);
+    //             });
+    //         }
+    //             timeDiv.appendChild(timeInput);
+
+    //             // 创建状态选择项
+    //             const stateDiv = document.createElement('div');
+    //             stateDiv.className = 'state-item';
+    //             const stateSelect = document.createElement('select');
+
+    //             // 状态选项数据
+    //             const states = ['尖峰','高峰','平时','低谷', '深谷' ];
+    //             states.forEach(state => {
+    //                 const option = document.createElement('option');
+    //                 option.value = state;
+    //                 option.textContent = state;
+    //                 if (item.state === state) {
+    //                     option.selected = true;
+    //                 }
+    //                 stateSelect.appendChild(option);
+    //             });
+
+    //             stateSelect.addEventListener('change', function() {
+    //                 updateData(sectionId, index, 'state', this.value);
+    //             });
+    //             stateDiv.appendChild(stateSelect);
+
+    //             // 组装行元素
+    //             row.appendChild(timeDiv);
+    //             row.appendChild(stateDiv);
+                
+    //             container.appendChild(row);
+    //         });
+    //     }
+
+    //             // 更新数据
+    //     // 更新数据并添加校验逻辑
+    //     function updateData(sectionId, index, field, value) {
+    //         const sectionIndex = sectionsData.findIndex(s => s.id === sectionId);
+    //         if (sectionIndex === -1 || !sectionsData[sectionIndex].times[index]) return;
+
+    //         // 仅处理时间修改的情况
+    //         if (field === 'time') {
+    //             // 对于非第一个时间项，校验是否小于前一个时间
+    //             if (index > 0) {
+    //                 const prevTime = sectionsData[sectionIndex].times[index - 1].time;
+    //                 // 如果当前时间大于前一个时间，触发重置逻辑
+    //                 if (isTimeGreater(value, prevTime)) {
+    //                     resetSubsequentTimes(sectionIndex, index); // 重置当前及后续时间
+    //                     renderTimeRows(sectionId); // 重新渲染时间行
+    //                     alert("当前时间不能小于前一个时间，已自动重置后续时间！");
+    //                     return; // 终止后续执行
+    //                 }
+    //             }
+    //         }
+
+    //         // 校验通过，正常更新数据
+    //         sectionsData[sectionIndex].times[index][field] = value;
+    //     }
+
+    //             // 创建新的大段
+    //     function createNewSection() {
+    //         // 生成唯一ID
+    //         if (sectionsData.length >= 5) {
+    //             alert("最多只能添加五个");
+    //             return;
+    //         }
+    //         const newId = sectionsData.length > 0 
+    //             ? Math.max(...sectionsData.map(s => s.id)) + 1 
+    //             : 1;
+            
+    //         // 创建新的大段数据（包含12个时间项）
+    //         const newSection = {
+    //             id: newId,
+    //             date: "01-01",
+    //             times: Array(12).fill().map(() => ({ time: "00:00", state: "低谷" }))
+    //         };
+            
+    //         // 添加到数据中
+    //         sectionsData.push(newSection);
+            
+    //         // 渲染新的大段
+    //         renderSection(newSection);
+    //     }
+
+    //     function renderSection(section) {
+    //         const sectionsContainer = document.getElementById('sectionsContainer');
+            
+    //         // 创建大段容器
+    //         const sectionDiv = document.createElement('div');
+    //         sectionDiv.className = 'section';
+    //         sectionDiv.id = `section-${section.id}`;
+
+    //         // 日期选择容器
+    //         const containerDiv = document.createElement('div');
+    //         containerDiv.className = 'container';
+            
+    //         // 日期块
+    //         const dateBlockDiv = document.createElement('div');
+    //         dateBlockDiv.className = 'date-block';
+            
+    //         // 日期头部
+    //         const dateHeaderDiv = document.createElement('div');
+    //         dateHeaderDiv.className = 'date-header';
+            
+    //         // 月日选择器
+    //         const selectorDiv = document.createElement('div');
+    //         selectorDiv.className = 'month-day-selector';
+            
+    //         // 月份选择
+    //         const monthSelect = document.createElement('select');
+    //         monthSelect.className = 'month-select';
+    //         monthSelect.id = `monthSelector-${section.id}`;
+    //         monthSelect.addEventListener("change", function() {
+    //             generateDayOptions(section.id);
+    //         });
+            
+    //         // 日期选择
+    //         const daySelect = document.createElement('select');
+    //         daySelect.className = 'day-select';
+    //         daySelect.id = `daySelector-${section.id}`;
+            
+    //         // 确认按钮
+    //         const confirmBtn = document.createElement('button');
+    //         confirmBtn.className = 'confirm-btn';
+    //         confirmBtn.id = `confirmDateBtn-${section.id}`;
+    //         confirmBtn.textContent = '确认';
+    //         confirmBtn.addEventListener('click', () => confirmDateSelection(section.id));
+            
+    //         // 时间行容器
+    //         const timeRowsDiv = document.createElement('div');
+    //         timeRowsDiv.id = `timeRows-${section.id}`;
+    //         timeRowsDiv.className = 'time-rows-container';
+            
+    //         // 组装元素
+    //         selectorDiv.appendChild(monthSelect);
+    //         selectorDiv.appendChild(daySelect);
+    //         selectorDiv.appendChild(confirmBtn);
+    //         dateHeaderDiv.appendChild(selectorDiv);
+    //         dateBlockDiv.appendChild(dateHeaderDiv);
+    //         dateBlockDiv.appendChild(timeRowsDiv);
+    //         containerDiv.appendChild(dateBlockDiv);
+    //         // sectionDiv.appendChild(titleDiv);
+    //         sectionDiv.appendChild(containerDiv);
+    //         sectionsContainer.appendChild(sectionDiv);
+            
+    //         // 初始化月份和日期选项
+    //         generateMonthOptions(section.id);
+    //         generateDayOptions(section.id);
+            
+    //         // 渲染时间行
+    //         renderTimeRows(section.id);
+    //     }
+
+                // 删除最后一个大段
+        function deleteLastSection() {
+            if (sectionsData.length <= 2) {
+                alert("至少保留两个");
+                return;
+            }
+            
+            // 移除最后一个大段的数据
+            const lastSection = sectionsData.pop();
+
+            const sectionElement = document.getElementById(`section-${lastSection.id}`);
+            if (sectionElement) {
+                sectionElement.remove();
+            }
+        }
+
+    //     const stateToHexMap = {
+    //         '尖峰': '00',
+    //         '高峰': '01',
+    //         '平时': '02',
+    //         '低谷': '03',
+    //         '深谷': '04'
+    //     };
+
+    //     function saveData() {
+    //         // 新增步骤1：读取并校验8个输入框的值
+    //         const params = {};
+    //         try {
+    //             // 读取充电系数
+    //             params.peakCoeff = parseFloat(document.getElementById("peakCoeff").value);
+    //             params.highCoeff = parseFloat(document.getElementById("highCoeff").value);
+    //             params.normalCoeff = parseFloat(document.getElementById("normalCoeff").value);
+    //             params.valleyCoeff = parseFloat(document.getElementById("valleyCoeff").value);
+                
+    //             // 读取时段电价
+    //             params.peakPrice = parseFloat(document.getElementById("peakPrice").value);
+    //             params.highPrice = parseFloat(document.getElementById("highPrice").value);
+    //             params.normalPrice = parseFloat(document.getElementById("normalPrice").value);
+    //             params.valleyPrice = parseFloat(document.getElementById("valleyPrice").value);
+                
+
+    //         } catch (err) {
+    //             alert("参数错误：" + err.message);
+    //             return; // 校验失败，终止保存
+    //         }
+    //         const sectionCountHex = sectionsData.length.toString(16).padStart(2, '0').toUpperCase();
+    //         let groupsHex = ''; 
+
+    //         sectionsData.forEach(section => {
+    //             const [month, day] = section.date.split('-');
+    //             const dateHex = `${parseInt(month, 10).toString(16).padStart(2, '0')}${parseInt(day, 10).toString(16).padStart(2, '0')}`.toUpperCase();
+    //             // 转成 16 进制字符串，再补零到 2 位（不足前面补 0）
+    //             const idHex = section.id.toString(16).padStart(2, '0').toUpperCase();
+    //             console.log("idHex",idHex);
+    //             let timesHex = '';
+
+    //             for (let i = 1; i < section.times.length; i++) {
+    //                 const time = section.times[i].time;
+    //                 if (time === "00:00") {
+    //                     timesHex += "1800"; 
+    //                 } else {
+    //                     const [hh, mm] = time.split(':');
+    //                     const hhHex = parseInt(hh, 10).toString(16).padStart(2, '0');
+    //                     const mmHex = parseInt(mm, 10).toString(16).padStart(2, '0');
+    //                     timesHex += `${hhHex}${mmHex}`.toUpperCase();
+    //                 }
+    //             }
+                
+    //             let statesHex = '';
+    //             section.times.forEach(item => {
+    //                 const stateHex = stateToHexMap[item.state] || '03'; 
+    //                 statesHex += stateHex;
+    //             });
+                
+    //             const groupHex = `${idHex}${dateHex}${timesHex}${statesHex}`;
+    //             console.log("groupHex",groupHex);
+    //             groupsHex += groupHex;
+    //         });
+            
+    //         const timeTablesData = `${sectionCountHex}${groupsHex}`;
+    //             const paramStr = `
+    //     充电系数：尖峰=${params.peakCoeff}, 高峰=${params.highCoeff}, 平时=${params.normalCoeff}, 低谷=${params.valleyCoeff}
+    //     时段电价：尖峰=${params.peakPrice}元, 高峰=${params.highPrice}元, 平时=${params.normalPrice}元, 低谷=${params.valleyPrice}元
+    // `;
+
+    //         alert(`配置已保存！转换后格式:\n${timeTablesData}`);
+
+    //         const cmd =  getTimeData(timeTablesData);
+    //         sendSerialData(cmd);
+    //             //  console.log("cmd",cmd);
+    //         // console.log("timeTablesData",timeTablesData);
+    //         //     console.log("length",timeTablesData.length);
+    //         // 可以在这里添加发送到服务器的逻辑
+    //         // return timeTablesData;
+    //     }
+
+    //     function getTimeData(cmd)
+    //     {
+    //         const head = "2201";
+    //         const cid = "40D7";
+    //         const gid = "01";
+    //         const rightcmd = gid + cmd;
+    //         const length = getLengthCheck(rightcmd.length.toString(16));
+    //         console.log("length",length);
+    //         const cmdWithoutChecksum = head + cid + length + rightcmd;
+    //         // console.log("cmdWithoutChecksum",cmdWithoutChecksum);
+    //         const checksum = calculateChecksum(cmdWithoutChecksum);
+    //         console.log("checksum",checksum);
+    //         const fullCommand = '~' + cmdWithoutChecksum + checksum + '\r';
+
+    //         return fullCommand;
+    //     }
+
+    //     document.getElementById("addTimeBtn").addEventListener("click",createNewSection);
+
+    //     document.getElementById("deleteTimeBtn").addEventListener("click", deleteLastSection);
+
+    //     document.getElementById("saveBtn").addEventListener("click",saveData);
+
+        // function initialize() {
+        //     const sectionsContainer = document.getElementById('sectionsContainer');
+        //     sectionsContainer.innerHTML = ''; // 清空容器
+            
+        //     // 渲染每个大段
+        //     sectionsData.forEach(section => {
+        //         renderSection(section);
+        //     });
+        // }
+
+        </script>
+    </body>
+</html>
