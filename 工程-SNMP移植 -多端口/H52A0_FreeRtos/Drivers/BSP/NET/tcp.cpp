@@ -198,7 +198,7 @@ void tcp::udpSendData(uint8 ch,  u8 *data, uint16 len,  uint8 *remote_ip, uint16
 
 // 测试响应缓冲区（全局/静态，避免栈溢出，大小适配测试需求）
 static u8 g_test_response_buff[512] = {0};
-
+#define MAX_RECV_DATA_COPY_LEN    256  // 替换原来的16，数值可根据需求调整
 /**
  * @brief Socket4测试数据处理函数
  * @param data 收到的原始数据
@@ -230,12 +230,25 @@ u8* HandleTestNetData(const u8 *data, u16 *send_len)
     uint16 fixed_len = strlen(fixed_response);
     uint16 recv_len = *send_len;
 
-    // 拼接固定报文 + 收到的前16字节数据（避免过长）
+    // 拼接固定报文 + 收到的指定长度数据（不再是16字节，可自定义且防溢出）
     memcpy(g_test_response_buff, fixed_response, fixed_len);
-    uint16 copy_len = (recv_len > 16) ? 16 : recv_len;
+    
+    // 步骤1：计算允许拷贝的最大数据长度（三重限制，确保不溢出）
+    // 1. 收到的实际数据长度 recv_len
+    // 2. 自定义的最大截取长度 MAX_RECV_DATA_COPY_LEN
+    // 3. 缓冲区剩余可用空间（总大小 - 固定报文长度）
+    uint16 max_available_len = sizeof(g_test_response_buff) - fixed_len;
+    uint16 copy_len = recv_len;
+    if (copy_len > MAX_RECV_DATA_COPY_LEN) {
+        copy_len = MAX_RECV_DATA_COPY_LEN;
+    }
+    if (copy_len > max_available_len) {
+        copy_len = max_available_len;
+    }
+    
+    // 步骤2：拷贝数据到缓冲区（长度更长，且安全）
     memcpy(g_test_response_buff + fixed_len, data, copy_len);
     *send_len = fixed_len + copy_len;
-   // printf("[Socket4测试] 返回固定响应，长度：%d\r\n", *send_len);
 
 #endif
 
