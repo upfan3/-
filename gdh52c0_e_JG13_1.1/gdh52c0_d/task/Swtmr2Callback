@@ -1,0 +1,10 @@
+void Swtmr2_Callback(void *parameter)
+{
+	
+	  if(genableTimeCount>0)
+			genableTimeCount--;//开机十秒内不读取AD值 
+		
+	  pMonitor->ChargeConversionOnSec();
+	
+	  
+}

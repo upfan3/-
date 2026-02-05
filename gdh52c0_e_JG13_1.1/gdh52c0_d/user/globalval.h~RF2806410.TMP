@@ -1,0 +1,768 @@
+#ifndef GLOBAL_VAL_H
+#define GLOBAL_VAL_H
+
+
+#include "Tqueue.h"
+#include <stdio.h>
+
+//系统头文件
+
+#include "task.h"
+#include "queue.h"
+#include "timers.h"
+#include "rtc.h"
+#include "screen.h"
+#include "battery.h"
+
+//外设并头文件
+#include "CAN.h" 
+#include "USART.h"
+#include "oled_display.h"
+#include "E2PROM.h"
+#include "adc.h"
+#include "network.h"
+#include "gpio.h"
+#include "h52c0.h"
+#include "tcp.h"
+
+
+#include "database.h"
+//协议头文件
+#include "canruleln.h"
+#include "module.h"
+#include "monitor.h"
+
+
+//I2C1
+#define AD_PARA0 0x80 
+#define AD_PARA  0x0100
+#define SYS_PARA_FLAG  0x014A //参数已写入标志
+#define SYS_PARA_LEN8  0x014C //单字节数据长
+#define SYS_PARA_LEN16 0x014E //双字节数据长
+#define SYS_PARA       0x0150 //参数首地址
+#define USER_DOWN_PARA 0x0600
+#define USER_DOWN_STAMP USER_DOWN_PARA+280  //单用户为 8+8+6+6=28 总共10个 280/512
+
+#define ALARM_DATA_FlAG  0x0800//告警标志    单个告警 6字节时间+2字节信息 8字 
+#define ALARM_DATA_LEN   ALARM_DATA_FlAG+2 //0x0802//告警长度
+#define ALARM_DATA_STAR  ALARM_DATA_LEN+2  //0x0804//第一条告警
+#define ALARM_DATA_HEAD   0x0804+12*2000        //各告警的实指针
+#define ALARM_DATA_TAIL   ALARM_DATA_HEAD+12    //各告警的尾指针
+#define ENERGY_DATA_FLAG  ALARM_DATA_TAIL+12    //电量存取标志
+#define ENERGY_DATA_LEN   ENERGY_DATA_FLAG+2
+#define ENERGY_DATA_STAR  ENERGY_DATA_LEN+2    //电量存放起始位置 //48条电量抄表记录
+#define BATT_TEST_DATA_FLAG  ENERGY_DATA_STAR+50*48
+#define BATT_TEST_DATA_LEN   BATT_TEST_DATA_FLAG+2
+#define BATT_TEST_DATA_STAR  BATT_TEST_DATA_LEN+2
+
+//I2C2
+#define ENERGY_90DAY_DATA_FLAG  0x0000 
+#define ENERGY_90DAY_DATA_LEN   ENERGY_90DAY_DATA_FLAG+2
+#define ENERGY_90DAY_DATA_START ENERGY_90DAY_DATA_LEN+2 //I2C2
+#define ENERGY_90DAY_TOTAL_LEN  136*90+4
+
+ 
+#define USER0_DOWN_DATA ENERGY_90DAY_DATA_FLAG + ENERGY_90DAY_TOTAL_LEN
+#define USER_DATA_LEN 2+28//两字节DATA_FLAG 24字节数据
+#define USER1_DOWN_DATA USER0_DOWN_DATA + USER_DATA_LEN
+#define USER2_DOWN_DATA USER1_DOWN_DATA + USER_DATA_LEN
+#define USER3_DOWN_DATA USER2_DOWN_DATA + USER_DATA_LEN
+#define USER4_DOWN_DATA USER3_DOWN_DATA + USER_DATA_LEN
+#define USER5_DOWN_DATA USER4_DOWN_DATA + USER_DATA_LEN
+#define USER6_DOWN_DATA USER5_DOWN_DATA + USER_DATA_LEN
+#define USER7_DOWN_DATA USER6_DOWN_DATA + USER_DATA_LEN
+
+
+
+#define SYS_INFO_FLAG 63*1024   //监控序列号，系统序列号，MAC,
+#define SYS_INFO_START SYS_INFO_FLAG+2
+
+#define DCVOLTAGE 0    //系统电压
+#define LOADCURR   2           //负载电流  
+#define BATT_CURR1 4
+#define USER_CURR1 6
+#define USER_CURR2 8
+#define USER_CURR 10
+#define BATT_SOC   12     //电池容量
+#define BATT_CURR2  14 //电池电流2
+#define USER_VOLTAGE    16//用户电压
+#define RECT_CURR 18       //整流模块总电流
+#define SOLAR_CURR 20     //光伏模块总电流
+#define INC_CURR 22      //A相电流
+#define INA_CURR 24     //B相电流
+#define INB_CURR 26      //C相电流
+#define RECT_ENERGY 28     //整流发电量
+#define PV_ENERGY 32     //光伏发电量
+#define WIND_CURR 36  //风机电流
+#define ENV_TEMP 38 //环境温度
+#define HUMIDITY 40 //湿度
+#define WORK_STATUS 42//工作状态
+#define TOTAL_BATTI 43//总电池电流
+#define BATT_FUSE 45//电池熔丝
+#define LOAD_FUSE 46
+
+#define LD_NONE 0
+#define LD_VOL  1
+#define LD_STOP_V_TIM  2
+#define LD_ENR  3
+//#define LD_TIM  4
+//#define LD_EXEMPTION 5
+#define LD_STOP_POWER 4
+#define ALARM_RECORD_LEN 2000
+#define ENERGY_DATE_RECORD_LEN 48
+#define ENERGY_DATE_90_RECORD_LEN 90
+#define DIS_BATT_RECORD_LEN 10
+#define PARA_FLAG 0x6A6A
+
+
+
+
+#define ENERGY_DATA_90_RECORD_LEN 90
+
+#define SOI        0x7E
+#define EOI        0x0D 
+
+
+#define cNew(p,t) p=(t *)pvPortMalloc(sizeof(t));\
+                   p->Init();
+
+
+#define vNew(p,t,x) p=(t *)pvPortMalloc(sizeof(t));\
+                   p->Init(x);
+									 
+#define dNew(p,t,x,y) p=(t *)pvPortMalloc(sizeof(t));\
+                  p->Init(x,y);
+
+
+
+typedef struct
+{
+	u16* _pReTotal;
+	u16* _pReMax;
+	u16*_pOrder;
+}RecordInfo;
+
+
+
+typedef struct{
+	u8 use1:1;
+	u8 use2:1;
+	u8 battI:1;
+	u8 voltage:1;
+	u8 battI2:1;
+	u8 battI3:1;
+	u8 battI4:1;
+	u8 battI5:1;
+	
+} ChEnable;
+
+typedef enum
+{
+	 RUNNULL=0 ,     //未定义
+	 SpikeMode,     //尖峰模式
+	 PeakMode,        //高峰模式
+	 NormalMode,      //正常模式  
+   TroughMode      //低谷模式
+	    
+	        
+}SpeakFlag;
+
+typedef struct
+{
+	s16 st_yday;// 1~366 一年中的第几天,从1月1日开始，1月1日为第1日 
+	s16 st_time[12];//0~1439 一天内的所有分钟数
+}SPeakTimeInteval;	
+
+
+typedef struct 
+{
+	u16 st_Ua;  //0
+	u16 st_Ub;  //1
+	u16 st_Uc;  //2
+	u16 st_Frq; //3
+	u32 st_energy1; //4,5
+	u32 st_energy2; //6,7
+	u32 st_energy3;  //8,9
+	u16 st_Ia;//10//A电流
+	u16 st_Ib;//11//B电流
+	u16 st_Ic;//12//C电流
+	u16 st_Pa;//13
+	u16 st_Pb;//14
+	u16 st_Pc;//15
+	u32 st_totalenergy;//16,17
+}ACdistribution;
+
+
+typedef struct 
+{
+	u16 *pst_I;
+	u16 *pst_V;
+	u8 *pst_status;
+	u32 *pst_enerqy;
+	
+}DCdistribution;
+
+
+enum AlarmType
+{
+   ON_ARARM=0, 
+  
+   OUT_V, //输出电压 1
+	 BATT_I,//电池电流 2
+	 IN_VA,  //A相电压 3
+	 IN_VB,  //B相电压 4
+	 IN_VC,  //C相电压 5
+	
+
+	 IN_IA,//A相电流   6
+	 IN_IB,//B相电流   7
+	 IN_IC,//C相电流   8
+	
+	 FRQ,//交流频率    9
+	
+	
+	 OWR_PHA,//A相缺相 10
+	 OWR_PHB,//B相缺相 11
+	 OWR_PHC,//C相缺相 12
+	 
+	
+	 USER_BREAK,//分路熔丝  13
+	 USER_DOWN, //分路下电  14
+	 MODULE,   //模块       15
+	 
+
+   BATT_TEMP,//电池温度   16
+   MONITOR_BRANCH,//本地分路  17
+	 
+	 BATTDOWN_ALARM,//电池下电   18
+	 BATTSUPPLY_ALARM,//电池供电 19
+	 
+	 
+	 
+	 DOOR_OPEN,//门禁           20  //28
+	 WATER_INVASION,//水侵      21  //26
+	 SMOKE,//烟雾               22  //27
+	 SPD,//防雷                 23  //20
+	 FAN,//风机                 24
+	 AC,//空调                  25  //23
+	 ACINPUT,//市电输入         26  //21
+	 OILINPUT,//油机输入        27  //22
+	 SPDSW,   //防雷开关        28  //19
+	 BATTFUSR_BREAK,//电池熔丝  29  //29
+	 LOAD_FUSE1,//负载熔丝1     30  //30
+	 LOAD_FUSE2,//负载熔丝1     31  //31
+	 
+	 
+	 MAX_TYPE
+
+} ;	
+
+typedef struct
+{
+	u8     NC;
+	u8     upcmd;
+	u16     tLen;
+	u16  tpcount;
+	u16 _tpcount;
+	u16  cpcount;
+	u16 _cpcount;
+} UpDateInfo;
+
+enum{
+	UPDATE_NON=0,
+	UPDATE_INIT,
+	UPDATE_START,
+	UPDATE_DOING,
+	UPDATE_STOP,
+	UPDATE_ERR
+};
+
+enum AlarmBehavior
+{
+	   NO=0,//正常
+	   LOW_,//低
+	   HIGH_,//高
+	   UNNOMAL,//异常
+	   BREAK,//断开
+	   DOWNELE,//下电
+	   BROKEN,//故障
+	   COMM_BROKEN,//通信故障
+	   STOP_SUPPLY,//到期
+	   RECOVER_SUPPLY, //恢复
+	   LOW_VOLT,//低压
+	   MAX_BEH
+};
+
+typedef struct
+{
+	
+  u16 wtype:5;
+	u16 wstatus:1;
+	u16 nb:6;
+	u16 behavior:4; 
+	
+}WarnStruct;
+
+
+typedef struct
+{
+	
+  u16 st_AlarmType:8 ;
+	u16 st_AlarmTrigger:1;
+	u16 st_InputNb:3;
+	u16 st_behavior:4;
+}InputAlarm;
+
+
+typedef struct
+{
+  
+	u32 bit_OVER_V:1;       //过压0
+	u32 bit_OWR_V: 1;       //电池欠压1
+	u32 bit_OWR_V2:1;       //输出欠压
+	u32 bit_BATTDOWN_ALARM:1; //电池下电告警18
+	
+	u32 bit_BATTSUPPLY_ALARM:1;//电池放电告警19
+	u32 bit_IN_OVER_VA:1;  //A输入过压2
+	u32 bit_IN_OVER_VB:1;  //B输入过压3
+  u32 bit_IN_OVER_VC:1;  //B输入过压4
+	
+	u32 bit_IN_OWR_VA:1;   //输入欠压5
+	u32 bit_IN_OWR_VB:1;   //输入欠压6
+	u32 bit_IN_OWR_VC:1;   //输入欠压7	
+	u32 bit_IN_OVER_IA:1;  //输入过流8
+	
+	u32 bit_IN_OVER_IB:1;  //输入过流9
+	u32 bit_IN_OVER_IC:1;  //输入过流10
+	u32 bit_OVER_FRQ:1;   //输入频率过高11	
+	u32 bit_OWR_FRQ:1;    //输入频率过低12
+	
+	u32 bit_OWR_PHA:1;     //A缺相13
+	u32 bit_OWR_PHB:1;     //B缺相14
+	u32 bit_OWR_PHC:1;     //C缺相15
+	u32 bit_SPDSW_DOWN:1;//防雷开关28
+	
+	u32 bit_spd:1;//防雷23
+	u32 bit_ACINPUT:1;//交流输入26
+	u32 bit_OILINPUT:1;	//油机输入27
+	u32 bit_AC:1;//空调25	
+	
+	
+	u32 bit_BATT_LTEMP:1;	  //电池温度低17
+	u32 bit_BATT_HTEMP:1;   //电池温度高16
+	u32 bit_WATERIN_DOWN:1;//水浸21
+	u32 bit_SMOKE_BREAK:1;	//烟雾22
+	
+	u32 bit_DOOR_BREAK:1;//门禁20
+	u32 bit_BATTFUSR_BREAK:1;//电池熔丝29
+	u32 bit_USER1_BREAK:1;//用户熔丝1 30
+	u32 bit_USER2_BREAK:1;//用户熔丝2 31
+	
+
+	
+}Alarmbit;	
+
+
+typedef struct
+{
+	u16 st_4043_dataflag :1 ;
+	u16 st_4143_dataflag :1 ;
+	u16 st_4243_dataflag :1 ;
+	u16 st_4343_dataflag :1 ;
+	u16 st_4443_dataflag :1 ;
+	u16 st_4A43_dataflag :1 ;
+	u16 st_E143_dataflag :1 ;
+	u16 st_E243_dataflag :1 ;
+	u16 st_4044_dataflag :1 ;
+	u16 st_4144_dataflag :1 ;
+	u16 st_4244_dataflag :1 ;
+	u16 st_4344_dataflag :1 ;
+	u16 st_4444_dataflag :1 ;
+	u16 st_4A44_dataflag :1 ;
+	u16 st_E144_dataflag :1 ;
+	u16 st_E244_dataflag :1 ;
+	
+}ydtdataflag;
+
+
+
+#pragma pack(push)
+#pragma pack(1) 
+typedef struct
+{
+	u32 st_sec:6;//秒
+  u32 st_min:6;//分
+	u32 st_hour:5;//时
+	u32 st_day: 5;//日
+	u32 st_mon:4;//月
+	u32 st_year:14;//年
+	
+	
+}DateTimeF33;
+#pragma pack(pop)
+
+
+
+
+#pragma pack(push)
+#pragma pack(1)
+typedef struct
+{
+
+	u32 st_day: 6;//日
+	u32 st_mon:4;//月
+	u32 st_year:14;//年
+	
+	
+}DateTimeF34;//占3个字节空间
+#pragma pack(pop) 
+
+
+
+
+
+
+//typedef struct
+//{
+//	u8 st_branchNO :6;
+//	u8 st_branchType:2;
+//	u8 st_warn :6;
+//	u8 st_downfault:2;
+//	u16 st_branchI;
+//	u16 st_branchP;
+//	u8  st_tmp;
+//	u8  st_fuse;
+//	
+//	
+//}DcmFram1;
+
+
+//#pragma pack(push)
+//#pragma pack(1)
+//typedef struct
+//{
+//	u16 st_branchNO :6;
+//	u16 st_branchType:2;
+//	u16 st_warn:8;
+//	u16 st_battV;
+//	u16 st_PositiveINR;
+//	u16  st_NegativeINR;
+//	
+//	
+//}DcmFram2;
+//#pragma pack(pop) 
+
+typedef struct
+{
+	u8 st_branchType;//支路类别
+	//u8 st_downModle; //下电模式
+	u8  st_UserNb:4;//用户编号
+	u8  st_downModle:4;//下电模式
+	u16 st_RatedCurrent;      //低字节在前，高字节在后
+	u16 st_OverCurrentLimit; //低字节在前，高字节在后
+	u16 st_LDVoltage;         //低字节在前，高字节在后
+}DCMParam0;//占8个字节空间
+
+typedef struct
+{
+	u8 st_branchType;//支路类别
+	DateTimeF34 st_stopDate;   //低字节在前，中字节在中间，高字节在后
+	u16 st_LDDelay;      //低字节在前，高字节在后
+	u16 st_LDEnergy;    //低字节在前，高字节在后
+}DCMParam1;//占字节空间
+
+typedef struct
+{
+  u8 st_branchType;//支路类别 0
+	u8 st_TimingDownElecEnable; //定时下电使能      1
+	u8 st_TimingDownElecStarMin;//定时下电开始分钟  2
+	u8 st_TimingDownElecStarHour;//定时下电开始小时 3
+	u8 st_TimingDownElecStopMin;//定时下电结束分钟  4
+	u8 st_TimingDownElecStopHour;//定时下电结束小时 5
+
+}DCMParam2;
+
+typedef struct
+{
+	u8 st_branchType;//支路类别       0
+	u8 st_OilMachineExemption; //油机免责 1
+	u8 st_ExemptionStarMin;//免责开始分钟  2
+	u8 st_ExemptionStarHour;//免责开始小时 3
+	u8 st_ExemptionStopMin;//免责结束分钟  4
+	u8 st_ExemptionStopHour;//免责结束小时 5
+
+}DCMParam3;
+
+
+
+
+extern Alarmbit * gpAlarmbit;
+extern u16 gyh[6];
+extern u16 gyl[6];
+extern u32 gxh[6];
+extern u32 gxl[6];
+
+
+
+extern u16 alarmtail[6];//交流瓶，直流瓶，模块，系统，用户配电，队列总（尾指针）
+extern u16 alarmhead[6];
+
+extern CanPort * pcan1;//CAN接口对象实例化
+extern CanPort * pcan2;//CAN接口对象实例化
+extern CanRuleLn* pcanruleln;
+//extern UsartPort gcom4;    //COM接口对象实例化
+extern UsartPort *pusart4;
+//extern UsartPort *pusart3;
+extern UsartPort *pusart1;
+extern  OLED gOled;        //显示屏对象实例化
+extern E2PROM gEprom, gEprom1;//E2PROM对象实例化
+//extern adc gadc;   //ADC对象实例化   
+extern adc * padc;
+extern u32 AD_channel[8];
+extern network gnetwork;//网络对象实例化 
+extern gpio gIO; //IO对象实例化
+extern h52c0 *pgh52c0;
+extern Module *pModule;
+extern Screen *pScreen;
+extern Monitor *pMonitor;
+extern BattCapacity *pbattCap;
+extern u8  gbattDownDelay;
+extern u8 InitSOC;
+
+void InitData();
+u8 setMenu(Item **ppItem);
+void OnTickSetPara(Screen *pCurrentScreen);
+void SpeakOnTick(void);//错峰时间切换
+void removeModule(u8 nb);
+void addAlarm(AlarmType type,u8 nb,AlarmBehavior behavior);
+void minusAlarm(AlarmType type,u8 nb,AlarmBehavior behavior);
+void SoftReset(void);
+void SetUserName(u8 user,u8 *pdat,u8 ydt);
+void DownElectronicDetectAC(void);
+void DownElectronicCtrl(void);
+void DownElectronicOnTick(void); //每秒调用1次
+void SpeakOnTick(void);
+void OnTickAlarm(void);
+void ErrEscUpData();
+s16 SaveRecordInfo(RecordInfo * pRecord,u16 ReLen);
+void ADMonlineDetect(void);
+uint8_t *Fun_UbindModule(uint8_t *UnbindPasswd, uint8_t *SerialCode);
+
+
+//任务函数
+void CAN_Task(void * pvParameters); 	//CAN接口任务		
+void SCREEN_Task(void * pvParameters);	
+void PORT_Task(void * pvParameters);  //gpio相关功能任务 
+void Swtmr1_Callback(void *parameter);
+void Swtmr2_Callback(void *parameter);
+void Monitor_Task(void * pvParameters);
+
+
+									
+//数据对象		
+extern const u8 Ver[];
+extern u8 ModuleOnlineMessage[6];
+extern u8 gcourrentWorkStatus;
+extern DATABASE  *pModuledata;			//模块数据						
+extern Item * pdisPlayItem;
+extern u8 * pdisDisPlayData;								
+extern u8 *gpSysData;
+extern u8 isSetModule;
+extern u8 genterflag;
+extern u8 gAcFlag;
+extern u8 gledtimer;
+extern u8 locdDownFlag;
+
+extern SpeakFlag ACRunMode;
+extern u8 Speakenable;
+extern SPeakTimeInteval gsPeakTimeInteval[5];
+extern u8 gSpeakFlag[30];
+extern ACdistribution * pgACmointor;
+
+extern InputAlarm gInPutAlarm[13];
+
+extern u8 genableTimeCount;
+extern u8 gsleepSucceedFlag;
+extern u8 glimitflag;
+extern u8 genableTimeFlag;
+extern u8 ghadbattflag;
+extern u8 gGetACEnergy;
+extern u8 gGetDCEnergy;
+extern u8 alarmCount[];
+extern u8 alarmdisplay[3];
+extern u8 gSPD;
+extern u8 sleepWait;
+extern u32  gWarnbit;
+extern u8 gtestSaveFlag;
+//extern u32 gtmpsleepTurnPeriod;
+//extern u32 gtmpAutoPeriod;
+extern u32 * gpEnergy_100Wh;
+extern u32 romveModuleMasklist;
+extern u16 * palarmtable;
+extern u16 gDiInPutFlag;
+extern u16 gbattDownCount;//电池下电计时
+extern u16 downDelayTimeMin;
+extern u16 downVoltageLimit;
+extern u8 *userName;
+extern u8 bitAlarmTypeList[12];
+
+extern u16 recordAlarmCount;
+
+extern u8 saveE1D3;
+extern u8 saveE2D3;
+extern u8 save40D7;
+extern u8 setCalibrationI;
+extern u8 setCalibrationV;
+
+extern u8 CalibrationI_ch;
+extern u32 CalibrationI_val;
+
+extern u8 gDcmStatus[8];
+
+extern u16  EnergyDataWriteConunt;
+extern u16  EnergyDataWriteConunt90;
+extern u16 gbattTestCount;
+extern uTIME gtestStarTimer ,gtestStopTimer ;//保存测试起止时间 结束时间
+extern u8 monitor_addr;
+
+//设置参数
+
+
+
+extern u16 gInOwrVLimit;      //输入欠压
+extern u16 gInOverVLimit;     //输入过压 
+extern u16 gInOverILimit;		  //输入限流
+extern u16 gOutOwrVLimit;     //输出欠压
+extern u16 gOutOverVLimit;    //输出过压
+extern u16 gOverFLimit;       //输入频率过高
+extern u16 gOwrFLimit;        //输入频率过低
+extern u16 ghtemp;            //输入温度过高
+extern u16 gltemp;            //输入温度过低
+extern u16 gsleepBattTestPeriod;//电池测试周期
+extern u16 gbattDownTime;       //电池下电计时
+extern u16 gdownV;              //下电电压
+extern u16 gtestV;           //放电测试电压 
+extern u16 gsafedisV;        //错峰安全放电电压
+extern u16 gSetStartBRI;     //均充启动电流率
+extern u16 gSetEndBRI;       //均充结束电流率
+extern u16 gSetBattC;        //电池容量
+extern u16 gstartdelay;      //均充启动延时      1
+extern u16 genddelay;        //均充结束延时      
+extern u16 gSetfloatV;       // 浮充电压
+extern u16 gSetequalV;       //均充电压
+extern u16 gdisDeep;         //放电深度
+extern u16 gRateCurr;    //最大输出电流
+extern u16 gAcRateP;          //单相扣除功率
+extern u16 gsleepStartDelay;  //休眠起动延时
+extern u16 gSetBattLimitPerCTrough;   //谷时电池限流系数    0.25
+extern u16 gSetBattLimitPerCPeak;     //峰时电池限流系数    0.01
+extern u16 gSetBattLimitPerCNormal;   //平时电池限流系数    0.1
+extern u16 gSetBattLimitPerCSpike;    //尖峰时电池限流系数    0.01
+extern u16 gSetBattLimitPerC;         //普通电池限流系数
+extern u16 gSinglePhasePower;      //尖峰功率
+extern u16 gAPhasePower;       //高峰功率
+extern u16 gBPhasePower;     //平段功率
+extern u16 gCPhasePower;     //低谷功率
+extern u16 gAcRateI;                  //空调额定电流
+extern u16 gtmpFactor16;
+extern u16 galarmRecordMax;
+
+extern u16 genergyDateRecordMax;
+extern u16 genergyDateRecord90Max;
+extern u16 gdisBattRecordMax;
+extern u16 gdiverter;
+extern u16 goutPutOwrV;
+
+extern u8   gSleepOnoff;       //休眠使能
+extern u8   gtestPeriodEnable; //周期测试使能
+extern u8   gAutoBootEnable;   //自动使能
+extern u8   gWorkShiftMode;  //错峰使能
+extern u8   gPeakShaveOnoff;  //削峰使能
+extern u8   gbeeEnable;
+extern u8   gtmpCompEn;      //温度补偿使能
+extern u8   gsleepTurnPeriod;//模块休眠轮换周期
+extern u8   gbattDownMod;     //电池下电模式
+extern u8   gtmpFactor;        //温度补偿系数
+extern u8   gSinglePhase;    //单相或三相 1 单相 0 三相
+extern u8   gAcPhase;         //被限相位
+extern u8   gsleepLoadRate;   //休眠负载率
+extern u8   gsleepWakeupLoadRate;  //唤醒负载率
+extern u8   gsleepMinCount;   //最小模块数
+extern u8   gsleepBattTestTime; //休眠电池测试时间
+extern u8   gAutoPeriod;     //自动均充周期 单位为s
+extern u8   gGetEnergyDay;//抄表日
+extern u8   gtestPeriod;    //自动测试周期 单位为s
+extern u8   gequalTimeMax;    //最长均长延时
+extern u8   gtestTimeout;      //设置测时长
+extern u8   battGroud;          //电池组数
+extern ChEnable chenble;
+extern u8 gbootBattCap;
+extern u8 branch[8];
+extern u8 genableTP;
+extern u8 EndParaData;              //   标记参数结束位置，本位置不使用
+
+extern DateTimeF33 SetTime,paraTimeStamp[4];
+
+
+
+
+extern DCMParam0 gDcParam0[5];
+extern DCMParam1 gDcParam1[5];
+extern DCMParam2 gDcParam2[5];
+extern DCMParam3 gDcParam3[5];
+
+extern u8 *updatamem;
+extern u8 isUpDataTimeOut;
+extern u8 UpdateFlag;
+extern u16 gMaxModuleCurr;
+extern u8 getEnergyFlag;
+
+extern u16 gy2h;//电池放电系高点
+extern u16 gy2l;//电池放电系低点
+
+extern u32 gx2h;
+extern u32 gx2l;
+
+extern u16 gy4h;//电池放电系高点
+extern u16 gy4l;//电池放电系低点
+
+extern u32 gx4h;
+extern u32 gx4l;
+
+extern u8 password[4];
+extern u8 passwordshow[4];
+
+extern u8 gmoduleInputLowV;
+extern Item **passWordToChange;
+
+extern u16 recoverV1;	
+extern u16 recoverV2;	
+extern u16 recoverV3;	
+extern u16 recoverV4;		
+extern u16 recoverV5;	
+extern u16 recoverbat;
+
+extern u8 delayPassWord;
+extern u8 gcheckBatt;
+extern u8 gtotalbranch;
+
+extern u8 gmSN[17];
+extern u8 gsSN[17];
+extern u8 gMAC[6];
+extern u8 gIP[4];
+extern u8 gGW[4];
+extern u8 gCustom[17];
+
+extern DCdistribution gDCdistribution;
+
+
+extern u32 dischargeTimer;//放池放电时间，放电时累加，进入均充状态后清零
+extern u32 acTimer;//交流供电时间，模块在线时累加
+//操作 
+
+
+
+
+
+
+#endif
