@@ -1,0 +1,1 @@
+为了解决栈溢出问题 将send_alarm_trap函数的 _trap_varbinding var_bindings[6];设置为静态变量

@@ -1,0 +1,6 @@
+/Output
+/Drivers/CMSIS
+Projects/MDK-ARM
+# /Drivers/GD32F4xx_standard_peripheral
+
+.vscode/settings.json
