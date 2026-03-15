@@ -1,0 +1,68 @@
+<html>
+<body>
+<pre>
+<h1>礦ision Build Log</h1>
+<h2>Tool Versions:</h2>
+IDE-Version: μVision V5.14.0.0
+Copyright (C) 2015 ARM Ltd and ARM Germany GmbH. All rights reserved.
+License Information: 11 huang, huang, LIC=ATTQ1-C0KRF-562Q2-92KUI-FU8X9-J84G1
+ 
+Tool Versions:
+Toolchain:       MDK-ARM Standard  Version: 5.14.0.0
+Toolchain Path:  E:\Keil5\ARM\ARMCC\Bin
+C Compiler:      Armcc.exe V5.05 update 1 (build 106)
+Assembler:       Armasm.exe V5.05 update 1 (build 106)
+Linker/Locator:  ArmLink.exe V5.05 update 1 (build 106)
+Library Manager: ArmAr.exe V5.05 update 1 (build 106)
+Hex Converter:   FromElf.exe V5.05 update 1 (build 106)
+CPU DLL:         SARMCM3.DLL V5.14.0.0
+Dialog DLL:      DCM.DLL V1.13.1.0
+Target DLL:      Segger\JL2CM3.dll V2.99.13.0
+Dialog DLL:      TCM.DLL V1.14.4.0
+ 
+<h2>Project:</h2>
+C:\Users\huang\Desktop\工作\项目\智能一体化备电\gdh52c0_d\gdh52c0.uvprojx
+Project File Date:  12/06/2025
+
+<h2>Output:</h2>
+Build target 'Target 1'
+compiling brainbattery.cpp...
+user\brainbattery.cpp(133): warning:  #940-D: missing return statement at end of non-void function "GetBatteryCmd"
+  }
+user\brainbattery.cpp(548): warning:  #177-D: variable "checkcount" was declared but never referenced
+        static u8 checkcount=60;
+user\brainbattery.cpp(1096): warning:  #177-D: variable "vCellNum" was declared but never referenced
+                u8 vCellNum = 0, tCellNum =0;
+user\brainbattery.cpp(1096): warning:  #177-D: variable "tCellNum" was declared but never referenced
+                u8 vCellNum = 0, tCellNum =0;
+user\brainbattery.cpp(1013): warning:  #177-D: variable "vCellNum" was declared but never referenced
+        u8 vCellNum = 0, tmpNum = 0;
+user\brainbattery.cpp(1013): warning:  #177-D: variable "tmpNum" was declared but never referenced
+        u8 vCellNum = 0, tmpNum = 0;
+user\brainbattery.cpp(1279): warning:  #940-D: missing return statement at end of non-void function "DuleWithDataBatteryCommon"
+  }
+user\brainbattery.cpp: 7 warnings, 0 errors
+compiling UsartTask.cpp...
+.\user\user.h(8): warning:  #1-D: last line of file ends without a newline
+  #endif
+task\UsartTask.cpp(19): warning:  #177-D: variable "airbuf" was declared but never referenced
+                 u8 airbuf[8];
+task\UsartTask.cpp(20): warning:  #177-D: variable "mt11buf" was declared but never referenced
+                 u8 mt11buf[8];
+task\UsartTask.cpp(78): warning:  #1-D: last line of file ends without a newline
+  }
+task\UsartTask.cpp: 4 warnings, 0 errors
+linking...
+Program Size: Code=172232 RO-data=3632 RW-data=4392 ZI-data=47832  
+FromELF: creating hex file...
+After Build - User command #1: E:\Keil5\\ARM\ARMCC\bin\fromelf.exe --bin --output=Bin\gdh52c0.bin .\Objects\gdh52c0.axf
+".\Objects\gdh52c0.axf" - 0 Error(s), 11 Warning(s).
+
+<h2>Collection of Component include folders:</h2>
+  C:\Users\huang\Desktop\工作\项目\智能一体化备电\gdh52c0_d\RTE
+  E:\Keil5\ARM\PACK\GigaDevice\GD32F10x_DFP\2.0.1\Device\Include
+
+<h2>Collection of Component Files used:</h2>
+</pre>
+</body>
+</html>

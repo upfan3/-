@@ -1,0 +1,1 @@
+E:\Keil_v5\ARM\ARMCC\bin\fromelf.exe --bin -o D:\文档\h52c0\gdh52c0_d\gdh52c0_d\bin\gdh52c0_code.bin D:\文档\h52c0\gdh52c0_d\gdh52c0_d\Objects\gdh52c0.axf
