@@ -226,6 +226,35 @@
 #define COOLING_REG_ADDR 0x0A	  // 制冷点寄存器地址
 #define ALARM_REG_ADDR   0x0E  // 高温告警点寄存器地址
 
+// 定义指示灯状态优先级（数值越大优先级越高）
+#define PRIO_OFF          0
+#define PRIO_NORMAL       1
+#define PRIO_CHARGING     2
+#define PRIO_DISCHARGING  3
+#define PRIO_ALARM        4  
+#define PRIO_FAULT        5  // 故障
+
+
+#define FLAG_FAULT        (1 << 0)  // 故障标志位
+#define FLAG_DISCHARGING  (1 << 1)  // 放电标志位
+#define FLAG_CHARGING     (1 << 2)  // 充电标志位
+#define FLAG_NORMAL       (1 << 3)  // 正常标志位
+#define FLAG_OFF          (1 << 4)  // 关机标志位
+#define FLAG_ALARM        (1 << 5)  // 告警标志（新增，优先级高于放电）
+
+// 自动计算数组长度，避免手动维护
+#define STATUS_MAP_NUM  (sizeof(statusMap)/sizeof(StatusPrioMap))
+
+// 闪烁频率定义（新增快闪阈值）
+#define BLINK_SLOW_INTERVAL  10  // 慢闪（放电）：1000ms（1s）
+#define BLINK_FAST_INTERVAL   2  // 快闪（告警）：500ms（0.5s）
+
+// GPIO操作宏
+#define LED_GREEN_ON()    pgh52c0->m_io.set(RUN_LED, LED_ON)
+#define LED_GREEN_OFF()   pgh52c0->m_io.set(RUN_LED, LED_OFF)
+#define LED_RED_ON()      pgh52c0->m_io.set(WARN_LED, LED_ON)
+#define LED_RED_OFF()     pgh52c0->m_io.set(WARN_LED, LED_OFF)
+
 #define MODBUS_COM 0
 #define YDT1363_COM 1
 
@@ -839,22 +868,7 @@ typedef enum {
     DEV_DISCHARGING     // 放电（后备供电）
 } DevState_t;
 
-// 定义状态优先级（数值越大优先级越高）
-#define PRIO_OFF          0
-#define PRIO_NORMAL       1
-#define PRIO_CHARGING     2
-#define PRIO_DISCHARGING  3
-#define PRIO_ALARM        4  
-#define PRIO_FAULT        5  // 故障
 
-extern u8 g_devStatusFlags;
-
-#define FLAG_FAULT        (1 << 0)  // 故障标志位
-#define FLAG_DISCHARGING  (1 << 1)  // 放电标志位
-#define FLAG_CHARGING     (1 << 2)  // 充电标志位
-#define FLAG_NORMAL       (1 << 3)  // 正常标志位
-#define FLAG_OFF          (1 << 4)  // 关机标志位
-#define FLAG_ALARM        (1 << 5)  // 告警标志（新增，优先级高于放电）
 
 typedef struct {
 		uint8_t flag;      // 状态标志位
@@ -865,18 +879,7 @@ typedef struct {
 
 
 extern StatusPrioMap statusMap[];
-// 自动计算数组长度，避免手动维护
-#define STATUS_MAP_NUM  (sizeof(statusMap)/sizeof(StatusPrioMap))
 
-// 闪烁频率定义（新增快闪阈值）
-#define BLINK_SLOW_INTERVAL  10  // 慢闪（放电）：1000ms（1s）
-#define BLINK_FAST_INTERVAL   5  // 快闪（告警）：500ms（0.5s）
-
-// GPIO操作宏（适配你的硬件）
-#define LED_GREEN_ON()    pgh52c0->m_io.set(RUN_LED, LED_ON)
-#define LED_GREEN_OFF()   pgh52c0->m_io.set(RUN_LED, LED_OFF)
-#define LED_RED_ON()      pgh52c0->m_io.set(WARN_LED, LED_ON)
-#define LED_RED_OFF()     pgh52c0->m_io.set(WARN_LED, LED_OFF)
 
 
 extern SwitchPara gSwitchPara[TOTAL_USER+8];
@@ -1316,8 +1319,7 @@ extern u32 prtotalBattdisCap;
 extern u8 recvBattEnd;
 extern u16 Volcut;//电压阈值
 extern u16 recoverVol;//恢复电压
-extern u8 recvWarnflag;
-extern u8 arrayTmp[LI_BATTERY_NUM];
+extern u8 g_devStatusFlags;
 
 
 #endif

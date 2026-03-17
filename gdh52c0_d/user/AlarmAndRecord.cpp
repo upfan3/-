@@ -350,13 +350,13 @@ void ledIndicator(void)
     switch (baseStatePrio)
     {
         case PRIO_NORMAL:
-            LED_GREEN_ON();
+            pgh52c0->m_io.set(RUN_LED, LED_ON);
             break;
         case PRIO_CHARGING:
-            blink_green ? LED_GREEN_ON() : LED_GREEN_OFF();  // ¶ÀÁ¢ÂýÉÁ
+            blink_green ? pgh52c0->m_io.set(RUN_LED, LED_ON) : pgh52c0->m_io.set(RUN_LED, LED_OFF);  // ¶ÀÁ¢ÂýÉÁ
             break;
         default:
-            LED_GREEN_OFF();
+            pgh52c0->m_io.set(RUN_LED, LED_OFF);
             break;
     }
 
@@ -364,19 +364,20 @@ void ledIndicator(void)
     switch (highestPrio)
     {
         case PRIO_FAULT:
-            LED_RED_ON();
+            pgh52c0->m_io.set(WARN_LED, LED_ON);
+						pgh52c0->m_io.set(RUN_LED, LED_OFF);	
             break;
 
         case PRIO_ALARM:
-            blink_red ? LED_RED_ON() : LED_RED_OFF();  // ¶ÀÁ¢¿ìÉÁ
+            blink_red ? pgh52c0->m_io.set(WARN_LED, LED_ON) : pgh52c0->m_io.set(WARN_LED, LED_OFF);  // ¶ÀÁ¢¿ìÉÁ
             break;
 
         case PRIO_DISCHARGING:
-            blink_red ? LED_RED_ON() : LED_RED_OFF();  // ¶ÀÁ¢ÂýÉÁ
+            blink_red ? pgh52c0->m_io.set(WARN_LED, LED_ON) : pgh52c0->m_io.set(WARN_LED, LED_OFF);  // ¶ÀÁ¢ÂýÉÁ
             break;
 
         default:
-            LED_RED_OFF();
+            pgh52c0->m_io.set(WARN_LED, LED_OFF);
             break;
     }
 }
