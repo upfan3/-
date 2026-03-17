@@ -869,8 +869,8 @@ extern StatusPrioMap statusMap[];
 #define STATUS_MAP_NUM  (sizeof(statusMap)/sizeof(StatusPrioMap))
 
 // 闪烁频率定义（新增快闪阈值）
-#define BLINK_SLOW_INTERVAL  10  // 慢闪（放电）：1000ms（1s）
-#define BLINK_FAST_INTERVAL   5  // 快闪（告警）：500ms（0.5s）
+#define BLINK_SLOW_INTERVAL  1000  // 慢闪（放电）：1000ms（1s）
+#define BLINK_FAST_INTERVAL   500  // 快闪（告警）：500ms（0.5s）
 
 // GPIO操作宏（适配你的硬件）
 #define LED_GREEN_ON()    pgh52c0->m_io.set(RUN_LED, LED_ON)

@@ -1149,7 +1149,13 @@ void parseBatteryData(u8 address, u8* hexFrame, u16 hexDataLength,u8 rtn)
 		u8 balanEventCode = hexFrame[index-1];//均衡事件代码
 		if(((balanEventCode>>5) & 0x01) == 1||((balanEventCode>>6) & 0x01) == 1)//充放电 MOS 故障
 		{
-			g_devStatusFlags = FLAG_FAULT;
+			g_devStatusFlags |= FLAG_FAULT;
+		}
+		else
+		{
+			    // 故障解除 
+			g_devStatusFlags &= ~FLAG_FAULT;
+			g_devStatusFlags |= FLAG_NORMAL;
 		}
 		
 		

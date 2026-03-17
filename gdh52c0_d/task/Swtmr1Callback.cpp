@@ -64,10 +64,10 @@ void Swtmr1_Callback(void *parameter)
  	  pMonitor->ChargeConversionAndSleepOnSec();
 	  SpeakOnTick();
 			
-//				if(gledtimer==1)
-//			 {gledtimer=0;}
-//				 else
-//			 {gledtimer=1;}
+				if(gledtimer==1)
+			 {gledtimer=0;}
+				 else
+			 {gledtimer=1;}
 			 
 
 			 

@@ -473,40 +473,39 @@ void DownElectronicCtrl(void)//ÏÂµçÂß¼­
 
 void battCut(u8 addr)
 {
-	
-	if(recvWarnflag)
-	{
-		recvWarnflag=0;
-		if((*((u16 *)&gpSysData[DCVOLTAGE])) < Volcut &&(*((u16 *)&gpSysData[DCVOLTAGE])) > 4200 && batt[addr-1].Vbat > 0)
-		{
-//			pgh52c0->setdo(0);
-			setMospara = MOS_ON;
-			testFlag.status = 1;
-			g_devStatusFlags = PRIO_DISCHARGING;
-		}
-		
-		if((*((u16 *)&gpSysData[DCVOLTAGE])) > recoverVol )
-		{
-			if(totalBattI>0)
+
+			if((*((u16 *)&gpSysData[DCVOLTAGE])) < Volcut &&(*((u16 *)&gpSysData[DCVOLTAGE])) > 4200 && batt[addr-1].Vbat > 0)
 			{
-					if(recvBattEnd==1)
-					{
-
-							recvBattEnd=0;
-//							pgh52c0->clrdo(0);
-							testFlag.status = 0;
-							setMospara = MOS_OFF;
-							g_devStatusFlags = PRIO_CHARGING;
-					}
-
+	//			pgh52c0->setdo(0);
+				setMospara = MOS_ON;
+				testFlag.status = 1;
+				g_devStatusFlags &= ~FLAG_CHARGING;
+				g_devStatusFlags |= FLAG_DISCHARGING;
 			}
-		}
-	}
-	
-	
+			
+			if((*((u16 *)&gpSysData[DCVOLTAGE])) > recoverVol)
+			{
 
 
-
+            if(totalSOC == 10000)
+            {              
+                g_devStatusFlags &= ~FLAG_CHARGING;
+                g_devStatusFlags |= FLAG_NORMAL;
+            }
+            else
+            {
+                if(totalBattI > 0 && recvBattEnd == 1)
+                {
+										g_devStatusFlags &= ~FLAG_DISCHARGING;
+                    recvBattEnd = 0;
+		//							pgh52c0->clrdo(0);
+										testFlag.status = 0;
+                    setMospara = MOS_OFF;
+                    g_devStatusFlags |= FLAG_CHARGING;
+                }
+            }
+			 }
+			
 
 }
 

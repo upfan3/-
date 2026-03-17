@@ -3,7 +3,7 @@
 <title>Static Call Graph - [.\Objects\gdh52c0.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image .\Objects\gdh52c0.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5050106: Last Updated: Mon Mar 16 18:50:09 2026
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5050106: Last Updated: Tue Mar 17 16:09:51 2026
 <BR><P>
 <H3>Maximum Stack Usage =        456 bytes + Unknown(Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -1362,7 +1362,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[6e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;PORT_Task(void*)
 </UL>
 
-<P><STRONG><a name="[117]"></a>minusAlarm(AlarmType, unsigned char, AlarmBehavior, unsigned)</STRONG> (Thumb, 336 bytes, Stack size 64 bytes, alarmandrecord.o(i._Z10minusAlarm9AlarmTypeh13AlarmBehaviorj))
+<P><STRONG><a name="[117]"></a>minusAlarm(AlarmType, unsigned char, AlarmBehavior, unsigned)</STRONG> (Thumb, 352 bytes, Stack size 64 bytes, alarmandrecord.o(i._Z10minusAlarm9AlarmTypeh13AlarmBehaviorj))
 <BR><BR>[Stack]<UL><LI>Max Depth = 216<LI>Call Chain = minusAlarm(AlarmType, unsigned char, AlarmBehavior, unsigned) &rArr; h52c0::SaveRecordInfo(unsigned short, void*, unsigned short, unsigned char) &rArr; h52c0::savePara(void*) &rArr; h52c0::writeI2C(unsigned short, unsigned char*, unsigned short) &rArr; E2PROM::WriteString(unsigned short, unsigned char*, unsigned short) &rArr; E2PROM::WriteByte(unsigned char, unsigned short) &rArr; I2C::SendByte(unsigned char)
 </UL>
 <BR>[Calls]<UL><LI><a href="#[119]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;h52c0::writeI2C(unsigned short, unsigned char*, unsigned short)
@@ -1649,7 +1649,7 @@ Global Symbols
 <BR><BR>[Called By]<UL><LI><a href="#[231]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Monitor::LiDiangShiftMode(void*)
 </UL>
 
-<P><STRONG><a name="[150]"></a>ledIndicator()</STRONG> (Thumb, 422 bytes, Stack size 16 bytes, alarmandrecord.o(i._Z12ledIndicatorv))
+<P><STRONG><a name="[150]"></a>ledIndicator()</STRONG> (Thumb, 376 bytes, Stack size 16 bytes, alarmandrecord.o(i._Z12ledIndicatorv))
 <BR><BR>[Stack]<UL><LI>Max Depth = 32<LI>Call Chain = ledIndicator() &rArr; gpio::set(unsigned char, unsigned char)
 </UL>
 <BR>[Calls]<UL><LI><a href="#[151]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio::set(unsigned char, unsigned char)
@@ -1657,7 +1657,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[6e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;PORT_Task(void*)
 </UL>
 
-<P><STRONG><a name="[152]"></a>removeModule(unsigned char, unsigned char)</STRONG> (Thumb, 336 bytes, Stack size 40 bytes, alarmandrecord.o(i._Z12removeModulehh))
+<P><STRONG><a name="[152]"></a>removeModule(unsigned char, unsigned char)</STRONG> (Thumb, 354 bytes, Stack size 40 bytes, alarmandrecord.o(i._Z12removeModulehh))
 <BR><BR>[Stack]<UL><LI>Max Depth = 40<LI>Call Chain = removeModule(unsigned char, unsigned char)
 </UL>
 <BR>[Calls]<UL><LI><a href="#[11f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_llsl
@@ -1945,7 +1945,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[12d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;OnTickSetPara(Screen*)
 </UL>
 
-<P><STRONG><a name="[f4]"></a>Swtmr1_Callback(void*)</STRONG> (Thumb, 472 bytes, Stack size 8 bytes, swtmr1callback.o(i._Z15Swtmr1_CallbackPv))
+<P><STRONG><a name="[f4]"></a>Swtmr1_Callback(void*)</STRONG> (Thumb, 494 bytes, Stack size 8 bytes, swtmr1callback.o(i._Z15Swtmr1_CallbackPv))
 <BR><BR>[Stack]<UL><LI>Max Depth = 120<LI>Call Chain = Swtmr1_Callback(void*) &rArr; ErrEscUpData() &rArr; SaveUpDataLog() &rArr; h52c0::writeI2C2(unsigned short, unsigned char*, unsigned short) &rArr; E2PROM::WriteString(unsigned short, unsigned char*, unsigned short) &rArr; E2PROM::WriteByte(unsigned char, unsigned short) &rArr; I2C::SendByte(unsigned char)
 </UL>
 <BR>[Calls]<UL><LI><a href="#[18c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Monitor::ChargeConversionAndSleepOnSec()
@@ -2035,7 +2035,7 @@ Global Symbols
 <BR><BR>[Called By]<UL><LI><a href="#[5f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;DealWithJinGuiData(void*)
 </UL>
 
-<P><STRONG><a name="[193]"></a>parseBatteryData(unsigned char, unsigned char*, unsigned short, unsigned char)</STRONG> (Thumb, 1250 bytes, Stack size 72 bytes, brainbattery.o(i._Z16parseBatteryDatahPhth))
+<P><STRONG><a name="[193]"></a>parseBatteryData(unsigned char, unsigned char*, unsigned short, unsigned char)</STRONG> (Thumb, 1294 bytes, Stack size 72 bytes, brainbattery.o(i._Z16parseBatteryDatahPhth))
 <BR><BR>[Stack]<UL><LI>Max Depth = 80<LI>Call Chain = parseBatteryData(unsigned char, unsigned char*, unsigned short, unsigned char) &rArr; updateRemainCap()
 </UL>
 <BR>[Calls]<UL><LI><a href="#[195]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;updateRemainCap()
@@ -2312,7 +2312,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[12d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;OnTickSetPara(Screen*)
 </UL>
 
-<P><STRONG><a name="[116]"></a>battCut(unsigned char)</STRONG> (Thumb, 134 bytes, Stack size 0 bytes, downelectronicctrl.o(i._Z7battCuth))
+<P><STRONG><a name="[116]"></a>battCut(unsigned char)</STRONG> (Thumb, 190 bytes, Stack size 0 bytes, downelectronicctrl.o(i._Z7battCuth))
 <BR><BR>[Called By]<UL><LI><a href="#[115]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;battCutCmd(unsigned char)
 </UL>
 
@@ -2384,7 +2384,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[97]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[11d]"></a>addAlarm(AlarmType, unsigned char, AlarmBehavior, unsigned)</STRONG> (Thumb, 272 bytes, Stack size 56 bytes, alarmandrecord.o(i._Z8addAlarm9AlarmTypeh13AlarmBehaviorj))
+<P><STRONG><a name="[11d]"></a>addAlarm(AlarmType, unsigned char, AlarmBehavior, unsigned)</STRONG> (Thumb, 278 bytes, Stack size 56 bytes, alarmandrecord.o(i._Z8addAlarm9AlarmTypeh13AlarmBehaviorj))
 <BR><BR>[Stack]<UL><LI>Max Depth = 208<LI>Call Chain = addAlarm(AlarmType, unsigned char, AlarmBehavior, unsigned) &rArr; h52c0::SaveRecordInfo(unsigned short, void*, unsigned short, unsigned char) &rArr; h52c0::savePara(void*) &rArr; h52c0::writeI2C(unsigned short, unsigned char*, unsigned short) &rArr; E2PROM::WriteString(unsigned short, unsigned char*, unsigned short) &rArr; E2PROM::WriteByte(unsigned char, unsigned short) &rArr; I2C::SendByte(unsigned char)
 </UL>
 <BR>[Calls]<UL><LI><a href="#[119]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;h52c0::writeI2C(unsigned short, unsigned char*, unsigned short)

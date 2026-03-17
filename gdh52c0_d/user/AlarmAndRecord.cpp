@@ -79,7 +79,7 @@ StatusPrioMap statusMap[] = {
 };
 
 // 全局状态变量（可同时标记多个状态，比如故障+放电）
-u8 g_devStatusFlags = 0;
+u8 g_devStatusFlags = FLAG_NORMAL;
 
 void removeModule(u8 nb,u8 type)//从1号开始
 {
@@ -148,7 +148,8 @@ void removeModule(u8 nb,u8 type)//从1号开始
    	if(alarmCount[2]==0)
 		{
 		  //ctrl_bee=0;
-			g_devStatusFlags = FLAG_NORMAL;
+			g_devStatusFlags &=~FLAG_ALARM;
+			g_devStatusFlags |= FLAG_NORMAL;
 		}
 
 }
@@ -218,7 +219,8 @@ void minusAlarm(AlarmType type,u8 nb,AlarmBehavior behavior,u32 ext)
 	
 	 	if(alarmCount[2]==0)
 		{
-			g_devStatusFlags = FLAG_NORMAL;
+			g_devStatusFlags &=~FLAG_ALARM;
+			g_devStatusFlags |= FLAG_NORMAL;
 		}
 	   //ctrl_bee=0;
 	
@@ -268,7 +270,7 @@ void addAlarm(AlarmType type,u8 nb,AlarmBehavior behavior,u32 ext)
 	 
 	
 	   ctrl_bee=3;
-		 g_devStatusFlags = FLAG_ALARM;	
+		 g_devStatusFlags |= FLAG_ALARM;	
 	 
 }
 void ledbattwarn(void)
@@ -289,94 +291,91 @@ void ledbattwarn(void)
 
 }
 
+//void battStatus(void)
+//{
+//	if()
+//}
 
 
 void ledIndicator(void)
 {
-    static uint32_t last_tick = 0;
-    static uint8_t  blink_state = 0; // 0:灭 1:亮（0.5Hz闪烁）
-    uint8_t         highestPrio = 0; // 记录当前最高优先级状态
-		uint32_t        blink_interval = BLINK_SLOW_INTERVAL; // 默认慢闪
+    // 独立定时器 + 独立闪烁状态
+    static uint32_t last_tick_green = 0;   // 绿灯专用定时器
+    static uint32_t last_tick_red   = 0;   // 红灯专用定时器
+    static uint8_t  blink_green     = 0;   // 绿灯独立闪烁状态
+    static uint8_t  blink_red       = 0;   // 红灯独立闪烁状态
 
+    uint8_t  highestPrio      = 0;
+    uint8_t  baseStatePrio    = 0;
 
-    // 初始化最高优先级为最低值（0），遍历所有状态后自动选中最大数值
-    for (uint8_t i = 0; i < STATUS_MAP_NUM; i++) 
-		{
-        // 检查当前状态标志是否置位
-        if (g_devStatusFlags & statusMap[i].flag) 
-					{
-            // 若当前状态优先级 > 已记录的最高优先级，更新
-            if (statusMap[i].prio > highestPrio) 
-						{
+    // ===================== 获取最高优先级（红灯） =====================
+    for (uint8_t i = 0; i < STATUS_MAP_NUM; i++)
+    {
+        if (g_devStatusFlags & statusMap[i].flag)
+        {
+            if (statusMap[i].prio > highestPrio)
                 highestPrio = statusMap[i].prio;
-            }
         }
     }
-		
 
-    switch (highestPrio) 
-			{
-        case PRIO_ALARM:
-            // 告警：快闪（0.5s亮/灭）
-            blink_interval = BLINK_FAST_INTERVAL;
+    // ===================== 获取基础状态（绿灯） =====================
+    if (g_devStatusFlags & FLAG_CHARGING)
+        baseStatePrio = PRIO_CHARGING;
+    else if (g_devStatusFlags & FLAG_NORMAL)
+        baseStatePrio = PRIO_NORMAL;
+    else
+        baseStatePrio = PRIO_OFF;
+
+    // ===================== 【绿灯独立闪烁】=====================
+    if (g_tick - last_tick_green >= BLINK_SLOW_INTERVAL)  // 绿灯固定慢闪
+    {
+        last_tick_green = g_tick;
+        blink_green = !blink_green;
+    }
+
+    // ===================== 【红灯独立闪烁】=====================
+    uint32_t red_interval = BLINK_SLOW_INTERVAL;
+    if (highestPrio == PRIO_ALARM)
+        red_interval = BLINK_FAST_INTERVAL;  // 告警 → 红灯快闪
+    else
+        red_interval = BLINK_SLOW_INTERVAL;  // 放电 → 红灯慢闪
+
+    if (g_tick - last_tick_red >= red_interval)
+    {
+        last_tick_red = g_tick;
+        blink_red = !blink_red;
+    }
+
+    // ===================== 绿灯控制 =====================
+    switch (baseStatePrio)
+    {
+        case PRIO_NORMAL:
+            LED_GREEN_ON();
             break;
-        case PRIO_DISCHARGING:
         case PRIO_CHARGING:
-            // 放电/充电：慢闪（1s亮/灭）
-            blink_interval = BLINK_SLOW_INTERVAL;
+            blink_green ? LED_GREEN_ON() : LED_GREEN_OFF();  // 独立慢闪
             break;
         default:
-            // 故障/正常/关机：无需闪烁，频率不影响最终效果
-            blink_interval = BLINK_SLOW_INTERVAL;
-            break;
-    }
-
-    if (g_tick - last_tick >= blink_interval) 
-		{
-        last_tick = g_tick;       // 更新时间戳
-        blink_state = !blink_state; // 翻转闪烁状态
-    }
-
-    // 3. 根据最高优先级控制指示灯
-    switch (highestPrio) {
-        case PRIO_OFF:
-            // 关机：绿灯灭、红灯灭
             LED_GREEN_OFF();
-            LED_RED_OFF();
             break;
-        
-        case PRIO_NORMAL:
-            // 正常：绿灯常亮、红灯灭
-            LED_GREEN_ON();
-            LED_RED_OFF();
-            break;
-        
-        case PRIO_CHARGING:
-            // 充电：绿灯慢闪、红灯灭
-            blink_state ? LED_GREEN_ON() : LED_GREEN_OFF();
-            LED_RED_OFF();
-            break;
-				
-				case PRIO_ALARM:
-            // 告警（新增）：绿灯灭、红灯快闪（0.5s亮/0.5s灭）
-            LED_GREEN_ON();
-            blink_state ? LED_RED_ON() : LED_RED_OFF();
-            break;
-        
+    }
+
+    // ===================== 红灯控制 =====================
+    switch (highestPrio)
+    {
         case PRIO_FAULT:
-            // 故障（优先）：绿灯灭、红灯常亮（无论是否放电）
-            LED_GREEN_OFF();
             LED_RED_ON();
             break;
-        
-        case PRIO_DISCHARGING:
-            // 放电：红灯慢闪
-						LED_GREEN_ON();
-            blink_state ? LED_RED_ON() : LED_RED_OFF();
+
+        case PRIO_ALARM:
+            blink_red ? LED_RED_ON() : LED_RED_OFF();  // 独立快闪
             break;
-        
+
+        case PRIO_DISCHARGING:
+            blink_red ? LED_RED_ON() : LED_RED_OFF();  // 独立慢闪
+            break;
+
         default:
-            LED_GREEN_OFF();
             LED_RED_OFF();
             break;
     }
