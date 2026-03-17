@@ -452,6 +452,11 @@
           <WinNumber>1</WinNumber>
           <ItemText>recvBattEnd</ItemText>
         </Ww>
+        <Ww>
+          <count>61</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>gtimeCount1s</ItemText>
+        </Ww>
       </WatchWindow1>
       <WatchWindow2>
         <Ww>
@@ -568,6 +573,16 @@
           <count>22</count>
           <WinNumber>2</WinNumber>
           <ItemText>setModOnFlag</ItemText>
+        </Ww>
+        <Ww>
+          <count>23</count>
+          <WinNumber>2</WinNumber>
+          <ItemText>testFlag</ItemText>
+        </Ww>
+        <Ww>
+          <count>24</count>
+          <WinNumber>2</WinNumber>
+          <ItemText>battcount</ItemText>
         </Ww>
       </WatchWindow2>
       <MemoryWindow1>

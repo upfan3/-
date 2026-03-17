@@ -110,8 +110,6 @@ void Swtmr1_Callback(void *parameter)
 		
 		DownElectronicOnTick();
 		
-
-		
 		if(delayPassWord>0)
 			delayPassWord--;
 		
@@ -168,14 +166,6 @@ detectTimer1=0;
 			}
      }
 		
-		 
-		 if(Chargeflag==1)
-		 {
-				Chargetime++;
-		 }
-		 else
-		 {
-				Chargetime=0;
-		 }
+
 		
 }

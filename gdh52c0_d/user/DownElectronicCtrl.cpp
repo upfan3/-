@@ -19,6 +19,10 @@ u16 downloadstatus[6]={0,0,0,0,0,0};
 u16 Volcut=4900;
 u16 recoverVol= 5000;
 
+u8 setBattParaAddr = 0;
+TestLogicFlag testFlag = {0,1,1};
+u8 setMospara = MOS_OFF;
+
 u32 startEnergy[2]={0,0};
 void DownElectronicOnTick(void) //下电延时计数，每秒调用1次
 {
@@ -466,62 +470,41 @@ void DownElectronicCtrl(void)//下电逻辑
 	
 }
 
-u8 Chargetime = 0;
-u8 Chargeflag = 0;
-u8 MOS_Charg[LI_BATTERY_NUM]={0};
-u8 MOS_DisCharg[LI_BATTERY_NUM]={0};
-u8 arrayTmp[LI_BATTERY_NUM] = {0};
-bool checkDis(void)
-{
-	bool result = false;
-	for(u8 i = 0; i < LI_BATTERY_NUM; i++)
-	{
-		if(arrayTmp[i] == 0)
-			continue;
-		
-		setDisChargeMos(i+1,(CtrlState)arrayTmp[i]);
-//		if(arrayTmp[i] == batt[i].MOS_DisCharg)
-		arrayTmp[i] = 0;
-		result = true;
-		break;
-	}
-	return result;
-}
+
 void battCut(u8 addr)
 {
 	
-	MOS_Charg[addr-1] =batt[addr-1].MOS_Charg;
-	MOS_DisCharg[addr-1]=batt[addr-1].MOS_DisCharg;
-	if((*((u16 *)&gpSysData[DCVOLTAGE]))< Volcut &&(*((u16 *)&gpSysData[DCVOLTAGE]))>4320&&batt[addr-1].Vbat>0)//&& totalBattI<-50
+	if(recvWarnflag)
 	{
-		pgh52c0->setdo(0);
-		arrayTmp[addr-1] = MOS_ON;
-		//setDisChargeMos(addr,MOS_ON);
+		recvWarnflag=0;
+		if((*((u16 *)&gpSysData[DCVOLTAGE])) < Volcut &&(*((u16 *)&gpSysData[DCVOLTAGE])) > 4200 && batt[addr-1].Vbat > 0)
+		{
+//			pgh52c0->setdo(0);
+			setMospara = MOS_ON;
+			testFlag.status = 1;
+			g_devStatusFlags = PRIO_DISCHARGING;
+		}
+		
+		if((*((u16 *)&gpSysData[DCVOLTAGE])) > recoverVol )
+		{
+			if(totalBattI>0)
+			{
+					if(recvBattEnd==1)
+					{
+
+							recvBattEnd=0;
+//							pgh52c0->clrdo(0);
+							testFlag.status = 0;
+							setMospara = MOS_OFF;
+							g_devStatusFlags = PRIO_CHARGING;
+					}
+
+			}
+		}
 	}
 	
-	if((*((u16 *)&gpSysData[DCVOLTAGE]))>recoverVol )
-	{
-		
-		if(totalBattI>0)
-		{
-				if(MOS_DisCharg[addr-1]==1&&recvBattEnd==1)
-				{
+	
 
-						recvBattEnd=0;
-						pgh52c0->clrdo(0);
-						arrayTmp[addr-1] = MOS_OFF;
-					
-					
-				}
-
-		}
-		
-		else if(totalBattI<=0)
-		{
-//			Chargetime=0;
-//			Chargeflag=0;
-		}
-	}
 
 
 

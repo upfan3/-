@@ -100,6 +100,7 @@ void TIMER1_IRQHandler(void)
 						  JinGuiOnLineCount();
               JinGuiOutLineCheckCount();	
 						  detectBatteryOnline();
+
 						  DownOnTicK();
 						  AirOnTick();
 							GetEnergy();
@@ -108,11 +109,14 @@ void TIMER1_IRQHandler(void)
 						{
 							gEqudelay++;
 						}
-							
-						 
-						 
+
 					 }
 					 
+					 if(gtimeCount1s%60==0&&gtimeCount1s!=0)
+					 {
+							detcetBattData();
+					 }
+					
 					
 				 }
 

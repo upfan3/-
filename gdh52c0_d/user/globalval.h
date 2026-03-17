@@ -231,6 +231,14 @@
 
 typedef struct
 {
+	u8 status;
+	u8 disMos;
+	u8 chargeMos;
+	u8 ctrType;
+} TestLogicFlag;
+
+typedef struct
+{
 	u16* _pReTotal;// 指向“总记录数”的指针（16位无符号整数）
 	u16* _pReMax;// 指向“最大记录值”的指针（16位无符号整数
 	u16*_pOrder;
@@ -1009,7 +1017,7 @@ void SetLimitI(CanPort *pcan,u8 addr,float val);
 
 void calculateTotalData(void);
 void *DuleWithDataBatteryCommon(u8 *pdat,u16 *plen);
-void parseBatteryData(u16 cycleFrameNumber, u8 address,u8* hexFrame,u16 hexDataLength);
+void parseBatteryData(u8 address,u8* hexFrame,u16 hexDataLength,u8 rtn);
 void BattCmdPollingCommon(bool flag);
 s8 PackBattCmdPolling(u8 addr, u8 cid1, u8 cid2, u16 infoLength, const u8* info);
 
@@ -1018,6 +1026,7 @@ void battCut(u8 addr);
 void SetBatteryflag( CtrlState state);
 void battCutCmd(u8 num);
 bool checkDis(void);
+void detcetBattData(void);
 
 //任务函数
 void CAN_Task(void * pvParameters); 	//CAN接口任务		
@@ -1303,12 +1312,12 @@ extern u8 battComType;
 extern u32 prtotalBattdisCap;
 //操作 
 
-extern u8 Chargetime;
-extern u8 Chargeflag;
 
 extern u8 recvBattEnd;
 extern u16 Volcut;//电压阈值
 extern u16 recoverVol;//恢复电压
+extern u8 recvWarnflag;
+extern u8 arrayTmp[LI_BATTERY_NUM];
 
 
 #endif

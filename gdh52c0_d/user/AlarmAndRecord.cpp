@@ -359,7 +359,7 @@ void ledIndicator(void)
 				
 				case PRIO_ALARM:
             // 告警（新增）：绿灯灭、红灯快闪（0.5s亮/0.5s灭）
-            LED_GREEN_OFF();
+            LED_GREEN_ON();
             blink_state ? LED_RED_ON() : LED_RED_OFF();
             break;
         
@@ -371,6 +371,7 @@ void ledIndicator(void)
         
         case PRIO_DISCHARGING:
             // 放电：红灯慢闪
+						LED_GREEN_ON();
             blink_state ? LED_RED_ON() : LED_RED_OFF();
             break;
         

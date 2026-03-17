@@ -26,37 +26,30 @@ Project File Date:  12/06/2025
 
 <h2>Output:</h2>
 Build target 'Target 1'
+compiling DownElectronicCtrl.cpp...
 compiling brainbattery.cpp...
-user\brainbattery.cpp(133): warning:  #940-D: missing return statement at end of non-void function "GetBatteryCmd"
+user\brainbattery.cpp(136): warning:  #940-D: missing return statement at end of non-void function "GetBatteryCmd"
   }
-user\brainbattery.cpp(548): warning:  #177-D: variable "checkcount" was declared but never referenced
+user\brainbattery.cpp(578): warning:  #177-D: variable "checkcount" was declared but never referenced
         static u8 checkcount=60;
-user\brainbattery.cpp(1096): warning:  #177-D: variable "vCellNum" was declared but never referenced
+user\brainbattery.cpp(1146): warning:  #177-D: variable "vCellNum" was declared but never referenced
                 u8 vCellNum = 0, tCellNum =0;
-user\brainbattery.cpp(1096): warning:  #177-D: variable "tCellNum" was declared but never referenced
+user\brainbattery.cpp(1146): warning:  #177-D: variable "tCellNum" was declared but never referenced
                 u8 vCellNum = 0, tCellNum =0;
-user\brainbattery.cpp(1013): warning:  #177-D: variable "vCellNum" was declared but never referenced
+user\brainbattery.cpp(1056): warning:  #177-D: variable "vCellNum" was declared but never referenced
         u8 vCellNum = 0, tmpNum = 0;
-user\brainbattery.cpp(1013): warning:  #177-D: variable "tmpNum" was declared but never referenced
+user\brainbattery.cpp(1056): warning:  #177-D: variable "tmpNum" was declared but never referenced
         u8 vCellNum = 0, tmpNum = 0;
-user\brainbattery.cpp(1279): warning:  #940-D: missing return statement at end of non-void function "DuleWithDataBatteryCommon"
+user\brainbattery.cpp(1057): warning:  #177-D: variable "firstIn" was declared but never referenced
+        static u8 recvBattNum = 0,firstIn = 1;
+user\brainbattery.cpp(1341): warning:  #940-D: missing return statement at end of non-void function "DuleWithDataBatteryCommon"
   }
-user\brainbattery.cpp: 7 warnings, 0 errors
-compiling UsartTask.cpp...
-.\user\user.h(8): warning:  #1-D: last line of file ends without a newline
-  #endif
-task\UsartTask.cpp(19): warning:  #177-D: variable "airbuf" was declared but never referenced
-                 u8 airbuf[8];
-task\UsartTask.cpp(20): warning:  #177-D: variable "mt11buf" was declared but never referenced
-                 u8 mt11buf[8];
-task\UsartTask.cpp(78): warning:  #1-D: last line of file ends without a newline
-  }
-task\UsartTask.cpp: 4 warnings, 0 errors
+user\brainbattery.cpp: 8 warnings, 0 errors
 linking...
-Program Size: Code=172232 RO-data=3632 RW-data=4392 ZI-data=47832  
+Program Size: Code=172412 RO-data=3628 RW-data=4388 ZI-data=47836  
 FromELF: creating hex file...
 After Build - User command #1: E:\Keil5\\ARM\ARMCC\bin\fromelf.exe --bin --output=Bin\gdh52c0.bin .\Objects\gdh52c0.axf
-".\Objects\gdh52c0.axf" - 0 Error(s), 11 Warning(s).
+".\Objects\gdh52c0.axf" - 0 Error(s), 8 Warning(s).
 
 <h2>Collection of Component include folders:</h2>
   C:\Users\huang\Desktop\工作\项目\智能一体化备电\gdh52c0_d\RTE

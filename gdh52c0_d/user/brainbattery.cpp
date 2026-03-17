@@ -57,6 +57,7 @@ u8 BattCmdPoing[]={//命令轮询数组
 
 u8 BattOnlineList[LI_BATTERY_NUM];
 u8 recvBattEnd = 1;
+u8 recvWarnflag = 0;
 
 u8 Set_BattPara[8]={0xD6,0x06,0x00,0x00,0x00,0x00,0x00,0x00};
 u8 tmpSend[8]={0xD6,0x03,0,0,0,0,0,0};
@@ -80,6 +81,8 @@ u16 vagBatVolt = 5300;
 
 
 SetBattery setbatt;
+extern u8 setBattParaAddr;
+extern u8 setMospara;
 
 u16 count_CRC(u8*addr,int num) 
 { 
@@ -543,6 +546,33 @@ void *DuleWithDataBattery(u8 *pdat,u16 *plen)
 
 }
 
+
+void detcetBattData(void)
+{
+	Battery emptyBatt = {0};
+	u8 battcount = 0;
+	
+	for(u8 i=0;i<LI_BATTERY_NUM;i++)
+	{
+		if(memcmp(&batt[i], &emptyBatt, sizeof(Battery))== 0||batt[i].Nexttime==0)
+		{
+			battcount++;
+		}
+		else
+		{
+			break;
+		}
+	}
+	
+	if(battcount==LI_BATTERY_NUM)
+	{
+		SoftReset();
+	}
+	
+
+}
+
+
 void detectBatteryOnline(void)
 {
 	static u8 checkcount=60;
@@ -781,6 +811,7 @@ void HexFrameToAscii(u8 *frame, u8 hexValue, u8* startPos)
 
 u8 ydtSendData[30] = {0};
 u16 cycleFrameNumber = 0;
+u8 recvSetsucess = 0;
 //打包轮询指令 infoLength HEX字节数  info 16进制数据
 s8 PackBattCmdPolling(u8 addr, u8 cid1, u8 cid2, u16 infoLength, const u8* info)
 {
@@ -923,28 +954,28 @@ void setChargeLimitI(u8 addr,u16 setData)
 	pusartBatt->SendDataEx(ydtSendData,byteNum);
 }
 
-u8 ydtQueryCmd[3] = {0x42,0x44,0x47}; 
+u8 ydtQueryCmd[4] = {0x42,0x44,0x45,0x47}; 
 //u8 test[2] = {0x63,0x12};
 void BattCmdPollingCommon(bool parseDoneFlag)
 {
 	static u8 timeoutCount = 1;
 	
-	if(checkDis())
-	{
-		timeoutCount = 5;
-		return;
-	}
-
-	
-	
-	if(parseDoneFlag == false)
-	{
 		if(timeoutCount > 0 )
 		{
 			timeoutCount--;
 			return;
 		}
-	}
+
+	
+	
+//	if(parseDoneFlag == false)
+//	{
+//		if(timeoutCount > 0 )
+//		{
+//			timeoutCount--;
+//			return;
+//		}
+//	}
 	
 	//timeoutCount = 5;
 		
@@ -957,7 +988,19 @@ void BattCmdPollingCommon(bool parseDoneFlag)
 	static u8 cmdNum = 0;
 
 	//byteNum = PackBattCmdPolling(battNum,0x4A,0x47,NULL,NULL);
-	byteNum = PackBattCmdPolling(battNum,0x4A,ydtQueryCmd[cmdNum],NULL,NULL);
+	u8 setData[2] = {0};
+	if(ydtQueryCmd[cmdNum]==0x45)
+	{
+		setData[1] = setMospara;
+		byteNum = PackBattCmdPolling(battNum,0x4A,ydtQueryCmd[cmdNum],2,setData);
+	}
+	else
+	{
+		byteNum = PackBattCmdPolling(battNum,0x4A,ydtQueryCmd[cmdNum],NULL,NULL);
+	}
+	
+	
+	
 	if(ydtQueryCmd[cmdNum] == 0x42)
 		recvBattCount[0]++;
 //	byteNum = PackBattCmdPolling(battNum,0x4A,ydtQueryCmd[cmdNum],2,test);
@@ -1007,11 +1050,11 @@ void updateRemainCap()
 	
 	
 }
-
-void parseBatteryData(u16 cycleFrameNumber, u8 address, u8* hexFrame, u16 hexDataLength)
+extern TestLogicFlag testFlag;
+void parseBatteryData(u8 address, u8* hexFrame, u16 hexDataLength,u8 rtn)
 {
 	u8 vCellNum = 0, tmpNum = 0;
-	static u8 recvBattNum = 0;
+	static u8 recvBattNum = 0,firstIn = 1;
 	
 	batt[address - 1].Nexttime = BATT_ONLINE_DELAT;//超时计数重置
 	
@@ -1087,7 +1130,14 @@ void parseBatteryData(u16 cycleFrameNumber, u8 address, u8* hexFrame, u16 hexDat
 		{
 			recvBattNum=0;
 			recvBattEnd=1;
+			
+//			if(firstIn)
+//			{
+//				firstIn = 0;
+//				memset(arrayTmp, MOS_OFF, sizeof(arrayTmp));
+//			}
 		}
+		
 		
 	}
 	else if(cycleFrameNumber == 0x4A44)
@@ -1185,7 +1235,6 @@ void parseBatteryData(u16 cycleFrameNumber, u8 address, u8* hexFrame, u16 hexDat
 		if(((fetEventCode >> 1) & 0x01) == 1)
 		{
 			batt[address - 1].MOS_Charg = 1;
-			g_devStatusFlags = FLAG_CHARGING;
 		}
 		else
 		{
@@ -1195,7 +1244,6 @@ void parseBatteryData(u16 cycleFrameNumber, u8 address, u8* hexFrame, u16 hexDat
 		if((fetEventCode & 0x01) == 1)
 		{
 			batt[address - 1].MOS_DisCharg = 1;
-			g_devStatusFlags = FLAG_DISCHARGING;
 		}
 		else
 		{
@@ -1218,6 +1266,20 @@ void parseBatteryData(u16 cycleFrameNumber, u8 address, u8* hexFrame, u16 hexDat
 		
 		batt[address - 1].BattWarning = battWarn;
 		
+		recvWarnflag =1;
+		
+	}
+	else if(cycleFrameNumber == 0x4A45)
+	{
+		if(rtn == 0)
+		{
+//			arrayTmp[setBattParaAddr - 1]=0;
+			
+			if(testFlag.ctrType == 0x1f)
+				testFlag.disMos = 0;
+			else
+				testFlag.disMos = 1;
+		}
 	}
 	else if(cycleFrameNumber == 0x4A47)
 	{
@@ -1273,7 +1335,7 @@ void *DuleWithDataBatteryCommon(u8 *recData,u16 *dataLength)
 	//将数据段转为HEX
 	AsciiFrameToHex(&recData[13], tmpLen, hexFrame, SINGLE_HEX_FRAME_LENGTH, &hexDataLength);
 	
-	parseBatteryData(cycleFrameNumber, address, hexFrame, hexDataLength);
+	parseBatteryData(address, hexFrame, hexDataLength,rtn);
 	
 	cycleFrameNumber = 0;
 }

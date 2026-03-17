@@ -3967,7 +3967,7 @@ void SetBrainBatt(Screen *pCurrentScreen)
 		}
 		else if((pCurrentScreen->m_pItem[pCurrentScreen->m_head+pCurrentScreen->m_coursItem]).st_plink==&pdisDisPlayData[10])
 		{
-			 CheckParaBoundary((u16 *) &pdisDisPlayData[10],4320,6000);//锂电放电电压 40-60V
+			 CheckParaBoundary((u16 *) &pdisDisPlayData[10],4200,5500);//锂电放电电压 40-60V
 				if(genterflag==1)
 				{
 					Volcut=(*(u16 *)&pdisDisPlayData[0]);
@@ -3986,7 +3986,7 @@ void SetBrainBatt(Screen *pCurrentScreen)
 		
 		else if((pCurrentScreen->m_pItem[pCurrentScreen->m_head+pCurrentScreen->m_coursItem]).st_plink==&pdisDisPlayData[12])
 		{
-			 CheckParaBoundary((u16 *) &pdisDisPlayData[12],4000,6000);//锂电放电电压 40-60V
+			 CheckParaBoundary((u16 *) &pdisDisPlayData[12],4200,5500);//锂电放电电压 40-60V
 				if(genterflag==1)
 				{
 					recoverVol=(*(u16 *)&pdisDisPlayData[12]);
@@ -3998,6 +3998,10 @@ void SetBrainBatt(Screen *pCurrentScreen)
 		if(pCurrentScreen->m_EnterStatus!=3)//处于非编辑状态时
 		 {
 				genterflag=0;
+			 if(recoverVol<Volcut)
+			 {
+					recoverVol=Volcut;
+			 }
 										 
 				(*(u16 *)&pdisDisPlayData[0])=batt[battID[0]-1].Set_BattV;
 				(*(u16 *)&pdisDisPlayData[2])=batt[battID[0]-1].Set_Batt_ChargA;
