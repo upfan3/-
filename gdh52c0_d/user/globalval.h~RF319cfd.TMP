@@ -90,7 +90,7 @@
 
 //智能开关参数
 #define DELAY_COUNT 200;
-#define TOTAL_USER 12
+#define TOTAL_USER 94
 
 //#define SWITCH_PARA UPDATA_LOG+UPDATA_LOG_LEN //8092
 #define SWITCH_PARA 8192 //8K位置

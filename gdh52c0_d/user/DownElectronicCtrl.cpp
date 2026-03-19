@@ -16,8 +16,7 @@ u8 usart3ConnetTimeOut=0;
 u8 acdelay=140;
 u16 downloadstatus[6]={0,0,0,0,0,0};
 
-u16 Volcut=4900;
-u16 recoverVol= 5000;
+
 
 u8 setBattParaAddr = 0;
 TestLogicFlag testFlag = {0,1,1};
@@ -473,14 +472,19 @@ void DownElectronicCtrl(void)//ÏÂµçÂß¼­
 
 void battCut(u8 addr)
 {
+	
+			u8 lastStatus = g_devStatusFlags;
+			u8 index = addr - 1;        
 
-			if((*((u16 *)&gpSysData[DCVOLTAGE])) < Volcut &&(*((u16 *)&gpSysData[DCVOLTAGE])) > 4200 && batt[addr-1].Vbat > 0)
+			if((*((u16 *)&gpSysData[DCVOLTAGE])) <=Volcut &&(*((u16 *)&gpSysData[DCVOLTAGE])) > 4200 && batt[index].Vbat > 0)
 			{
 	//			pgh52c0->setdo(0);
 				setMospara = MOS_ON;
 				testFlag.status = 1;
 				g_devStatusFlags &= ~FLAG_CHARGING;
 				g_devStatusFlags |= FLAG_DISCHARGING;
+				
+				
 			}
 			
 			if((*((u16 *)&gpSysData[DCVOLTAGE])) > recoverVol)
@@ -494,17 +498,34 @@ void battCut(u8 addr)
             }
             else
             {
-                if(totalBattI > 0 && recvBattEnd == 1)
+                if(totalBattI > 0 && batt[index].Vbat > 0 && recvBattEnd == 1)
                 {
 										g_devStatusFlags &= ~FLAG_DISCHARGING;
                     recvBattEnd = 0;
 		//							pgh52c0->clrdo(0);
-										testFlag.status = 0;
+//										testFlag.status = 0;
                     setMospara = MOS_OFF;
                     g_devStatusFlags |= FLAG_CHARGING;
+
+									
                 }
             }
+						
+
+						
 			 }
+			 if( !(lastStatus & FLAG_DISCHARGING) && (g_devStatusFlags & FLAG_DISCHARGING) )
+			{
+					disChargeCount[index]++;
+					pgh52c0->savePara(&disChargeCount[index]);
+			}	
+			
+			if( !(lastStatus & FLAG_CHARGING) && (g_devStatusFlags & FLAG_CHARGING)  )
+			{
+							chargeCount[index]++;
+							pgh52c0->savePara(&chargeCount[index]);
+			}
+		
 			
 
 }

@@ -3797,7 +3797,7 @@ void SetCalibrationMenu2(Screen *pCurrentScreen)
 	    
 
 }
-void Update_BattData(void)
+void Update_BattData(Screen *pCurrentScreen)
 {
 	if(battID[0]>LI_BATTERY_NUM||battID[0]==0)
 	{
@@ -3843,6 +3843,39 @@ void Update_BattData(void)
 	(*(u16 *)&pdisDisPlayData[28])=batt[battID[0]-1].CellVMin;//最小单体电压
 	(*(u16 *)&pdisDisPlayData[30])=batt[battID[0]-1].CellVMax;//最大单体电压
 	(*(u16 *)&pdisDisPlayData[32])=batt[battID[0]-1].Ibat;		//充放电流
+
+	
+	 if((pCurrentScreen->m_pItem[pCurrentScreen->m_head+pCurrentScreen->m_coursItem]).st_plink==&pdisDisPlayData[36])
+	 {
+		  if(genterflag==1)
+			{
+				disChargeCount[battID[0]-1] =(*(u16 *)&pdisDisPlayData[36]);
+			  pgh52c0->savePara(&disChargeCount[battID[0]-1]);
+				genterflag=0;
+			}
+	 }
+	 
+	 else if((pCurrentScreen->m_pItem[pCurrentScreen->m_head+pCurrentScreen->m_coursItem]).st_plink==&pdisDisPlayData[38])
+	 {
+			if(genterflag==1)
+			{
+				chargeCount[battID[0]-1] =(*(u16 *)&pdisDisPlayData[38]);
+				pgh52c0->savePara(&chargeCount[battID[0]-1]);
+				genterflag=0;
+			}
+		 
+		 
+	 }
+	 
+	if(pCurrentScreen->m_EnterStatus!=3)//处于非编辑状态时
+	 {
+						 				genterflag=0;
+				(*(u16 *)&pdisDisPlayData[36])=disChargeCount[battID[0]-1];
+				(*(u16 *)&pdisDisPlayData[38])=chargeCount[battID[0]-1];
+		 
+
+		 
+	 }
 	
 }
 
@@ -3970,7 +4003,9 @@ void SetBrainBatt(Screen *pCurrentScreen)
 			 CheckParaBoundary((u16 *) &pdisDisPlayData[10],4200,5500);//锂电放电电压 40-60V
 				if(genterflag==1)
 				{
-					Volcut=(*(u16 *)&pdisDisPlayData[0]);
+					Volcut=(*(u16 *)&pdisDisPlayData[10]);
+					
+					pgh52c0->savePara(&Volcut);
 					genterflag=0;
 
 //					SetBatteryData(1,0,&pdisDisPlayData[0]);
@@ -3990,6 +4025,12 @@ void SetBrainBatt(Screen *pCurrentScreen)
 				if(genterflag==1)
 				{
 					recoverVol=(*(u16 *)&pdisDisPlayData[12]);
+					
+				 if(recoverVol<Volcut)
+				 {
+						recoverVol=Volcut;
+				 }
+				 pgh52c0->savePara(&recoverVol );
 					genterflag=0;
 				}
 			
@@ -3998,10 +4039,7 @@ void SetBrainBatt(Screen *pCurrentScreen)
 		if(pCurrentScreen->m_EnterStatus!=3)//处于非编辑状态时
 		 {
 				genterflag=0;
-			 if(recoverVol<Volcut)
-			 {
-					recoverVol=Volcut;
-			 }
+
 										 
 				(*(u16 *)&pdisDisPlayData[0])=batt[battID[0]-1].Set_BattV;
 				(*(u16 *)&pdisDisPlayData[2])=batt[battID[0]-1].Set_Batt_ChargA;

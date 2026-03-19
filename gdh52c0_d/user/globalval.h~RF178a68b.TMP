@@ -90,7 +90,7 @@
 
 //智能开关参数
 #define DELAY_COUNT 200;
-#define TOTAL_USER 12
+#define TOTAL_USER 94
 
 //#define SWITCH_PARA UPDATA_LOG+UPDATA_LOG_LEN //8092
 #define SWITCH_PARA 8192 //8K位置
@@ -138,7 +138,7 @@
 #define ENERGY_DATE_RECORD_LEN 48
 #define ENERGY_DATE_90_RECORD_LEN 90
 #define DIS_BATT_RECORD_LEN 10
-#define PARA_FLAG 0x4A9A  //0x4A9A//0x3A9A
+#define PARA_FLAG 0x3535  //0x4A9A//0x3A9A
 
 
 #define MAX_HOT_FAN_RECV_LEN 30
@@ -1320,8 +1320,8 @@ extern u8 recvBattEnd;
 extern u16 Volcut;//电压阈值
 extern u16 recoverVol;//恢复电压
 extern u8 g_devStatusFlags;
-extern u16 disChargeCount[LI_BATTERY_NUM];
-extern u16 chargeCount[LI_BATTERY_NUM];
+extern u8 disChargeCount;
+extern u8 chargeCount;
 
 
 #endif

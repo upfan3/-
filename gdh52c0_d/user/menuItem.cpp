@@ -925,7 +925,8 @@ u8 setMenu(Item **ppItem)
 				battID[0]=1;
 				pBATTERYData=pdisPlayItem;
 				
-				
+				(*(u16*)&pdisDisPlayData[36])=disChargeCount[battID[0]-1];
+				(*(u16*)&pdisDisPlayData[38])=chargeCount[battID[0]-1];
 				
 				
 				
@@ -947,6 +948,8 @@ u8 setMenu(Item **ppItem)
 												SetScreenItem(NULL,(u8 *)"MOS充闭合   %l",OnOffLis,&pdisDisPlayData[18],MODIFI_PARA);
 												SetScreenItem(NULL,(u8 *)"MOS放闭合   %l",OnOffLis,&pdisDisPlayData[20],MODIFI_PARA);
 												SetScreenItem(NULL,(u8 *)"放电电流    %F.2A",&pdisDisPlayData[22],NULL,SCREEN_TWO_BYTE);
+												SetScreenItem(NULL,(u8 *)"放电次数    %d",&pdisDisPlayData[36],NULL,MODIFI_PARA|SCREEN_TWO_BYTE);
+												SetScreenItem(NULL,(u8 *)"充电次数    %d",&pdisDisPlayData[38],NULL,MODIFI_PARA|SCREEN_TWO_BYTE);
 				//	SetScreenItem(NULL,(u8 *)"剩余时间      %dMIN",    &pdisDisPlayData[24], NULL,SCREEN_TWO_BYTE);	
 					//SetScreenItem(NULL,(u8 *)"充放状态         %D"  , &pdisDisPlayData[6],  NULL,MODIFI_PARA);						
 						
@@ -2351,7 +2354,7 @@ void OnTickSetPara(Screen *pCurrentScreen)
 								else if(CurrentPpItem==&pBATTERYData )	//锂电数据信息	
 							{
 								
-								Update_BattData();//更新锂电信息（切换锂电时）	
+								Update_BattData(pCurrentScreen);//更新锂电信息（切换锂电时）	
 							}
 							else if(CurrentPpItem==&pBatterySetMenu)//锂电设置
 							{

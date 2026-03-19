@@ -3,7 +3,7 @@
 <title>Static Call Graph - [.\Objects\gdh52c0.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image .\Objects\gdh52c0.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5050106: Last Updated: Tue Mar 17 17:18:14 2026
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5050106: Last Updated: Thu Mar 19 08:55:30 2026
 <BR><P>
 <H3>Maximum Stack Usage =        456 bytes + Unknown(Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -723,7 +723,6 @@ Global Symbols
 
 <P><STRONG><a name="[125]"></a>__aeabi_memclr</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, rt_memclr.o(.text))
 <BR><BR>[Called By]<UL><LI><a href="#[2a0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Queue&lang;unsigned char&rang;::Queue(unsigned short)
-<LI><a href="#[1b8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;InitData()
 <LI><a href="#[123]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ReplyUpData(unsigned char, unsigned char*, unsigned short*)
 <LI><a href="#[f9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;AirOnTick()
 <LI><a href="#[1b5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;PowrCan::UpDataUserEnergy()
@@ -1354,8 +1353,8 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[12d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;OnTickSetPara(Screen*)
 </UL>
 
-<P><STRONG><a name="[115]"></a>battCutCmd(unsigned char)</STRONG> (Thumb, 26 bytes, Stack size 8 bytes, downelectronicctrl.o(i._Z10battCutCmdh))
-<BR><BR>[Stack]<UL><LI>Max Depth = 8<LI>Call Chain = battCutCmd(unsigned char)
+<P><STRONG><a name="[115]"></a>battCutCmd(unsigned char)</STRONG> (Thumb, 26 bytes, Stack size 16 bytes, downelectronicctrl.o(i._Z10battCutCmdh))
+<BR><BR>[Stack]<UL><LI>Max Depth = 144<LI>Call Chain = battCutCmd(unsigned char) &rArr; battCut(unsigned char) &rArr; h52c0::savePara(void*) &rArr; h52c0::writeI2C(unsigned short, unsigned char*, unsigned short) &rArr; E2PROM::WriteString(unsigned short, unsigned char*, unsigned short) &rArr; E2PROM::WriteByte(unsigned char, unsigned short) &rArr; I2C::SendByte(unsigned char)
 </UL>
 <BR>[Calls]<UL><LI><a href="#[116]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;battCut(unsigned char)
 </UL>
@@ -1601,7 +1600,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[12d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;OnTickSetPara(Screen*)
 </UL>
 
-<P><STRONG><a name="[14c]"></a>SetBrainBatt(Screen*)</STRONG> (Thumb, 1048 bytes, Stack size 16 bytes, setmenuitem.o(i._Z12SetBrainBattP6Screen))
+<P><STRONG><a name="[14c]"></a>SetBrainBatt(Screen*)</STRONG> (Thumb, 1066 bytes, Stack size 16 bytes, setmenuitem.o(i._Z12SetBrainBattP6Screen))
 <BR><BR>[Stack]<UL><LI>Max Depth = 128<LI>Call Chain = SetBrainBatt(Screen*) &rArr; h52c0::savePara(void*) &rArr; h52c0::writeI2C(unsigned short, unsigned char*, unsigned short) &rArr; E2PROM::WriteString(unsigned short, unsigned char*, unsigned short) &rArr; E2PROM::WriteByte(unsigned char, unsigned short) &rArr; I2C::SendByte(unsigned char)
 </UL>
 <BR>[Calls]<UL><LI><a href="#[14d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SetBatteryData(unsigned char, unsigned char, unsigned char*)
@@ -1687,7 +1686,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[179]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;BattCmdPolling()
 </UL>
 
-<P><STRONG><a name="[12d]"></a>OnTickSetPara(Screen*)</STRONG> (Thumb, 628 bytes, Stack size 16 bytes, menuitem.o(i._Z13OnTickSetParaP6Screen))
+<P><STRONG><a name="[12d]"></a>OnTickSetPara(Screen*)</STRONG> (Thumb, 630 bytes, Stack size 16 bytes, menuitem.o(i._Z13OnTickSetParaP6Screen))
 <BR><BR>[Stack]<UL><LI>Max Depth = 240 + Unknown Stack Size
 <LI>Call Chain = OnTickSetPara(Screen*) &rArr; GetUpDataLogMenu(Screen*) &rArr; __2sprintf &rArr; _printf_char_common &rArr; __printf
 </UL>
@@ -1713,7 +1712,7 @@ Global Symbols
 <LI><a href="#[15b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SetPeakShavePara(Screen*)
 <LI><a href="#[16f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SetPOWERRATEMenu(Screen*)
 <LI><a href="#[16a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GetUpDataLogMenu(Screen*)
-<LI><a href="#[173]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Update_BattData()
+<LI><a href="#[173]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Update_BattData(Screen*)
 <LI><a href="#[162]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SetUserDownPara(Screen*)
 <LI><a href="#[16e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SetUserDownMenu(Screen*)
 <LI><a href="#[157]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SetBattTestMenu(Screen*)
@@ -1964,8 +1963,12 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[33]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;TIMER1_IRQHandler
 </UL>
 
-<P><STRONG><a name="[173]"></a>Update_BattData()</STRONG> (Thumb, 536 bytes, Stack size 0 bytes, setmenuitem.o(i._Z15Update_BattDatav))
-<BR><BR>[Called By]<UL><LI><a href="#[12d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;OnTickSetPara(Screen*)
+<P><STRONG><a name="[173]"></a>Update_BattData(Screen*)</STRONG> (Thumb, 746 bytes, Stack size 8 bytes, setmenuitem.o(i._Z15Update_BattDataP6Screen))
+<BR><BR>[Stack]<UL><LI>Max Depth = 120<LI>Call Chain = Update_BattData(Screen*) &rArr; h52c0::savePara(void*) &rArr; h52c0::writeI2C(unsigned short, unsigned char*, unsigned short) &rArr; E2PROM::WriteString(unsigned short, unsigned char*, unsigned short) &rArr; E2PROM::WriteByte(unsigned char, unsigned short) &rArr; I2C::SendByte(unsigned char)
+</UL>
+<BR>[Calls]<UL><LI><a href="#[10e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;h52c0::savePara(void*)
+</UL>
+<BR>[Called By]<UL><LI><a href="#[12d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;OnTickSetPara(Screen*)
 </UL>
 
 <P><STRONG><a name="[17c]"></a>setDisChargeMos(unsigned char, CtrlState)</STRONG> (Thumb, 48 bytes, Stack size 24 bytes, brainbattery.o(i._Z15setDisChargeMosh9CtrlState))
@@ -2312,11 +2315,15 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[12d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;OnTickSetPara(Screen*)
 </UL>
 
-<P><STRONG><a name="[116]"></a>battCut(unsigned char)</STRONG> (Thumb, 190 bytes, Stack size 0 bytes, downelectronicctrl.o(i._Z7battCuth))
-<BR><BR>[Called By]<UL><LI><a href="#[115]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;battCutCmd(unsigned char)
+<P><STRONG><a name="[116]"></a>battCut(unsigned char)</STRONG> (Thumb, 300 bytes, Stack size 16 bytes, downelectronicctrl.o(i._Z7battCuth))
+<BR><BR>[Stack]<UL><LI>Max Depth = 128<LI>Call Chain = battCut(unsigned char) &rArr; h52c0::savePara(void*) &rArr; h52c0::writeI2C(unsigned short, unsigned char*, unsigned short) &rArr; E2PROM::WriteString(unsigned short, unsigned char*, unsigned short) &rArr; E2PROM::WriteByte(unsigned char, unsigned short) &rArr; I2C::SendByte(unsigned char)
+</UL>
+<BR>[Calls]<UL><LI><a href="#[10e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;h52c0::savePara(void*)
+</UL>
+<BR>[Called By]<UL><LI><a href="#[115]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;battCutCmd(unsigned char)
 </UL>
 
-<P><STRONG><a name="[5d]"></a>setMenu(Item**)</STRONG> (Thumb, 19076 bytes, Stack size 32 bytes, menuitem.o(i._Z7setMenuPP4Item))
+<P><STRONG><a name="[5d]"></a>setMenu(Item**)</STRONG> (Thumb, 19196 bytes, Stack size 32 bytes, menuitem.o(i._Z7setMenuPP4Item))
 <BR><BR>[Stack]<UL><LI>Max Depth = 160 + Unknown Stack Size
 <LI>Call Chain = setMenu(Item**) &rArr; __2sprintf &rArr; _printf_char_common &rArr; __printf
 </UL>
@@ -2376,7 +2383,6 @@ Global Symbols
 <LI><a href="#[111]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fdiv
 <LI><a href="#[190]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_f2d
 <LI><a href="#[17d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memclr4
-<LI><a href="#[125]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memclr
 <LI><a href="#[ad]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memset
 <LI><a href="#[126]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memcpy
 <LI><a href="#[a3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__2sprintf
@@ -3095,6 +3101,7 @@ Global Symbols
 <LI><a href="#[170]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SetBattBranchMenu(Screen*)
 <LI><a href="#[15a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SetPeakShiftPara(Screen*)
 <LI><a href="#[15b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SetPeakShavePara(Screen*)
+<LI><a href="#[173]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Update_BattData(Screen*)
 <LI><a href="#[157]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SetBattTestMenu(Screen*)
 <LI><a href="#[174]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SetLocalPower(Screen*)
 <LI><a href="#[14f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SetSleepPara(Screen*)
@@ -3104,6 +3111,7 @@ Global Symbols
 <LI><a href="#[12f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SetBootMenu(Screen*)
 <LI><a href="#[10c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SetAirData(Screen*)
 <LI><a href="#[118]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;h52c0::SaveRecordInfo(unsigned short, void*, unsigned short, unsigned char)
+<LI><a href="#[116]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;battCut(unsigned char)
 <LI><a href="#[260]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CYDT1363::setE548()
 <LI><a href="#[261]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CYDT1363::setE248()
 <LI><a href="#[25f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CYDT1363::set4A48()

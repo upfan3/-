@@ -66,7 +66,7 @@ u8 ErrCode=0;
 u8 Next_flag=0;
 u8 gCmdCode=0;//判断发送的是查询还是设置指令
 u8 set_addr=0;
-u8 onlineNum=8,checkflag=1,pronlineNum=4;
+u8 onlineNum=5,checkflag=1,pronlineNum=4;
 u8 battID[2]={0,onlineNum};//电池模块数列表   0:第n个电池   1:总锂电模块数
 u8 SetBattCmd=0,SetBattAddr=0, *pBattData;
 u8 recvBattCount[2]={0,0};

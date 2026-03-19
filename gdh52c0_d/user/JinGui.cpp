@@ -10,6 +10,7 @@ u8 gcmdAddr=0;
 u32 gsetTmpData=0;
 //Timer4 CurrTime={10,12,31,12,1970};//当前时间
 
+u8 powerBreak=0;
 
 s16 mt11Tmp = 0;
 s16 mt11Humi = 0;
@@ -1115,7 +1116,7 @@ void DownElectricty(void)
 				 }
 				 else if((gSwitchPara[i].st_downMode&0x0F)==2)//时间下电
 				 {
-					       if(stopPowrSupply==1)// 市电中断，需要时间下电
+					       if(powerBreak==1)// 市电中断，需要时间下电
 								 {
 									 if( gSwitchData[i].st_statusflag.bit_ready==0)
 									 {
@@ -1134,7 +1135,7 @@ void DownElectricty(void)
 			   else if((gSwitchPara[i].st_downMode&0x0F)==3)//电量下电
 				 {
 					 
-					   if(stopPowrSupply==1)
+					   if(powerBreak==1)
 						{
 					      if(gSwitchData[i].st_statusflag.bit_ready==0)
 									 {
@@ -1209,7 +1210,7 @@ void DownElectricty(void)
 					if(gSwitchPara[i].startTime1!=gSwitchData[i].stopTime1)//开始时间与结束时间不等时，使能免责下电
 				{
 				
-						 if(stopPowrSupply==1)
+						 if(powerBreak==1)
 						{
 									
 									
@@ -1310,7 +1311,7 @@ void DownElectricty(void)
 				                                              (vagBatVolt>gSwitchPara[i].st_recoverV)&&
 				                                              (gSwitchData[i].st_statusflag.bit_time0flag==0)&&//定时
 				                                              (gSwitchData[i].st_statusflag.bit_time1flag==0)&&//免责
-				                                              (stopPowrSupply==0)
+				                                              (powerBreak==0)
 			                                                )||//在非电压，时间，电量下电情况下，定时免责可恢复
 				                                              ((gSwitchData[i].st_statusflag.NC13==0)&&
 				                                                (gSwitchData[i].st_statusflag.bit_time0flag==0)&&//定时
@@ -1326,7 +1327,7 @@ void DownElectricty(void)
 					    //   gSwitchData[i].st_statusflag.setCmdAsk=1;
 					       gSwitchData[i].st_statusflag.bit_break=0;
 					       gSwitchData[i].st_statusflag.NC13=0;
-					       //stopPowrSupply=0;//市电 恢复
+					       //powerBreak=0;//市电 恢复
 					       gSwitchData[i].st_statusflag.bit_setdown=0;
 								
 						}
