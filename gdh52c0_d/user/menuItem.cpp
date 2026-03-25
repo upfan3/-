@@ -68,6 +68,8 @@ extern s16 currLimitCap;
 	 Item *pBatterySetMenu;//锂电设置界面
 	 Item *pBattCellVMenu;// 锂电芯电压界面
 	 Item *pBattTmpMenu;//锂电温度界面
+	 
+	 Item *pBatteryCutMenu =NULL;
 	
 Item *pAirMenu=NULL;
 
@@ -247,7 +249,7 @@ const u8 * userDownType[]={(const u8 *)"本地分路1",(const u8 *)"本地分路2",(cons
 void *userDowntype[]={userDownType};
 
 
-const u8 * userDownList2[]={(const u8 *)"手动上电",(const u8 *)"电压下电",(const u8 *)"时间下电",(const u8 *)"容量下电",NULL};//,(const u8 *)"手动下电"//,(const u8 *)"重置下电",
+const u8 * userDownList2[]={(const u8 *)"手动上电",(const u8 *)"电压下电",(const u8 *)"时间下电",(const u8 *)"电量下电",NULL};//,(const u8 *)"手动下电"//,(const u8 *)"重置下电",
 void *userDownlis2[]={userDownList2}; 
 
 //const u8 *userName2[]={(const u8 *)"未定义",(const u8 *)"移动",(const u8 *)"联通",(const u8 *)"电信",(const u8 *)"广电",(const u8 *)"行业外客户",(const u8 *)"铁塔自用",NULL};
@@ -404,10 +406,10 @@ u8 setMenu(Item **ppItem)
 					     			 SetScreenItem(NULL,        (u8 *)"实时告警"  ,NULL,(u8 *)(&pALARMMenu),NEXT_SCREEN);//pSetPara
 				             SetScreenItem(NULL,        (u8 *)"交流配电"  ,NULL,(u8 *)(&pACDMenu),NEXT_SCREEN);
 				             SetScreenItem(NULL,        (u8 *)"整流模块"  ,NULL,(u8 *)(&pSMRMenu),NEXT_SCREEN);
-					           SetScreenItem(NULL,        (u8 *)"光伏模块"  ,NULL,(u8 *)(&pSCRMenu),NEXT_SCREEN);
+//					           SetScreenItem(NULL,        (u8 *)"光伏模块"  ,NULL,(u8 *)(&pSCRMenu),NEXT_SCREEN);
 					           SetScreenItem(NULL,        (u8 *)"锂电信息"  ,NULL,(u8 *)(&pBATTERYData),NEXT_SCREEN);
 					           SetScreenItem(NULL,        (u8 *)"配电信息"  ,NULL,(u8 *)(&pUSRMenu),NEXT_SCREEN);
-					           SetScreenItem(NULL,        (u8 *)"空调信息 ", NULL,(u8 *)(&pAirMenu),NEXT_SCREEN);
+//					           SetScreenItem(NULL,        (u8 *)"空调信息 ", NULL,(u8 *)(&pAirMenu),NEXT_SCREEN);
 					           SetScreenItem(NULL,        (u8 *)"扩展分路信息"  ,NULL,(u8 *)(&pUSR3Menu),NEXT_SCREEN);
 					           SetScreenItem(NULL,        (u8 *)"历史记录"  ,NULL,(u8 *)(&pRECORDMenu),NEXT_SCREEN);				
 					           	SetScreenItem(NULL,       (u8 *)"系统信息 ", NULL,(u8 *)(&pSYSINFO),NEXT_SCREEN);
@@ -442,6 +444,7 @@ u8 setMenu(Item **ppItem)
 				  SetScreenItem(pSetPara,   (u8 *)"参数设置" ,NULL,(u8 *)(&pSYSMenu),NEXT_SCREEN);
 					SetScreenItem(NULL,       (u8 *)"工厂设置 ",NULL,(u8 *)(&pSysParaSetMenu),NEXT_SCREEN);
 					SetScreenItem(NULL,       (u8 *)"锂电设置 ",NULL,(u8 *)(&pBatterySetMenu),NEXT_SCREEN);
+					SetScreenItem(NULL,       (u8 *)"备电设置 ",NULL,(u8 *)(&pBatteryCutMenu),NEXT_SCREEN);
 					SetScreenItem(NULL,       (u8 *)"智能空开设置 ",NULL,(u8 *)(&pSetBranchMenu),NEXT_SCREEN);
 					SetScreenItem(NULL,       (u8 *)"扩展单元设置",NULL,(u8 *)(&pBattMenu),NEXT_SCREEN);//
 					SetScreenItem(NULL,       (u8 *)"分路下电设置",NULL,(u8 *)(&pLocalPowerMenu),NEXT_SCREEN);//						
@@ -486,7 +489,22 @@ u8 setMenu(Item **ppItem)
 				
 				
 			}
-			
+			else if(ppItem==&pBatteryCutMenu)//备电切换设置
+			{
+					
+				(*(u16 *)&pdisDisPlayData[0])=	Volcut;		
+				(*(u16 *)&pdisDisPlayData[2])=	recoverVol;	
+				pBatteryCutMenu=pdisPlayItem;
+				if(pBatteryCutMenu!=NULL)
+				{
+					SetScreenItem(pBatteryCutMenu,   (u8 *)"备电切换电压    %F.2V"   , &pdisDisPlayData[0],0,SCREEN_TWO_BYTE|MODIFI_PARA);
+					SetScreenItem(NULL,   (u8 *)"恢复电压    %F.2V"   , &pdisDisPlayData[2],0,SCREEN_TWO_BYTE|MODIFI_PARA);
+					SetScreenItem(NULL);//结束
+					return 1;
+				}
+				else 
+				   return 0;
+			}
 			else if(ppItem==&pSYSMenu)//参数设置界面
 			{
 				
@@ -498,7 +516,7 @@ u8 setMenu(Item **ppItem)
 					SetScreenItem(pSYSMenu,(u8 *)"电池参数设置 ",NULL,(u8 *)(&pBattParaSetMenu),NEXT_SCREEN);//
 					SetScreenItem(NULL,(u8 *)"电池均充设置 ",NULL,(u8 *)(&pBattBootSetMenu),NEXT_SCREEN);//
 					SetScreenItem(NULL,(u8 *)"电池测试设置 ",NULL,(u8 *)(&pBattTestSetMenu),NEXT_SCREEN);//
-					SetScreenItem(NULL,(u8 *)"节能参数设置 ",NULL,(u8 *)(&pSavePowrSetMenu),NEXT_SCREEN);//
+//					SetScreenItem(NULL,(u8 *)"节能参数设置 ",NULL,(u8 *)(&pSavePowrSetMenu),NEXT_SCREEN);//
 					SetScreenItem(NULL,(u8 *)"告警参数设置 ",NULL,(u8 *)(&pAlarmParaSetMenu),NEXT_SCREEN);//
 					SetScreenItem(NULL,(u8 *)"输入告警设置 ",NULL,(u8 *)(&pSetDIMenu),NEXT_SCREEN);
 					SetScreenItem(NULL,(u8 *)"输出告警设置 ",NULL,(u8 *)(&pSetDOMenu),NEXT_SCREEN);
@@ -839,8 +857,8 @@ u8 setMenu(Item **ppItem)
 				
 					*((u16 *)&pdisDisPlayData[4])=0;//gDCdistribution.pst_I[pdisDisPlayData[2]-1];
 					*((u32 *)&pdisDisPlayData[6])=0;//gDCdistribution.pst_enerqy[pdisDisPlayData[2]-1];
-					
-					
+					*((u16 *)&pdisDisPlayData[10])=0;
+					*((u32 *)&pdisDisPlayData[12])=0;
 					
 				
 				
@@ -852,8 +870,9 @@ u8 setMenu(Item **ppItem)
 				 SetScreenItem(pUSRMenu,   (u8 *)"配电分路     %O/$D",             &pdisDisPlayData[2],0,MODIFI_PARA);
 				    SetScreenItem(NULL,    (u8 *)"电流  %F.1A",     &pdisDisPlayData[4],0,SCREEN_TWO_BYTE); 	
 						SetScreenItem(NULL,    (u8 *)"电量  %G.2KWH",   &pdisDisPlayData[6],0,SCREEN_FOUR_BYTE); 
-					
-
+						SetScreenItem(NULL,    (u8 *)"电压  %F.2V",     &pdisDisPlayData[10],0,SCREEN_TWO_BYTE); 
+				    SetScreenItem(NULL,    (u8 *)"功率  %F.2W",     &pdisDisPlayData[12],0,SCREEN_FOUR_BYTE); 
+				 
 				 	SetScreenItem(NULL);
 				 SetScreenItemSelectFirst(pUSRMenu);
 				 		 return 1;
@@ -925,8 +944,8 @@ u8 setMenu(Item **ppItem)
 				battID[0]=1;
 				pBATTERYData=pdisPlayItem;
 				
-				(*(u16*)&pdisDisPlayData[36])=disChargeCount[battID[0]-1];
-				(*(u16*)&pdisDisPlayData[38])=chargeCount[battID[0]-1];
+				(*(u16*)&pdisDisPlayData[36])=*(disChargeCount[battID[0]-1]);
+				(*(u16*)&pdisDisPlayData[38])=*(chargeCount[battID[0]-1]);
 				
 				
 				
@@ -945,8 +964,8 @@ u8 setMenu(Item **ppItem)
 												SetScreenItem(NULL,(u8 *)"SOH         %F.2%",	  &pdisDisPlayData[14],  NULL,SCREEN_TWO_BYTE);
 					              SetScreenItem(NULL,(u8 *)"单体电压 %F.3-%F.3V",	 &pdisDisPlayData[28],  (u8 *)(&pBattCellVMenu),NEXT_SCREEN|SCREEN_TWO_BYTE);
 												SetScreenItem(NULL,(u8 *)"额定容量    %F.2AH",   &pdisDisPlayData[16],  NULL,SCREEN_TWO_BYTE);	
-												SetScreenItem(NULL,(u8 *)"MOS充闭合   %l",OnOffLis,&pdisDisPlayData[18],MODIFI_PARA);
-												SetScreenItem(NULL,(u8 *)"MOS放闭合   %l",OnOffLis,&pdisDisPlayData[20],MODIFI_PARA);
+//												SetScreenItem(NULL,(u8 *)"MOS充闭合   %l",OnOffLis,&pdisDisPlayData[18],MODIFI_PARA);
+//												SetScreenItem(NULL,(u8 *)"MOS放闭合   %l",OnOffLis,&pdisDisPlayData[20],MODIFI_PARA);
 												SetScreenItem(NULL,(u8 *)"放电电流    %F.2A",&pdisDisPlayData[22],NULL,SCREEN_TWO_BYTE);
 												SetScreenItem(NULL,(u8 *)"放电次数    %d",&pdisDisPlayData[36],NULL,MODIFI_PARA|SCREEN_TWO_BYTE);
 												SetScreenItem(NULL,(u8 *)"充电次数    %d",&pdisDisPlayData[38],NULL,MODIFI_PARA|SCREEN_TWO_BYTE);
@@ -1949,7 +1968,7 @@ u8 setMenu(Item **ppItem)
                             SetScreenItem(NULL,   (u8 *)"授权        %l"   ,     &OnOffLis   ,&pdisDisPlayData[11],setSpecialParaFlag);						 
 														//SetScreenItem(NULL ,  (u8 *)"止于 %d年%d月%d日"    ,    &pdisDisPlayData[11],NULL, setSpecialParaFlag);
 														SetScreenItem(NULL,   (u8 *)"下电时间    %d分钟" ,     &pdisDisPlayData[17],0,SCREEN_TWO_BYTE|MODIFI_PARA);
-														SetScreenItem(NULL,   (u8 *)"下电容量    %G.2%" ,     &pdisDisPlayData[19],0,SCREEN_TWO_BYTE|MODIFI_PARA);	 
+														SetScreenItem(NULL,   (u8 *)"下电电量    %G.2KWH" ,     &pdisDisPlayData[19],0,SCREEN_TWO_BYTE|MODIFI_PARA);	 
 														SetScreenItem(NULL,   (u8 *)"定时下电使能     %l" ,   OnOffLis,  & pdisDisPlayData[21],MODIFI_PARA);
 														SetScreenItem(NULL,   (u8 *)"开始定时    %DH:%DM" ,     &pdisDisPlayData[22],0,MODIFI_PARA);
 														SetScreenItem(NULL,   (u8 *)"定时时长    %DH:%DM" ,     &pdisDisPlayData[24],0,MODIFI_PARA);	
@@ -2077,8 +2096,7 @@ u8 setMenu(Item **ppItem)
 				(*(u16 *)&pdisDisPlayData[4])=batt[0].MOS_Charg;
 				(*(u16 *)&pdisDisPlayData[6])=batt[0].MOS_DisCharg;
 				 pdisDisPlayData[8]  = batt[0].WorkMode-1;
-				(*(u16 *)&pdisDisPlayData[10])=	Volcut;		
-				(*(u16 *)&pdisDisPlayData[12])=	recoverVol;	
+
 
 				 if(gsetbatt.WORK_MODE == 0x0101)
 				 {
@@ -2107,8 +2125,7 @@ u8 setMenu(Item **ppItem)
 					SetScreenItem(NULL,(u8 *)"MOS放闭合      %l",OnOffLis,&pdisDisPlayData[6],MODIFI_PARA);
 				  SetScreenItem(NULL,(u8 *)"锂电工作特性   %l",BattWorkCharacter,&pdisDisPlayData[8],MODIFI_PARA);
           SetScreenItem(NULL,(u8 *)"设定工作特性   %l",BattWorkCharacter,&pdisDisPlayData[9],MODIFI_PARA);
-					SetScreenItem(NULL,   (u8 *)"电压阈值    %F.2V"   , &pdisDisPlayData[10],0,SCREEN_TWO_BYTE|MODIFI_PARA);
-					SetScreenItem(NULL,   (u8 *)"恢复电压    %F.2V"   , &pdisDisPlayData[12],0,SCREEN_TWO_BYTE|MODIFI_PARA);
+
 					SetScreenItem(NULL);//结束
 					SetScreenItemSelectFirst(pBatterySetMenu);//设置为选择翻页
 					return 1;
@@ -2372,7 +2389,10 @@ void OnTickSetPara(Screen *pCurrentScreen)
 							{
 								GetBattData(pCurrentScreen);
 							}
-
+							else if(CurrentPpItem==&pBatteryCutMenu)
+							{
+								SetBattCut(pCurrentScreen);
+							}
 
 
 }

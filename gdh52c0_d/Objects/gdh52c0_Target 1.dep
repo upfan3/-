@@ -1,6 +1,6 @@
 Dependencies for Project 'gdh52c0', Target 'Target 1': (DO NOT MODIFY !)
 F (.\user\main.cpp)(0x691AF110)(--cpp -c --cpu Cortex-M3 -g -O0 --apcs=interwork --split_sections -I.\lib\Include -I.\CMSIS\GD\GD32F10x\Include -I.\CMSIS -I.\user -I.\FreeRTOS -I.\FreeRTOS\Source\include -I.\FreeRTOS\Source\portable\RVDS\ARM_CM3 -I.\net -I.\canrule -I.\usartrule-I C:\Users\huang\Desktop\工作\项目\智能一体化备电\gdh52c0_d\RTE-I E:\Keil5\ARM\PACK\GigaDevice\GD32F10x_DFP\2.0.1\Device\Include-I E:\Keil5\ARM\CMSIS\Include-D__UVISION_VERSION="514" -DGD32F10X_CL -DUSE_STDPERIPH_DRIVER -DUSE_STDPERIPH_DRIVER -DGD32F10X_CL -DUSE_12MHZ-o .\objects\main.o --omf_browse .\objects\main.crf --depend .\objects\main.d)
-I (user\globalval.h)(0x69BB4972)
+I (user\globalval.h)(0x69C23D21)
 I (user\Tqueue.h)(0x68EA1674)
 I (user\valtype.h)(0x60964EBE)
 I (.\FreeRTOS\Source\include\FreeRTOS.h)(0x58FD9326)
@@ -200,7 +200,7 @@ I (.\lib\Include\gd32f10x_enet.h)(0x5DDF60C6)
 I (E:\Keil5\ARM\ARMCC\include\stdlib.h)(0x5475F300)
 I (.\lib\Include\gd32f10x_misc.h)(0x5DDF60C6)
 I (E:\Keil5\ARM\ARMCC\include\string.h)(0x5475F300)
-I (user\globalval.h)(0x69BB4972)
+I (user\globalval.h)(0x69C23D21)
 I (E:\Keil5\ARM\ARMCC\include\stdio.h)(0x5475F300)
 I (.\FreeRTOS\Source\include\task.h)(0x58FD9326)
 I (.\FreeRTOS\Source\include\list.h)(0x58FD9326)
@@ -313,7 +313,7 @@ I (.\lib\Include\gd32f10x_enet.h)(0x5DDF60C6)
 I (E:\Keil5\ARM\ARMCC\include\stdlib.h)(0x5475F300)
 I (.\lib\Include\gd32f10x_misc.h)(0x5DDF60C6)
 I (E:\Keil5\ARM\ARMCC\include\string.h)(0x5475F300)
-I (user\globalval.h)(0x69BB4972)
+I (user\globalval.h)(0x69C23D21)
 I (E:\Keil5\ARM\ARMCC\include\stdio.h)(0x5475F300)
 I (.\FreeRTOS\Source\include\task.h)(0x58FD9326)
 I (.\FreeRTOS\Source\include\list.h)(0x58FD9326)
@@ -428,7 +428,7 @@ I (.\lib\Include\gd32f10x_enet.h)(0x5DDF60C6)
 I (E:\Keil5\ARM\ARMCC\include\stdlib.h)(0x5475F300)
 I (.\lib\Include\gd32f10x_misc.h)(0x5DDF60C6)
 I (E:\Keil5\ARM\ARMCC\include\string.h)(0x5475F300)
-I (user\globalval.h)(0x69BB4972)
+I (user\globalval.h)(0x69C23D21)
 I (E:\Keil5\ARM\ARMCC\include\stdio.h)(0x5475F300)
 I (.\FreeRTOS\Source\include\task.h)(0x58FD9326)
 I (.\FreeRTOS\Source\include\list.h)(0x58FD9326)
@@ -453,8 +453,8 @@ I (user\h52c0.h)(0x6639FC02)
 I (user\database.h)(0x6108B340)
 I (.\canrule\canruleln.h)(0x68DA2144)
 I (user\module.h)(0x60B83D4E)
-F (.\user\InitData.cpp)(0x69BA6BCD)(--cpp -c --cpu Cortex-M3 -g -O0 --apcs=interwork --split_sections -I.\lib\Include -I.\CMSIS\GD\GD32F10x\Include -I.\CMSIS -I.\user -I.\FreeRTOS -I.\FreeRTOS\Source\include -I.\FreeRTOS\Source\portable\RVDS\ARM_CM3 -I.\net -I.\canrule -I.\usartrule-I C:\Users\huang\Desktop\工作\项目\智能一体化备电\gdh52c0_d\RTE-I E:\Keil5\ARM\PACK\GigaDevice\GD32F10x_DFP\2.0.1\Device\Include-I E:\Keil5\ARM\CMSIS\Include-D__UVISION_VERSION="514" -DGD32F10X_CL -DUSE_STDPERIPH_DRIVER -DUSE_STDPERIPH_DRIVER -DGD32F10X_CL -DUSE_12MHZ-o .\objects\initdata.o --omf_browse .\objects\initdata.crf --depend .\objects\initdata.d)
-I (user\globalval.h)(0x69BB4972)
+F (.\user\InitData.cpp)(0x69C23DB4)(--cpp -c --cpu Cortex-M3 -g -O0 --apcs=interwork --split_sections -I.\lib\Include -I.\CMSIS\GD\GD32F10x\Include -I.\CMSIS -I.\user -I.\FreeRTOS -I.\FreeRTOS\Source\include -I.\FreeRTOS\Source\portable\RVDS\ARM_CM3 -I.\net -I.\canrule -I.\usartrule-I C:\Users\huang\Desktop\工作\项目\智能一体化备电\gdh52c0_d\RTE-I E:\Keil5\ARM\PACK\GigaDevice\GD32F10x_DFP\2.0.1\Device\Include-I E:\Keil5\ARM\CMSIS\Include-D__UVISION_VERSION="514" -DGD32F10X_CL -DUSE_STDPERIPH_DRIVER -DUSE_STDPERIPH_DRIVER -DGD32F10X_CL -DUSE_12MHZ-o .\objects\initdata.o --omf_browse .\objects\initdata.crf --depend .\objects\initdata.d)
+I (user\globalval.h)(0x69C23D21)
 I (user\Tqueue.h)(0x68EA1674)
 I (user\valtype.h)(0x60964EBE)
 I (.\FreeRTOS\Source\include\FreeRTOS.h)(0x58FD9326)
@@ -522,7 +522,7 @@ I (user\database.h)(0x6108B340)
 I (.\canrule\canruleln.h)(0x68DA2144)
 I (.\user\monitor.h)(0x6903332C)
 I (user\module.h)(0x60B83D4E)
-I (.\usartrule\cydt1363.h)(0x690C5ECE)
+I (.\usartrule\cydt1363.h)(0x69C0A1BC)
 F (.\user\gpio.cpp)(0x6295DBD2)(--cpp -c --cpu Cortex-M3 -g -O0 --apcs=interwork --split_sections -I.\lib\Include -I.\CMSIS\GD\GD32F10x\Include -I.\CMSIS -I.\user -I.\FreeRTOS -I.\FreeRTOS\Source\include -I.\FreeRTOS\Source\portable\RVDS\ARM_CM3 -I.\net -I.\canrule -I.\usartrule-I C:\Users\huang\Desktop\工作\项目\智能一体化备电\gdh52c0_d\RTE-I E:\Keil5\ARM\PACK\GigaDevice\GD32F10x_DFP\2.0.1\Device\Include-I E:\Keil5\ARM\CMSIS\Include-D__UVISION_VERSION="514" -DGD32F10X_CL -DUSE_STDPERIPH_DRIVER -DUSE_STDPERIPH_DRIVER -DGD32F10X_CL -DUSE_12MHZ-o .\objects\gpio.o --omf_browse .\objects\gpio.crf --depend .\objects\gpio.d)
 I (user\gpio.h)(0x69B2277F)
 I (user\Tqueue.h)(0x68EA1674)
@@ -651,7 +651,7 @@ I (.\lib\Include\gd32f10x_can.h)(0x5DDF60CA)
 I (.\lib\Include\gd32f10x_enet.h)(0x5DDF60C6)
 I (E:\Keil5\ARM\ARMCC\include\stdlib.h)(0x5475F300)
 I (.\lib\Include\gd32f10x_misc.h)(0x5DDF60C6)
-F (.\user\h52c0.cpp)(0x69BA4C00)(--cpp -c --cpu Cortex-M3 -g -O0 --apcs=interwork --split_sections -I.\lib\Include -I.\CMSIS\GD\GD32F10x\Include -I.\CMSIS -I.\user -I.\FreeRTOS -I.\FreeRTOS\Source\include -I.\FreeRTOS\Source\portable\RVDS\ARM_CM3 -I.\net -I.\canrule -I.\usartrule-I C:\Users\huang\Desktop\工作\项目\智能一体化备电\gdh52c0_d\RTE-I E:\Keil5\ARM\PACK\GigaDevice\GD32F10x_DFP\2.0.1\Device\Include-I E:\Keil5\ARM\CMSIS\Include-D__UVISION_VERSION="514" -DGD32F10X_CL -DUSE_STDPERIPH_DRIVER -DUSE_STDPERIPH_DRIVER -DGD32F10X_CL -DUSE_12MHZ-o .\objects\h52c0.o --omf_browse .\objects\h52c0.crf --depend .\objects\h52c0.d)
+F (.\user\h52c0.cpp)(0x69C22D6C)(--cpp -c --cpu Cortex-M3 -g -O0 --apcs=interwork --split_sections -I.\lib\Include -I.\CMSIS\GD\GD32F10x\Include -I.\CMSIS -I.\user -I.\FreeRTOS -I.\FreeRTOS\Source\include -I.\FreeRTOS\Source\portable\RVDS\ARM_CM3 -I.\net -I.\canrule -I.\usartrule-I C:\Users\huang\Desktop\工作\项目\智能一体化备电\gdh52c0_d\RTE-I E:\Keil5\ARM\PACK\GigaDevice\GD32F10x_DFP\2.0.1\Device\Include-I E:\Keil5\ARM\CMSIS\Include-D__UVISION_VERSION="514" -DGD32F10X_CL -DUSE_STDPERIPH_DRIVER -DUSE_STDPERIPH_DRIVER -DGD32F10X_CL -DUSE_12MHZ-o .\objects\h52c0.o --omf_browse .\objects\h52c0.crf --depend .\objects\h52c0.d)
 I (user\h52c0.h)(0x6639FC02)
 I (user\gpio.h)(0x69B2277F)
 I (user\Tqueue.h)(0x68EA1674)
@@ -696,7 +696,7 @@ I (.\lib\Include\gd32f10x_enet.h)(0x5DDF60C6)
 I (E:\Keil5\ARM\ARMCC\include\stdlib.h)(0x5475F300)
 I (.\lib\Include\gd32f10x_misc.h)(0x5DDF60C6)
 I (E:\Keil5\ARM\ARMCC\include\string.h)(0x5475F300)
-I (user\globalval.h)(0x69BB4972)
+I (user\globalval.h)(0x69C23D21)
 I (E:\Keil5\ARM\ARMCC\include\stdio.h)(0x5475F300)
 I (.\FreeRTOS\Source\include\task.h)(0x58FD9326)
 I (.\FreeRTOS\Source\include\list.h)(0x58FD9326)
@@ -767,9 +767,9 @@ I (.\lib\Include\gd32f10x_misc.h)(0x5DDF60C6)
 I (E:\Keil5\ARM\ARMCC\include\string.h)(0x5475F300)
 I (user\gpio.h)(0x69B2277F)
 I (user\oled_display.h)(0x618E278A)
-F (.\user\menuItem.cpp)(0x69BA4F49)(--cpp -c --cpu Cortex-M3 -g -O0 --apcs=interwork --split_sections -I.\lib\Include -I.\CMSIS\GD\GD32F10x\Include -I.\CMSIS -I.\user -I.\FreeRTOS -I.\FreeRTOS\Source\include -I.\FreeRTOS\Source\portable\RVDS\ARM_CM3 -I.\net -I.\canrule -I.\usartrule-I C:\Users\huang\Desktop\工作\项目\智能一体化备电\gdh52c0_d\RTE-I E:\Keil5\ARM\PACK\GigaDevice\GD32F10x_DFP\2.0.1\Device\Include-I E:\Keil5\ARM\CMSIS\Include-D__UVISION_VERSION="514" -DGD32F10X_CL -DUSE_STDPERIPH_DRIVER -DUSE_STDPERIPH_DRIVER -DGD32F10X_CL -DUSE_12MHZ-o .\objects\menuitem.o --omf_browse .\objects\menuitem.crf --depend .\objects\menuitem.d)
+F (.\user\menuItem.cpp)(0x69C23B4E)(--cpp -c --cpu Cortex-M3 -g -O0 --apcs=interwork --split_sections -I.\lib\Include -I.\CMSIS\GD\GD32F10x\Include -I.\CMSIS -I.\user -I.\FreeRTOS -I.\FreeRTOS\Source\include -I.\FreeRTOS\Source\portable\RVDS\ARM_CM3 -I.\net -I.\canrule -I.\usartrule-I C:\Users\huang\Desktop\工作\项目\智能一体化备电\gdh52c0_d\RTE-I E:\Keil5\ARM\PACK\GigaDevice\GD32F10x_DFP\2.0.1\Device\Include-I E:\Keil5\ARM\CMSIS\Include-D__UVISION_VERSION="514" -DGD32F10X_CL -DUSE_STDPERIPH_DRIVER -DUSE_STDPERIPH_DRIVER -DGD32F10X_CL -DUSE_12MHZ-o .\objects\menuitem.o --omf_browse .\objects\menuitem.crf --depend .\objects\menuitem.d)
 I (user\SetMenuitem.h)(0x690188B4)
-I (user\globalval.h)(0x69BB4972)
+I (user\globalval.h)(0x69C23D21)
 I (user\Tqueue.h)(0x68EA1674)
 I (user\valtype.h)(0x60964EBE)
 I (.\FreeRTOS\Source\include\FreeRTOS.h)(0x58FD9326)
@@ -886,7 +886,7 @@ I (.\canrule\canruleln.h)(0x68DA2144)
 I (.\user\can.h)(0x61397C7C)
 I (.\user\database.h)(0x6108B340)
 I (.\user\monitor.h)(0x6903332C)
-I (user\globalval.h)(0x69BB4972)
+I (user\globalval.h)(0x69C23D21)
 I (E:\Keil5\ARM\ARMCC\include\stdio.h)(0x5475F300)
 I (.\FreeRTOS\Source\include\task.h)(0x58FD9326)
 I (.\FreeRTOS\Source\include\list.h)(0x58FD9326)
@@ -907,9 +907,9 @@ I (.\net\Types.h)(0x6141DCE0)
 I (.\net\config.h)(0x61418030)
 I (.\net\utility.h)(0x61419358)
 I (user\h52c0.h)(0x6639FC02)
-F (.\user\SetMenuitem.cpp)(0x69BA5F86)(--cpp -c --cpu Cortex-M3 -g -O0 --apcs=interwork --split_sections -I.\lib\Include -I.\CMSIS\GD\GD32F10x\Include -I.\CMSIS -I.\user -I.\FreeRTOS -I.\FreeRTOS\Source\include -I.\FreeRTOS\Source\portable\RVDS\ARM_CM3 -I.\net -I.\canrule -I.\usartrule-I C:\Users\huang\Desktop\工作\项目\智能一体化备电\gdh52c0_d\RTE-I E:\Keil5\ARM\PACK\GigaDevice\GD32F10x_DFP\2.0.1\Device\Include-I E:\Keil5\ARM\CMSIS\Include-D__UVISION_VERSION="514" -DGD32F10X_CL -DUSE_STDPERIPH_DRIVER -DUSE_STDPERIPH_DRIVER -DGD32F10X_CL -DUSE_12MHZ-o .\objects\setmenuitem.o --omf_browse .\objects\setmenuitem.crf --depend .\objects\setmenuitem.d)
+F (.\user\SetMenuitem.cpp)(0x69C23B73)(--cpp -c --cpu Cortex-M3 -g -O0 --apcs=interwork --split_sections -I.\lib\Include -I.\CMSIS\GD\GD32F10x\Include -I.\CMSIS -I.\user -I.\FreeRTOS -I.\FreeRTOS\Source\include -I.\FreeRTOS\Source\portable\RVDS\ARM_CM3 -I.\net -I.\canrule -I.\usartrule-I C:\Users\huang\Desktop\工作\项目\智能一体化备电\gdh52c0_d\RTE-I E:\Keil5\ARM\PACK\GigaDevice\GD32F10x_DFP\2.0.1\Device\Include-I E:\Keil5\ARM\CMSIS\Include-D__UVISION_VERSION="514" -DGD32F10X_CL -DUSE_STDPERIPH_DRIVER -DUSE_STDPERIPH_DRIVER -DGD32F10X_CL -DUSE_12MHZ-o .\objects\setmenuitem.o --omf_browse .\objects\setmenuitem.crf --depend .\objects\setmenuitem.d)
 I (user\SetMenuitem.h)(0x690188B4)
-I (user\globalval.h)(0x69BB4972)
+I (user\globalval.h)(0x69C23D21)
 I (user\Tqueue.h)(0x68EA1674)
 I (user\valtype.h)(0x60964EBE)
 I (.\FreeRTOS\Source\include\FreeRTOS.h)(0x58FD9326)
@@ -979,8 +979,8 @@ I (.\user\monitor.h)(0x6903332C)
 I (user\module.h)(0x60B83D4E)
 I (.\canrule\powercan.h)(0x68FADB38)
 I (user\Staggeredpeak.h)(0x60C4B558)
-F (.\user\AlarmAndRecord.cpp)(0x69B9166D)(--cpp -c --cpu Cortex-M3 -g -O0 --apcs=interwork --split_sections -I.\lib\Include -I.\CMSIS\GD\GD32F10x\Include -I.\CMSIS -I.\user -I.\FreeRTOS -I.\FreeRTOS\Source\include -I.\FreeRTOS\Source\portable\RVDS\ARM_CM3 -I.\net -I.\canrule -I.\usartrule-I C:\Users\huang\Desktop\工作\项目\智能一体化备电\gdh52c0_d\RTE-I E:\Keil5\ARM\PACK\GigaDevice\GD32F10x_DFP\2.0.1\Device\Include-I E:\Keil5\ARM\CMSIS\Include-D__UVISION_VERSION="514" -DGD32F10X_CL -DUSE_STDPERIPH_DRIVER -DUSE_STDPERIPH_DRIVER -DGD32F10X_CL -DUSE_12MHZ-o .\objects\alarmandrecord.o --omf_browse .\objects\alarmandrecord.crf --depend .\objects\alarmandrecord.d)
-I (user\globalval.h)(0x69BB4972)
+F (.\user\AlarmAndRecord.cpp)(0x69BB9989)(--cpp -c --cpu Cortex-M3 -g -O0 --apcs=interwork --split_sections -I.\lib\Include -I.\CMSIS\GD\GD32F10x\Include -I.\CMSIS -I.\user -I.\FreeRTOS -I.\FreeRTOS\Source\include -I.\FreeRTOS\Source\portable\RVDS\ARM_CM3 -I.\net -I.\canrule -I.\usartrule-I C:\Users\huang\Desktop\工作\项目\智能一体化备电\gdh52c0_d\RTE-I E:\Keil5\ARM\PACK\GigaDevice\GD32F10x_DFP\2.0.1\Device\Include-I E:\Keil5\ARM\CMSIS\Include-D__UVISION_VERSION="514" -DGD32F10X_CL -DUSE_STDPERIPH_DRIVER -DUSE_STDPERIPH_DRIVER -DGD32F10X_CL -DUSE_12MHZ-o .\objects\alarmandrecord.o --omf_browse .\objects\alarmandrecord.crf --depend .\objects\alarmandrecord.d)
+I (user\globalval.h)(0x69C23D21)
 I (user\Tqueue.h)(0x68EA1674)
 I (user\valtype.h)(0x60964EBE)
 I (.\FreeRTOS\Source\include\FreeRTOS.h)(0x58FD9326)
@@ -1091,7 +1091,7 @@ I (.\lib\Include\gd32f10x_enet.h)(0x5DDF60C6)
 I (E:\Keil5\ARM\ARMCC\include\stdlib.h)(0x5475F300)
 I (.\lib\Include\gd32f10x_misc.h)(0x5DDF60C6)
 I (E:\Keil5\ARM\ARMCC\include\stdio.h)(0x5475F300)
-I (user\globalval.h)(0x69BB4972)
+I (user\globalval.h)(0x69C23D21)
 I (user\Tqueue.h)(0x68EA1674)
 I (E:\Keil5\ARM\ARMCC\include\string.h)(0x5475F300)
 I (.\FreeRTOS\Source\include\task.h)(0x58FD9326)
@@ -1117,9 +1117,9 @@ I (user\database.h)(0x6108B340)
 I (.\canrule\canruleln.h)(0x68DA2144)
 I (.\user\monitor.h)(0x6903332C)
 I (user\module.h)(0x60B83D4E)
-F (.\user\DownElectronicCtrl.cpp)(0x69BA68E6)(--cpp -c --cpu Cortex-M3 -g -O0 --apcs=interwork --split_sections -I.\lib\Include -I.\CMSIS\GD\GD32F10x\Include -I.\CMSIS -I.\user -I.\FreeRTOS -I.\FreeRTOS\Source\include -I.\FreeRTOS\Source\portable\RVDS\ARM_CM3 -I.\net -I.\canrule -I.\usartrule-I C:\Users\huang\Desktop\工作\项目\智能一体化备电\gdh52c0_d\RTE-I E:\Keil5\ARM\PACK\GigaDevice\GD32F10x_DFP\2.0.1\Device\Include-I E:\Keil5\ARM\CMSIS\Include-D__UVISION_VERSION="514" -DGD32F10X_CL -DUSE_STDPERIPH_DRIVER -DUSE_STDPERIPH_DRIVER -DGD32F10X_CL -DUSE_12MHZ-o .\objects\downelectronicctrl.o --omf_browse .\objects\downelectronicctrl.crf --depend .\objects\downelectronicctrl.d)
+F (.\user\DownElectronicCtrl.cpp)(0x69C38F64)(--cpp -c --cpu Cortex-M3 -g -O0 --apcs=interwork --split_sections -I.\lib\Include -I.\CMSIS\GD\GD32F10x\Include -I.\CMSIS -I.\user -I.\FreeRTOS -I.\FreeRTOS\Source\include -I.\FreeRTOS\Source\portable\RVDS\ARM_CM3 -I.\net -I.\canrule -I.\usartrule-I C:\Users\huang\Desktop\工作\项目\智能一体化备电\gdh52c0_d\RTE-I E:\Keil5\ARM\PACK\GigaDevice\GD32F10x_DFP\2.0.1\Device\Include-I E:\Keil5\ARM\CMSIS\Include-D__UVISION_VERSION="514" -DGD32F10X_CL -DUSE_STDPERIPH_DRIVER -DUSE_STDPERIPH_DRIVER -DGD32F10X_CL -DUSE_12MHZ-o .\objects\downelectronicctrl.o --omf_browse .\objects\downelectronicctrl.crf --depend .\objects\downelectronicctrl.d)
 I (.\canrule\powercan.h)(0x68FADB38)
-I (.\user\globalval.h)(0x69BB4972)
+I (.\user\globalval.h)(0x69C23D21)
 I (.\user\Tqueue.h)(0x68EA1674)
 I (.\user\valtype.h)(0x60964EBE)
 I (.\FreeRTOS\Source\include\FreeRTOS.h)(0x58FD9326)
@@ -1230,7 +1230,7 @@ I (.\lib\Include\gd32f10x_can.h)(0x5DDF60CA)
 I (.\lib\Include\gd32f10x_enet.h)(0x5DDF60C6)
 I (E:\Keil5\ARM\ARMCC\include\stdlib.h)(0x5475F300)
 I (.\lib\Include\gd32f10x_misc.h)(0x5DDF60C6)
-I (user\globalval.h)(0x69BB4972)
+I (user\globalval.h)(0x69C23D21)
 I (user\Tqueue.h)(0x68EA1674)
 I (E:\Keil5\ARM\ARMCC\include\string.h)(0x5475F300)
 I (E:\Keil5\ARM\ARMCC\include\stdio.h)(0x5475F300)
@@ -1258,7 +1258,7 @@ I (.\canrule\canruleln.h)(0x68DA2144)
 I (.\user\monitor.h)(0x6903332C)
 I (user\module.h)(0x60B83D4E)
 F (.\user\moduleTP.cpp)(0x619C3FC8)(--cpp -c --cpu Cortex-M3 -g -O0 --apcs=interwork --split_sections -I.\lib\Include -I.\CMSIS\GD\GD32F10x\Include -I.\CMSIS -I.\user -I.\FreeRTOS -I.\FreeRTOS\Source\include -I.\FreeRTOS\Source\portable\RVDS\ARM_CM3 -I.\net -I.\canrule -I.\usartrule-I C:\Users\huang\Desktop\工作\项目\智能一体化备电\gdh52c0_d\RTE-I E:\Keil5\ARM\PACK\GigaDevice\GD32F10x_DFP\2.0.1\Device\Include-I E:\Keil5\ARM\CMSIS\Include-D__UVISION_VERSION="514" -DGD32F10X_CL -DUSE_STDPERIPH_DRIVER -DUSE_STDPERIPH_DRIVER -DGD32F10X_CL -DUSE_12MHZ-o .\objects\moduletp.o --omf_browse .\objects\moduletp.crf --depend .\objects\moduletp.d)
-I (user\globalval.h)(0x69BB4972)
+I (user\globalval.h)(0x69C23D21)
 I (user\Tqueue.h)(0x68EA1674)
 I (user\valtype.h)(0x60964EBE)
 I (.\FreeRTOS\Source\include\FreeRTOS.h)(0x58FD9326)
@@ -1327,7 +1327,7 @@ I (.\canrule\canruleln.h)(0x68DA2144)
 I (.\user\monitor.h)(0x6903332C)
 I (user\module.h)(0x60B83D4E)
 F (.\user\rtime.cpp)(0x69B8F096)(--cpp -c --cpu Cortex-M3 -g -O0 --apcs=interwork --split_sections -I.\lib\Include -I.\CMSIS\GD\GD32F10x\Include -I.\CMSIS -I.\user -I.\FreeRTOS -I.\FreeRTOS\Source\include -I.\FreeRTOS\Source\portable\RVDS\ARM_CM3 -I.\net -I.\canrule -I.\usartrule-I C:\Users\huang\Desktop\工作\项目\智能一体化备电\gdh52c0_d\RTE-I E:\Keil5\ARM\PACK\GigaDevice\GD32F10x_DFP\2.0.1\Device\Include-I E:\Keil5\ARM\CMSIS\Include-D__UVISION_VERSION="514" -DGD32F10X_CL -DUSE_STDPERIPH_DRIVER -DUSE_STDPERIPH_DRIVER -DGD32F10X_CL -DUSE_12MHZ-o .\objects\rtime.o --omf_browse .\objects\rtime.crf --depend .\objects\rtime.d)
-I (user\globalval.h)(0x69BB4972)
+I (user\globalval.h)(0x69C23D21)
 I (user\Tqueue.h)(0x68EA1674)
 I (user\valtype.h)(0x60964EBE)
 I (.\FreeRTOS\Source\include\FreeRTOS.h)(0x58FD9326)
@@ -1397,8 +1397,8 @@ I (.\user\monitor.h)(0x6903332C)
 I (user\module.h)(0x60B83D4E)
 I (.\canrule\powercan.h)(0x68FADB38)
 F (.\user\user.cpp)(0x6593D1E4)(--cpp -c --cpu Cortex-M3 -g -O0 --apcs=interwork --split_sections -I.\lib\Include -I.\CMSIS\GD\GD32F10x\Include -I.\CMSIS -I.\user -I.\FreeRTOS -I.\FreeRTOS\Source\include -I.\FreeRTOS\Source\portable\RVDS\ARM_CM3 -I.\net -I.\canrule -I.\usartrule-I C:\Users\huang\Desktop\工作\项目\智能一体化备电\gdh52c0_d\RTE-I E:\Keil5\ARM\PACK\GigaDevice\GD32F10x_DFP\2.0.1\Device\Include-I E:\Keil5\ARM\CMSIS\Include-D__UVISION_VERSION="514" -DGD32F10X_CL -DUSE_STDPERIPH_DRIVER -DUSE_STDPERIPH_DRIVER -DGD32F10X_CL -DUSE_12MHZ-o .\objects\user.o --omf_browse .\objects\user.crf --depend .\objects\user.d)
-I (.\usartrule\cydt1363.h)(0x690C5ECE)
-I (.\user\globalval.h)(0x69BB4972)
+I (.\usartrule\cydt1363.h)(0x69C0A1BC)
+I (.\user\globalval.h)(0x69C23D21)
 I (.\user\Tqueue.h)(0x68EA1674)
 I (.\user\valtype.h)(0x60964EBE)
 I (.\FreeRTOS\Source\include\FreeRTOS.h)(0x58FD9326)
@@ -1466,8 +1466,8 @@ I (.\user\database.h)(0x6108B340)
 I (.\canrule\canruleln.h)(0x68DA2144)
 I (.\user\monitor.h)(0x6903332C)
 I (.\user\module.h)(0x60B83D4E)
-F (.\user\JinGui.cpp)(0x69143F46)(--cpp -c --cpu Cortex-M3 -g -O0 --apcs=interwork --split_sections -I.\lib\Include -I.\CMSIS\GD\GD32F10x\Include -I.\CMSIS -I.\user -I.\FreeRTOS -I.\FreeRTOS\Source\include -I.\FreeRTOS\Source\portable\RVDS\ARM_CM3 -I.\net -I.\canrule -I.\usartrule-I C:\Users\huang\Desktop\工作\项目\智能一体化备电\gdh52c0_d\RTE-I E:\Keil5\ARM\PACK\GigaDevice\GD32F10x_DFP\2.0.1\Device\Include-I E:\Keil5\ARM\CMSIS\Include-D__UVISION_VERSION="514" -DGD32F10X_CL -DUSE_STDPERIPH_DRIVER -DUSE_STDPERIPH_DRIVER -DGD32F10X_CL -DUSE_12MHZ-o .\objects\jingui.o --omf_browse .\objects\jingui.crf --depend .\objects\jingui.d)
-I (user\globalval.h)(0x69BB4972)
+F (.\user\JinGui.cpp)(0x69C35490)(--cpp -c --cpu Cortex-M3 -g -O0 --apcs=interwork --split_sections -I.\lib\Include -I.\CMSIS\GD\GD32F10x\Include -I.\CMSIS -I.\user -I.\FreeRTOS -I.\FreeRTOS\Source\include -I.\FreeRTOS\Source\portable\RVDS\ARM_CM3 -I.\net -I.\canrule -I.\usartrule-I C:\Users\huang\Desktop\工作\项目\智能一体化备电\gdh52c0_d\RTE-I E:\Keil5\ARM\PACK\GigaDevice\GD32F10x_DFP\2.0.1\Device\Include-I E:\Keil5\ARM\CMSIS\Include-D__UVISION_VERSION="514" -DGD32F10X_CL -DUSE_STDPERIPH_DRIVER -DUSE_STDPERIPH_DRIVER -DGD32F10X_CL -DUSE_12MHZ-o .\objects\jingui.o --omf_browse .\objects\jingui.crf --depend .\objects\jingui.d)
+I (user\globalval.h)(0x69C23D21)
 I (user\Tqueue.h)(0x68EA1674)
 I (user\valtype.h)(0x60964EBE)
 I (.\FreeRTOS\Source\include\FreeRTOS.h)(0x58FD9326)
@@ -1535,8 +1535,8 @@ I (user\database.h)(0x6108B340)
 I (.\canrule\canruleln.h)(0x68DA2144)
 I (.\user\monitor.h)(0x6903332C)
 I (user\module.h)(0x60B83D4E)
-F (.\user\brainbattery.cpp)(0x69B91DA1)(--cpp -c --cpu Cortex-M3 -g -O0 --apcs=interwork --split_sections -I.\lib\Include -I.\CMSIS\GD\GD32F10x\Include -I.\CMSIS -I.\user -I.\FreeRTOS -I.\FreeRTOS\Source\include -I.\FreeRTOS\Source\portable\RVDS\ARM_CM3 -I.\net -I.\canrule -I.\usartrule-I C:\Users\huang\Desktop\工作\项目\智能一体化备电\gdh52c0_d\RTE-I E:\Keil5\ARM\PACK\GigaDevice\GD32F10x_DFP\2.0.1\Device\Include-I E:\Keil5\ARM\CMSIS\Include-D__UVISION_VERSION="514" -DGD32F10X_CL -DUSE_STDPERIPH_DRIVER -DUSE_STDPERIPH_DRIVER -DGD32F10X_CL -DUSE_12MHZ-o .\objects\brainbattery.o --omf_browse .\objects\brainbattery.crf --depend .\objects\brainbattery.d)
-I (user\globalval.h)(0x69BB4972)
+F (.\user\brainbattery.cpp)(0x69C1F643)(--cpp -c --cpu Cortex-M3 -g -O0 --apcs=interwork --split_sections -I.\lib\Include -I.\CMSIS\GD\GD32F10x\Include -I.\CMSIS -I.\user -I.\FreeRTOS -I.\FreeRTOS\Source\include -I.\FreeRTOS\Source\portable\RVDS\ARM_CM3 -I.\net -I.\canrule -I.\usartrule-I C:\Users\huang\Desktop\工作\项目\智能一体化备电\gdh52c0_d\RTE-I E:\Keil5\ARM\PACK\GigaDevice\GD32F10x_DFP\2.0.1\Device\Include-I E:\Keil5\ARM\CMSIS\Include-D__UVISION_VERSION="514" -DGD32F10X_CL -DUSE_STDPERIPH_DRIVER -DUSE_STDPERIPH_DRIVER -DGD32F10X_CL -DUSE_12MHZ-o .\objects\brainbattery.o --omf_browse .\objects\brainbattery.crf --depend .\objects\brainbattery.d)
+I (user\globalval.h)(0x69C23D21)
 I (user\Tqueue.h)(0x68EA1674)
 I (user\valtype.h)(0x60964EBE)
 I (.\FreeRTOS\Source\include\FreeRTOS.h)(0x58FD9326)
@@ -2203,7 +2203,7 @@ I (.\FreeRTOS\Source\include\task.h)(0x58FD9326)
 I (.\FreeRTOS\Source\include\list.h)(0x58FD9326)
 F (.\canrule\powercan.cpp)(0x690DD544)(--cpp -c --cpu Cortex-M3 -g -O0 --apcs=interwork --split_sections -I.\lib\Include -I.\CMSIS\GD\GD32F10x\Include -I.\CMSIS -I.\user -I.\FreeRTOS -I.\FreeRTOS\Source\include -I.\FreeRTOS\Source\portable\RVDS\ARM_CM3 -I.\net -I.\canrule -I.\usartrule-I C:\Users\huang\Desktop\工作\项目\智能一体化备电\gdh52c0_d\RTE-I E:\Keil5\ARM\PACK\GigaDevice\GD32F10x_DFP\2.0.1\Device\Include-I E:\Keil5\ARM\CMSIS\Include-D__UVISION_VERSION="514" -DGD32F10X_CL -DUSE_STDPERIPH_DRIVER -DUSE_STDPERIPH_DRIVER -DGD32F10X_CL -DUSE_12MHZ-o .\objects\powercan.o --omf_browse .\objects\powercan.crf --depend .\objects\powercan.d)
 I (canrule\powercan.h)(0x68FADB38)
-I (.\user\globalval.h)(0x69BB4972)
+I (.\user\globalval.h)(0x69C23D21)
 I (.\user\Tqueue.h)(0x68EA1674)
 I (.\user\valtype.h)(0x60964EBE)
 I (.\FreeRTOS\Source\include\FreeRTOS.h)(0x58FD9326)
@@ -2318,7 +2318,7 @@ I (.\lib\Include\gd32f10x_misc.h)(0x5DDF60C6)
 I (E:\Keil5\ARM\ARMCC\include\string.h)(0x5475F300)
 I (.\user\database.h)(0x6108B340)
 I (.\user\monitor.h)(0x6903332C)
-I (.\user\globalval.h)(0x69BB4972)
+I (.\user\globalval.h)(0x69C23D21)
 I (E:\Keil5\ARM\ARMCC\include\stdio.h)(0x5475F300)
 I (.\FreeRTOS\Source\include\task.h)(0x58FD9326)
 I (.\FreeRTOS\Source\include\list.h)(0x58FD9326)
@@ -2342,7 +2342,7 @@ I (.\user\h52c0.h)(0x6639FC02)
 I (.\user\module.h)(0x60B83D4E)
 F (.\task\UsartTask.cpp)(0x69B7A1AF)(--cpp -c --cpu Cortex-M3 -g -O0 --apcs=interwork --split_sections -I.\lib\Include -I.\CMSIS\GD\GD32F10x\Include -I.\CMSIS -I.\user -I.\FreeRTOS -I.\FreeRTOS\Source\include -I.\FreeRTOS\Source\portable\RVDS\ARM_CM3 -I.\net -I.\canrule -I.\usartrule-I C:\Users\huang\Desktop\工作\项目\智能一体化备电\gdh52c0_d\RTE-I E:\Keil5\ARM\PACK\GigaDevice\GD32F10x_DFP\2.0.1\Device\Include-I E:\Keil5\ARM\CMSIS\Include-D__UVISION_VERSION="514" -DGD32F10X_CL -DUSE_STDPERIPH_DRIVER -DUSE_STDPERIPH_DRIVER -DGD32F10X_CL -DUSE_12MHZ-o .\objects\usarttask.o --omf_browse .\objects\usarttask.crf --depend .\objects\usarttask.d)
 I (.\user\user.h)(0x64EF11DA)
-I (.\user\globalval.h)(0x69BB4972)
+I (.\user\globalval.h)(0x69C23D21)
 I (.\user\Tqueue.h)(0x68EA1674)
 I (.\user\valtype.h)(0x60964EBE)
 I (.\FreeRTOS\Source\include\FreeRTOS.h)(0x58FD9326)
@@ -2411,7 +2411,7 @@ I (.\canrule\canruleln.h)(0x68DA2144)
 I (.\user\monitor.h)(0x6903332C)
 I (.\user\module.h)(0x60B83D4E)
 F (.\task\ScreenTask.cpp)(0x69B3C389)(--cpp -c --cpu Cortex-M3 -g -O0 --apcs=interwork --split_sections -I.\lib\Include -I.\CMSIS\GD\GD32F10x\Include -I.\CMSIS -I.\user -I.\FreeRTOS -I.\FreeRTOS\Source\include -I.\FreeRTOS\Source\portable\RVDS\ARM_CM3 -I.\net -I.\canrule -I.\usartrule-I C:\Users\huang\Desktop\工作\项目\智能一体化备电\gdh52c0_d\RTE-I E:\Keil5\ARM\PACK\GigaDevice\GD32F10x_DFP\2.0.1\Device\Include-I E:\Keil5\ARM\CMSIS\Include-D__UVISION_VERSION="514" -DGD32F10X_CL -DUSE_STDPERIPH_DRIVER -DUSE_STDPERIPH_DRIVER -DGD32F10X_CL -DUSE_12MHZ-o .\objects\screentask.o --omf_browse .\objects\screentask.crf --depend .\objects\screentask.d)
-I (.\user\globalval.h)(0x69BB4972)
+I (.\user\globalval.h)(0x69C23D21)
 I (.\user\Tqueue.h)(0x68EA1674)
 I (.\user\valtype.h)(0x60964EBE)
 I (.\FreeRTOS\Source\include\FreeRTOS.h)(0x58FD9326)
@@ -2480,7 +2480,7 @@ I (.\canrule\canruleln.h)(0x68DA2144)
 I (.\user\monitor.h)(0x6903332C)
 I (.\user\module.h)(0x60B83D4E)
 F (.\task\CanTask.cpp)(0x69003EBE)(--cpp -c --cpu Cortex-M3 -g -O0 --apcs=interwork --split_sections -I.\lib\Include -I.\CMSIS\GD\GD32F10x\Include -I.\CMSIS -I.\user -I.\FreeRTOS -I.\FreeRTOS\Source\include -I.\FreeRTOS\Source\portable\RVDS\ARM_CM3 -I.\net -I.\canrule -I.\usartrule-I C:\Users\huang\Desktop\工作\项目\智能一体化备电\gdh52c0_d\RTE-I E:\Keil5\ARM\PACK\GigaDevice\GD32F10x_DFP\2.0.1\Device\Include-I E:\Keil5\ARM\CMSIS\Include-D__UVISION_VERSION="514" -DGD32F10X_CL -DUSE_STDPERIPH_DRIVER -DUSE_STDPERIPH_DRIVER -DGD32F10X_CL -DUSE_12MHZ-o .\objects\cantask.o --omf_browse .\objects\cantask.crf --depend .\objects\cantask.d)
-I (.\user\globalval.h)(0x69BB4972)
+I (.\user\globalval.h)(0x69C23D21)
 I (.\user\Tqueue.h)(0x68EA1674)
 I (.\user\valtype.h)(0x60964EBE)
 I (.\FreeRTOS\Source\include\FreeRTOS.h)(0x58FD9326)
@@ -2550,7 +2550,7 @@ I (.\user\monitor.h)(0x6903332C)
 I (.\user\module.h)(0x60B83D4E)
 I (.\canrule\powercan.h)(0x68FADB38)
 F (.\task\PortTask.cpp)(0x69B75FD4)(--cpp -c --cpu Cortex-M3 -g -O0 --apcs=interwork --split_sections -I.\lib\Include -I.\CMSIS\GD\GD32F10x\Include -I.\CMSIS -I.\user -I.\FreeRTOS -I.\FreeRTOS\Source\include -I.\FreeRTOS\Source\portable\RVDS\ARM_CM3 -I.\net -I.\canrule -I.\usartrule-I C:\Users\huang\Desktop\工作\项目\智能一体化备电\gdh52c0_d\RTE-I E:\Keil5\ARM\PACK\GigaDevice\GD32F10x_DFP\2.0.1\Device\Include-I E:\Keil5\ARM\CMSIS\Include-D__UVISION_VERSION="514" -DGD32F10X_CL -DUSE_STDPERIPH_DRIVER -DUSE_STDPERIPH_DRIVER -DGD32F10X_CL -DUSE_12MHZ-o .\objects\porttask.o --omf_browse .\objects\porttask.crf --depend .\objects\porttask.d)
-I (.\user\globalval.h)(0x69BB4972)
+I (.\user\globalval.h)(0x69C23D21)
 I (.\user\Tqueue.h)(0x68EA1674)
 I (.\user\valtype.h)(0x60964EBE)
 I (.\FreeRTOS\Source\include\FreeRTOS.h)(0x58FD9326)
@@ -2619,7 +2619,7 @@ I (.\canrule\canruleln.h)(0x68DA2144)
 I (.\user\monitor.h)(0x6903332C)
 I (.\user\module.h)(0x60B83D4E)
 F (.\task\Swtmr1Callback.cpp)(0x69B8AF0F)(--cpp -c --cpu Cortex-M3 -g -O0 --apcs=interwork --split_sections -I.\lib\Include -I.\CMSIS\GD\GD32F10x\Include -I.\CMSIS -I.\user -I.\FreeRTOS -I.\FreeRTOS\Source\include -I.\FreeRTOS\Source\portable\RVDS\ARM_CM3 -I.\net -I.\canrule -I.\usartrule-I C:\Users\huang\Desktop\工作\项目\智能一体化备电\gdh52c0_d\RTE-I E:\Keil5\ARM\PACK\GigaDevice\GD32F10x_DFP\2.0.1\Device\Include-I E:\Keil5\ARM\CMSIS\Include-D__UVISION_VERSION="514" -DGD32F10X_CL -DUSE_STDPERIPH_DRIVER -DUSE_STDPERIPH_DRIVER -DGD32F10X_CL -DUSE_12MHZ-o .\objects\swtmr1callback.o --omf_browse .\objects\swtmr1callback.crf --depend .\objects\swtmr1callback.d)
-I (.\user\globalval.h)(0x69BB4972)
+I (.\user\globalval.h)(0x69C23D21)
 I (.\user\Tqueue.h)(0x68EA1674)
 I (.\user\valtype.h)(0x60964EBE)
 I (.\FreeRTOS\Source\include\FreeRTOS.h)(0x58FD9326)
@@ -2688,7 +2688,7 @@ I (.\canrule\canruleln.h)(0x68DA2144)
 I (.\user\monitor.h)(0x6903332C)
 I (.\user\module.h)(0x60B83D4E)
 F (.\task\Swtmr2Callback.cpp)(0x69B27432)(--cpp -c --cpu Cortex-M3 -g -O0 --apcs=interwork --split_sections -I.\lib\Include -I.\CMSIS\GD\GD32F10x\Include -I.\CMSIS -I.\user -I.\FreeRTOS -I.\FreeRTOS\Source\include -I.\FreeRTOS\Source\portable\RVDS\ARM_CM3 -I.\net -I.\canrule -I.\usartrule-I C:\Users\huang\Desktop\工作\项目\智能一体化备电\gdh52c0_d\RTE-I E:\Keil5\ARM\PACK\GigaDevice\GD32F10x_DFP\2.0.1\Device\Include-I E:\Keil5\ARM\CMSIS\Include-D__UVISION_VERSION="514" -DGD32F10X_CL -DUSE_STDPERIPH_DRIVER -DUSE_STDPERIPH_DRIVER -DGD32F10X_CL -DUSE_12MHZ-o .\objects\swtmr2callback.o --omf_browse .\objects\swtmr2callback.crf --depend .\objects\swtmr2callback.d)
-I (.\user\globalval.h)(0x69BB4972)
+I (.\user\globalval.h)(0x69C23D21)
 I (.\user\Tqueue.h)(0x68EA1674)
 I (.\user\valtype.h)(0x60964EBE)
 I (.\FreeRTOS\Source\include\FreeRTOS.h)(0x58FD9326)
@@ -2757,7 +2757,7 @@ I (.\canrule\canruleln.h)(0x68DA2144)
 I (.\user\monitor.h)(0x6903332C)
 I (.\user\module.h)(0x60B83D4E)
 F (.\task\MonitorTask.cpp)(0x60CC7D4C)(--cpp -c --cpu Cortex-M3 -g -O0 --apcs=interwork --split_sections -I.\lib\Include -I.\CMSIS\GD\GD32F10x\Include -I.\CMSIS -I.\user -I.\FreeRTOS -I.\FreeRTOS\Source\include -I.\FreeRTOS\Source\portable\RVDS\ARM_CM3 -I.\net -I.\canrule -I.\usartrule-I C:\Users\huang\Desktop\工作\项目\智能一体化备电\gdh52c0_d\RTE-I E:\Keil5\ARM\PACK\GigaDevice\GD32F10x_DFP\2.0.1\Device\Include-I E:\Keil5\ARM\CMSIS\Include-D__UVISION_VERSION="514" -DGD32F10X_CL -DUSE_STDPERIPH_DRIVER -DUSE_STDPERIPH_DRIVER -DGD32F10X_CL -DUSE_12MHZ-o .\objects\monitortask.o --omf_browse .\objects\monitortask.crf --depend .\objects\monitortask.d)
-I (.\user\globalval.h)(0x69BB4972)
+I (.\user\globalval.h)(0x69C23D21)
 I (.\user\Tqueue.h)(0x68EA1674)
 I (.\user\valtype.h)(0x60964EBE)
 I (.\FreeRTOS\Source\include\FreeRTOS.h)(0x58FD9326)
@@ -2825,9 +2825,9 @@ I (.\user\database.h)(0x6108B340)
 I (.\canrule\canruleln.h)(0x68DA2144)
 I (.\user\monitor.h)(0x6903332C)
 I (.\user\module.h)(0x60B83D4E)
-F (.\usartrule\cydt1363.cpp)(0x691EB66A)(--cpp -c --cpu Cortex-M3 -g -O0 --apcs=interwork --split_sections -I.\lib\Include -I.\CMSIS\GD\GD32F10x\Include -I.\CMSIS -I.\user -I.\FreeRTOS -I.\FreeRTOS\Source\include -I.\FreeRTOS\Source\portable\RVDS\ARM_CM3 -I.\net -I.\canrule -I.\usartrule-I C:\Users\huang\Desktop\工作\项目\智能一体化备电\gdh52c0_d\RTE-I E:\Keil5\ARM\PACK\GigaDevice\GD32F10x_DFP\2.0.1\Device\Include-I E:\Keil5\ARM\CMSIS\Include-D__UVISION_VERSION="514" -DGD32F10X_CL -DUSE_STDPERIPH_DRIVER -DUSE_STDPERIPH_DRIVER -DGD32F10X_CL -DUSE_12MHZ-o .\objects\cydt1363.o --omf_browse .\objects\cydt1363.crf --depend .\objects\cydt1363.d)
-I (usartrule\cydt1363.h)(0x690C5ECE)
-I (.\user\globalval.h)(0x69BB4972)
+F (.\usartrule\cydt1363.cpp)(0x69C335A1)(--cpp -c --cpu Cortex-M3 -g -O0 --apcs=interwork --split_sections -I.\lib\Include -I.\CMSIS\GD\GD32F10x\Include -I.\CMSIS -I.\user -I.\FreeRTOS -I.\FreeRTOS\Source\include -I.\FreeRTOS\Source\portable\RVDS\ARM_CM3 -I.\net -I.\canrule -I.\usartrule-I C:\Users\huang\Desktop\工作\项目\智能一体化备电\gdh52c0_d\RTE-I E:\Keil5\ARM\PACK\GigaDevice\GD32F10x_DFP\2.0.1\Device\Include-I E:\Keil5\ARM\CMSIS\Include-D__UVISION_VERSION="514" -DGD32F10X_CL -DUSE_STDPERIPH_DRIVER -DUSE_STDPERIPH_DRIVER -DGD32F10X_CL -DUSE_12MHZ-o .\objects\cydt1363.o --omf_browse .\objects\cydt1363.crf --depend .\objects\cydt1363.d)
+I (usartrule\cydt1363.h)(0x69C0A1BC)
+I (.\user\globalval.h)(0x69C23D21)
 I (.\user\Tqueue.h)(0x68EA1674)
 I (.\user\valtype.h)(0x60964EBE)
 I (.\FreeRTOS\Source\include\FreeRTOS.h)(0x58FD9326)

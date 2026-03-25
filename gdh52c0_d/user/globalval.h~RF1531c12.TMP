@@ -535,7 +535,6 @@ typedef struct
 	u16 BattWarning;
 	u16 prBattWarning;
 	u16 remainCap;
-	
 }Battery;
 
 typedef struct
@@ -1327,8 +1326,8 @@ extern u8 recvBattEnd;
 extern u16 Volcut;//µÁ—π„–÷µ
 extern u16 recoverVol;//ª÷∏¥µÁ—π
 extern u8 g_devStatusFlags;
-extern u16 *disChargeCount[];
-extern u16 *chargeCount[];
+extern u16 disChargeCount[LI_BATTERY_NUM];
+extern u16 chargeCount[LI_BATTERY_NUM];
 
 
 #endif

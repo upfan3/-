@@ -1041,6 +1041,14 @@ void h52c0::InitPara(void)
 							 SaveSwitchPara( &gSwitchPara[0],(TOTAL_USER+8)*sizeof(SwitchPara));
 							
 			}
+			
+//			      readI2C2(SWITCH_PARA,(u8 *)&_flag,2);	
+//			if(_flag==0xA5A5)
+//			{
+//				      readI2C2(SWITCH_PARA_STATR ,(u8 *)&gSwitchPara,(TOTAL_USER+8)*sizeof(SwitchPara));	
+//			}
+//			else
+//			{
 
 
 

@@ -273,23 +273,23 @@ void addAlarm(AlarmType type,u8 nb,AlarmBehavior behavior,u32 ext)
 		 g_devStatusFlags |= FLAG_ALARM;	
 	 
 }
-void ledbattwarn(void)
-{
-	u8 warn=0;
-	u8 flag=0;
-	switch (flag)
-	{
-		case 0:
-			pgh52c0->m_io.set(WARN_LED,LED_ON);
-		break;
-		
-			case 1:
-			pgh52c0->m_io.set(WARN_LED,LED_ON);
-			
-	}
+//void ledbattwarn(void)
+//{
+//	u8 warn=0;
+//	u8 flag=0;
+//	switch (flag)
+//	{
+//		case 0:
+//			pgh52c0->m_io.set(WARN_LED,LED_ON);
+//		break;
+//		
+//			case 1:
+//			pgh52c0->m_io.set(WARN_LED,LED_ON);
+//			
+//	}
 
 
-}
+//}
 
 //void battStatus(void)
 //{
@@ -323,7 +323,7 @@ void ledIndicator(void)
         baseStatePrio = PRIO_CHARGING;
     else if (g_devStatusFlags & FLAG_NORMAL)
         baseStatePrio = PRIO_NORMAL;
-    else
+    else if(g_devStatusFlags & FLAG_OFF)
         baseStatePrio = PRIO_OFF;
 
     // ===================== ¡¾ÂÌµÆ¶ÀÁ¢ÉÁË¸¡¿=====================
@@ -355,7 +355,7 @@ void ledIndicator(void)
         case PRIO_CHARGING:
             blink_green ? pgh52c0->m_io.set(RUN_LED, LED_ON) : pgh52c0->m_io.set(RUN_LED, LED_OFF);  // ¶ÀÁ¢ÂýÉÁ
             break;
-        default:
+        case PRIO_OFF:
             pgh52c0->m_io.set(RUN_LED, LED_OFF);
             break;
     }
@@ -376,9 +376,9 @@ void ledIndicator(void)
             blink_red ? pgh52c0->m_io.set(WARN_LED, LED_ON) : pgh52c0->m_io.set(WARN_LED, LED_OFF);  // ¶ÀÁ¢ÂýÉÁ
             break;
 
-        default:
-            pgh52c0->m_io.set(WARN_LED, LED_OFF);
-            break;
+//        default:
+//            //pgh52c0->m_io.set(WARN_LED, LED_OFF);
+//            break;
     }
 }
 

@@ -237,15 +237,15 @@ u8 JinGuiSendCmdData( u8 addr,u8 *sendbuff)
 	
 			if( sysPara[SWITCH_FACT]==0)
 			{
-				 if(gSwitchData[addr-1].CmdStatus==0)
+				 if(gSwitchData[addr-1].CmdStatus==0)//设备空闲，无命令在执行
 				 {
-					 if(gSwitchData[addr-1].st_statusflag.bit_setCmd==0)
+					 if(gSwitchData[addr-1].st_statusflag.bit_setCmd==0)//未分闸 = 合闸/待机状态
 					 {
 						 
-						 if(gSwitchData[addr-1].readAuthorize==0)
+						 if(gSwitchData[addr-1].readAuthorize==0)//未授权
 						 {
 							 gSwitchData[addr-1].readAuthorize=1;
-							 len=SetJinGuiDataCmd(sendbuff,addr,0x16,0x1804,0X10,0);
+							 len=SetJinGuiDataCmd(sendbuff,addr,0x16,0x1804,0X10,0);//批量读取电压/电流/功率/电量/温度/状态
 							 return len;
 						 }
 						 else
@@ -253,7 +253,7 @@ u8 JinGuiSendCmdData( u8 addr,u8 *sendbuff)
 								Cmd03[0]=0x30;
 								Cmd03[1]=0x22;
 								gSwitchData[addr-1].readAuthorize=0;
-								len=SetJinGuiDataCmd(sendbuff,addr,0x03,0x3022,0X01,0);
+								len=SetJinGuiDataCmd(sendbuff,addr,0x03,0x3022,0X01,0);//授权
 								return len;
 						 }
 						 
@@ -1146,16 +1146,39 @@ void DownElectricty(void)
 										    setFlag[i]=1;
 									 }
 									 
-								 if(totalSOC<gSwitchPara[i].st_downEnery)
-							{
-
-										  if(setFlag[i]==1)
-													gSwitchData[i].st_stopSupplyCount=0;
-
-							}
-					 
-					 
+								if(gSwitchData[i].st_BaseEnergy<(gSwitchData[i].st_BaseEnergy+gSwitchPara[i].st_downEnery))
+									{
+											//if(gSwitchData[i].st_Energy>=gSwitchData[i].st_BaseEnergy+gSwitchPara[i].st_downEnery)//
+											if(gDCdistribution.pst_enerqy[i]>=gSwitchData[i].st_BaseEnergy+gSwitchPara[i].st_downEnery)
+										 {
+													
+													if(setFlag[i]==1)
+															gSwitchData[i].st_stopSupplyCount=0;
+												
+											}
+									}
+								else if(gSwitchData[i].st_BaseEnergy>=(gSwitchData[i].st_BaseEnergy+gSwitchPara[i].st_downEnery))//处理设定值溢出的情况
+									{
+										 // if((gSwitchData[i].st_Energy>gSwitchData[i].st_BaseEnergy+gSwitchPara[i].st_downEnery)&&(gSwitchData[i].st_Energy<gSwitchData[i].st_BaseEnergy))
+											if((gDCdistribution.pst_enerqy[i]>gSwitchData[i].st_BaseEnergy+gSwitchPara[i].st_downEnery)&&(gDCdistribution.pst_enerqy[i]<gSwitchData[i].st_BaseEnergy))
+										 {
+													
+														if(setFlag[i]==1) 
+															gSwitchData[i].st_stopSupplyCount=0;
+				
+											}
+									}
 						}
+									 
+//								 if(totalSOC<gSwitchPara[i].st_downEnery)
+//							{
+
+//										  if(setFlag[i]==1)
+//													gSwitchData[i].st_stopSupplyCount=0;
+
+//							}
+					 
+
 						else
 						{
 							    gSwitchData[i].st_statusflag.bit_ready=0;

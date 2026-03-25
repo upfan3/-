@@ -676,6 +676,10 @@ void CYDT1363::DuleWith1363Data(void)//1363协议打包处理
 									 { 
 										 setE546();//锂电
 									 }
+									 else if(m_cid1==0xE6)
+									 {
+										setE646();
+									 }
 							     else//无效CID2
 										{
 												 m_rtn=4;
@@ -708,6 +712,11 @@ void CYDT1363::DuleWith1363Data(void)//1363协议打包处理
 									 {
 										 setE248();//本地下电与扩展下电
 									 }
+									 else if(m_cid1==0xE6)
+									 {
+										setE648();
+									 }
+									 
 									 else//无效CID2
 										{
 												 m_rtn=4;
@@ -2536,7 +2545,24 @@ void CYDT1363::setE546(void)
 			 Set1363Packet();	
 }
 
-
+void CYDT1363::setE646(void)
+{
+		u8 command_group=0;
+			if(AsciitoHex(&command_group,&m_recvdata[0])==0){ReturnVailData(6);return ;}//无效命令;
+			if(command_group==0xff)
+			{
+						SetFourByteData((float)Volcut/100);
+						SetFourByteData((float)recoverVol/100);
+		  }
+		  else
+		  {
+					ReturnVailData(6);return ;
+			}
+	
+			///////////////////////////////数据打包///////////////////////////////////////////////////////////////////////////////
+		   SetDataLen(m_sdatlen);
+			 Set1363Packet();	
+}
 
 
 /////////////////设置参数数据///////////////////////////////////////////
@@ -3680,7 +3706,31 @@ void CYDT1363:: setE548(void)
 		
 }
 
+void CYDT1363:: setE648(void)
+{
+	 u32 cmd_dat=0;
+	 u8 cmd_type=0;
 
+	  if(AsciitoHex(&cmd_type,&m_recvdata[2])==0){ReturnVailData(6);return ;}//无效命令;
+	  if(AsciitoHex32L(&cmd_dat ,&m_recvdata[4])==0){ReturnVailData(6);return ;};//无效命令;
+		
+		if(cmd_type==0x80)//备电切换
+	  {
+			    	Volcut  = *((float*)&cmd_dat)*100;
+			      pgh52c0->savePara(&Volcut);//掉电保存
+
+		}
+		else if(cmd_type==0x81)//恢复电压
+		{
+			      recoverVol  = *((float*)&cmd_dat)*100;
+			      pgh52c0->savePara(&recoverVol);//掉电保存
+
+		}
+		
+		
+	  SetDataLen(m_sdatlen);
+		Set1363Packet();
+}
 
 
 void CYDT1363::set42AE(void)

@@ -536,6 +536,8 @@ typedef struct
 	u16 prBattWarning;
 	u16 remainCap;
 	
+	u16 disChargeCount;
+	u16 chargeCount;
 }Battery;
 
 typedef struct

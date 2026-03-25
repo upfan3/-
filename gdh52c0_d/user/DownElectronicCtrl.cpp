@@ -12,6 +12,7 @@ extern PowrCan PowCanDevice;
 extern u32 gTotalMrEnergy;
 extern u16 gpower[3];
 extern u8 stopPowrSupply;
+extern u8 powerBreak;
 u8 usart3ConnetTimeOut=0;
 u8 acdelay=140;
 u16 downloadstatus[6]={0,0,0,0,0,0};
@@ -20,7 +21,8 @@ u16 downloadstatus[6]={0,0,0,0,0,0};
 
 u8 setBattParaAddr = 0;
 TestLogicFlag testFlag = {0,1,1};
-u8 setMospara = MOS_OFF;
+u8 setDisChargeMospara = MOS_OFF;
+u8 setChargeMospara = MOS_OFF;
 
 u32 startEnergy[2]={0,0};
 void DownElectronicOnTick(void) //下电延时计数，每秒调用1次
@@ -474,56 +476,67 @@ void battCut(u8 addr)
 {
 	
 			u8 lastStatus = g_devStatusFlags;
-			u8 index = addr - 1;        
+			u8 index = addr - 1;      
+	
+//		  if(*((s16 *)&gpSysData[BATT_CURR3])==0)
+//			{
+					if((*((u16 *)&gpSysData[DCVOLTAGE])) <=Volcut &&(*((u16 *)&gpSysData[DCVOLTAGE])) > 4200 && batt[index].Vbat > 0)
+					{
+			//			pgh52c0->setdo(0);
+//						setChargeMospara = MOS_OFF;
+						setDisChargeMospara = MOS_ON;
 
-			if((*((u16 *)&gpSysData[DCVOLTAGE])) <=Volcut &&(*((u16 *)&gpSysData[DCVOLTAGE])) > 4200 && batt[index].Vbat > 0)
-			{
-	//			pgh52c0->setdo(0);
-				setMospara = MOS_ON;
-				testFlag.status = 1;
-				g_devStatusFlags &= ~FLAG_CHARGING;
-				g_devStatusFlags |= FLAG_DISCHARGING;
-				
-				
-			}
-			
-			if((*((u16 *)&gpSysData[DCVOLTAGE])) > recoverVol)
-			{
-
-
-            if(totalSOC == 10000)
-            {              
-                g_devStatusFlags &= ~FLAG_CHARGING;
-                g_devStatusFlags |= FLAG_NORMAL;
-            }
-            else
-            {
-                if(totalBattI > 0 && batt[index].Vbat > 0 && recvBattEnd == 1)
-                {
-										g_devStatusFlags &= ~FLAG_DISCHARGING;
-                    recvBattEnd = 0;
-		//							pgh52c0->clrdo(0);
-//										testFlag.status = 0;
-                    setMospara = MOS_OFF;
-                    g_devStatusFlags |= FLAG_CHARGING;
-
-									
-                }
-            }
+						testFlag.status = 1;
+						g_devStatusFlags &= ~FLAG_CHARGING;
+						g_devStatusFlags |= FLAG_DISCHARGING;
+						powerBreak =1;
 						
-
 						
-			 }
-			 if( !(lastStatus & FLAG_DISCHARGING) && (g_devStatusFlags & FLAG_DISCHARGING) )
+					}
+//			}
+//			else//有分流器判断是否有市电 不需要判断电池充电电流
+//			{
+					if((*((u16 *)&gpSysData[DCVOLTAGE])) > recoverVol)
+					{
+										setChargeMospara = MOS_ON;
+										if(totalBattI>0 &&  batt[index].Vbat > 0 && recvBattEnd == 1)
+										{
+												g_devStatusFlags &= ~FLAG_DISCHARGING;
+												g_devStatusFlags &= ~FLAG_NORMAL;
+												recvBattEnd = 0;
+				//							pgh52c0->clrdo(0);
+		//										testFlag.status = 0;
+												
+												setDisChargeMospara = MOS_OFF;
+												
+												g_devStatusFlags |= FLAG_CHARGING;
+												powerBreak =0;
+											
+										}
+										
+										if(totalSOC == 10000)
+										{ 
+												if(totalBattI==0)	
+												{
+													g_devStatusFlags &= ~FLAG_CHARGING;
+													g_devStatusFlags |= FLAG_NORMAL;
+													powerBreak =0;
+												}											
+										}
+								
+					 }
+//			}
+
+			 if( !(lastStatus & FLAG_DISCHARGING) && (g_devStatusFlags & FLAG_DISCHARGING) )//放电次数
 			{
-					disChargeCount[index]++;
-					pgh52c0->savePara(&disChargeCount[index]);
+				(*disChargeCount[index])++;                
+				pgh52c0->savePara(disChargeCount[index]);  
 			}	
 			
-			if( !(lastStatus & FLAG_CHARGING) && (g_devStatusFlags & FLAG_CHARGING)  )
+			if( !(lastStatus & FLAG_CHARGING) && (g_devStatusFlags & FLAG_CHARGING)  )//充电次数
 			{
-							chargeCount[index]++;
-							pgh52c0->savePara(&chargeCount[index]);
+					(*chargeCount[index])++;                
+					pgh52c0->savePara(chargeCount[index]); 
 			}
 		
 			

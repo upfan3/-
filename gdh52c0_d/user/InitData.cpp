@@ -55,6 +55,8 @@ u16 gBattSafeSoc=2000;//锂电安底容量//gAcRateI=200;    //0.1空调额定电流
 u16 gOcrdiffV = 500; //0.5V  //光伏电压差
 u16 gtmpFactor16=52;  //两字节温度保偿  
 
+
+
 InputAlarm gInPutAlarm[13]={
 	{0,0,1,6},//门禁 常开 告警号 无1
 	{1,0,0,6},//水浸 常开 告警号 无2
@@ -106,10 +108,37 @@ s16 limitCap[5][12] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 AirInterfaceData g_AirInterfaceData[8] = {{350,550},{350,550},{350,550},{350,550},
 																					{350,550},{350,550},{350,550},{350,550},
 																					};								 
-u16 Volcut=4900;
-u16 recoverVol= 5000;												 
-u16 disChargeCount[LI_BATTERY_NUM]={0,0,0,0,0};
-u16 chargeCount[LI_BATTERY_NUM]={0,0,0,0,0};
+u16 Volcut=4830;
+u16 recoverVol= 4930;												 
+																					
+u16 disChargeCount1 = 0;
+u16 disChargeCount2 = 0;
+u16 disChargeCount3 = 0;
+u16 disChargeCount4 = 0;
+u16 disChargeCount5 = 0;
+
+u16 chargeCount1 = 0;
+u16 chargeCount2 = 0;
+u16 chargeCount3 = 0;
+u16 chargeCount4 = 0;
+u16 chargeCount5 = 0;
+
+
+u16 *disChargeCount[LI_BATTERY_NUM] = {
+    &disChargeCount1,
+    &disChargeCount2,
+    &disChargeCount3,
+    &disChargeCount4,
+    &disChargeCount5
+};
+
+u16 *chargeCount[LI_BATTERY_NUM] = {
+    &chargeCount1,
+    &chargeCount2,
+    &chargeCount3,
+    &chargeCount4,
+    &chargeCount5
+};
 	
 
 

@@ -133,6 +133,9 @@ void setE544(void);
 void setE546(void);
 void setE548(void);
 
+void setE646(void);
+void setE648(void);
+
 void set42AE(void);
 void set42AF(void);
 

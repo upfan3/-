@@ -3110,7 +3110,7 @@ void SetBranchParaMenu(Screen *pCurrentScreen)//智能空开分路参数配置页
 			 
 }
 
-
+u32 Power[TOTAL_USER]={0};
 
 void SetUSRPara(Screen *pCurrentScreen)
 {
@@ -3143,8 +3143,9 @@ void SetUSRPara(Screen *pCurrentScreen)
 
 		 	*((u16 *)&pdisDisPlayData[4])=gDCdistribution.pst_I[i];
 			*((u32 *)&pdisDisPlayData[6])=gDCdistribution.pst_enerqy[i];
-		 
-		 
+			*((u16 *)&pdisDisPlayData[10])=(*((u16 *)&gpSysData[DCVOLTAGE]));
+										 Power[i]=*((u16 *)&pdisDisPlayData[10])*(*((u16 *)&pdisDisPlayData[4]))/10;//*(*((u16 *)&pdisDisPlayData[10]));
+		  *((u32 *)&pdisDisPlayData[12])=Power[i];
 	
 }
 
@@ -3849,7 +3850,7 @@ void Update_BattData(Screen *pCurrentScreen)
 	 {
 		  if(genterflag==1)
 			{
-				disChargeCount[battID[0]-1] =(*(u16 *)&pdisDisPlayData[36]);
+				*(disChargeCount[battID[0]-1]) =(*(u16 *)&pdisDisPlayData[36]);
 			  pgh52c0->savePara(&disChargeCount[battID[0]-1]);
 				genterflag=0;
 			}
@@ -3859,7 +3860,7 @@ void Update_BattData(Screen *pCurrentScreen)
 	 {
 			if(genterflag==1)
 			{
-				chargeCount[battID[0]-1] =(*(u16 *)&pdisDisPlayData[38]);
+				*(chargeCount[battID[0]-1]) =(*(u16 *)&pdisDisPlayData[38]);
 				pgh52c0->savePara(&chargeCount[battID[0]-1]);
 				genterflag=0;
 			}
@@ -3870,8 +3871,8 @@ void Update_BattData(Screen *pCurrentScreen)
 	if(pCurrentScreen->m_EnterStatus!=3)//处于非编辑状态时
 	 {
 						 				genterflag=0;
-				(*(u16 *)&pdisDisPlayData[36])=disChargeCount[battID[0]-1];
-				(*(u16 *)&pdisDisPlayData[38])=chargeCount[battID[0]-1];
+				(*(u16 *)&pdisDisPlayData[36])=*(disChargeCount[battID[0]-1]);
+				(*(u16 *)&pdisDisPlayData[38])=*(chargeCount[battID[0]-1]);
 		 
 
 		 
@@ -3930,11 +3931,11 @@ void SetBrainBatt(Screen *pCurrentScreen)
 			
 			if(pdisDisPlayData[4]==0)
 			{
-				pdisDisPlayData[4]=0x55;
+				pdisDisPlayData[4]=MOS_OFF;
 			}
 			else if(pdisDisPlayData[4]==1)
 			{
-				pdisDisPlayData[4]=0x01;
+				pdisDisPlayData[4]=MOS_ON;
 			}
 
 			  SetBatteryData(3,0,&pdisDisPlayData[4]);
@@ -3998,43 +3999,7 @@ void SetBrainBatt(Screen *pCurrentScreen)
 												
 				}
 		}
-		else if((pCurrentScreen->m_pItem[pCurrentScreen->m_head+pCurrentScreen->m_coursItem]).st_plink==&pdisDisPlayData[10])
-		{
-			 CheckParaBoundary((u16 *) &pdisDisPlayData[10],4200,5500);//锂电放电电压 40-60V
-				if(genterflag==1)
-				{
-					Volcut=(*(u16 *)&pdisDisPlayData[10]);
-					
-					pgh52c0->savePara(&Volcut);
-					genterflag=0;
 
-//					SetBatteryData(1,0,&pdisDisPlayData[0]);
-//					gsetbatt.Set_BattV = (*(u16 *)&pdisDisPlayData[0]);
-//		     
-//					 pgh52c0->savePara(&gsetbatt.Set_BattV );
-//					genterflag=0;
-//					
-//					setBattV = gsetbatt.Set_BattV;
-					
-				}
-		}
-		
-		else if((pCurrentScreen->m_pItem[pCurrentScreen->m_head+pCurrentScreen->m_coursItem]).st_plink==&pdisDisPlayData[12])
-		{
-			 CheckParaBoundary((u16 *) &pdisDisPlayData[12],4200,5500);//锂电放电电压 40-60V
-				if(genterflag==1)
-				{
-					recoverVol=(*(u16 *)&pdisDisPlayData[12]);
-					
-				 if(recoverVol<Volcut)
-				 {
-						recoverVol=Volcut;
-				 }
-				 pgh52c0->savePara(&recoverVol );
-					genterflag=0;
-				}
-			
-		}
 		
 		if(pCurrentScreen->m_EnterStatus!=3)//处于非编辑状态时
 		 {
@@ -4148,8 +4113,47 @@ void GetBattData(Screen *pCurrentScreen)
 }
 
 
-
-
+void SetBattCut(Screen *pCurrentScreen)
+{
+		if((pCurrentScreen->m_pItem[pCurrentScreen->m_head+pCurrentScreen->m_coursItem]).st_plink==&pdisDisPlayData[0])
+		{
+			 CheckParaBoundary((u16 *) &pdisDisPlayData[10],4200,5500);//备电切换阈值
+				if(genterflag==1)
+				{
+					Volcut=(*(u16 *)&pdisDisPlayData[0]);
+					
+					pgh52c0->savePara(&Volcut);
+					genterflag=0;
+					
+				}
+		}
+		
+		else if((pCurrentScreen->m_pItem[pCurrentScreen->m_head+pCurrentScreen->m_coursItem]).st_plink==&pdisDisPlayData[2])
+		{
+			 CheckParaBoundary((u16 *) &pdisDisPlayData[2],4200,5500);//市电恢复电压
+				if(genterflag==1)
+				{
+					recoverVol=(*(u16 *)&pdisDisPlayData[2]);
+					
+				 if(recoverVol<Volcut)
+				 {
+						recoverVol=Volcut;
+				 }
+				 pgh52c0->savePara(&recoverVol );
+					genterflag=0;
+				}
+			
+		}
+		
+				if(pCurrentScreen->m_EnterStatus!=3)//处于非编辑状态时
+		 {
+				genterflag=0;
+				(*(u16 *)&pdisDisPlayData[0])=Volcut;
+				(*(u16 *)&pdisDisPlayData[2])=recoverVol;	 
+		 }
+		
+		
+}
 
 	
 

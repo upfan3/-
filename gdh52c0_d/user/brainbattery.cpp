@@ -82,7 +82,8 @@ u16 vagBatVolt = 5300;
 
 SetBattery setbatt;
 extern u8 setBattParaAddr;
-extern u8 setMospara;
+extern u8 setDisChargeMospara;
+extern u8 setChargeMospara;
 
 u16 count_CRC(u8*addr,int num) 
 { 
@@ -560,14 +561,19 @@ void detcetBattData(void)
 		}
 		else
 		{
+			g_devStatusFlags &=~FLAG_OFF;
+			g_devStatusFlags|=FLAG_NORMAL;
 			break;
 		}
 	}
 	
 	if(battcount==LI_BATTERY_NUM)
 	{
+			g_devStatusFlags&=~FLAG_NORMAL;
+			g_devStatusFlags|=FLAG_OFF;
 		SoftReset();
 	}
+	
 	
 
 }
@@ -988,16 +994,37 @@ void BattCmdPollingCommon(bool parseDoneFlag)
 	static u8 cmdNum = 0;
 
 	//byteNum = PackBattCmdPolling(battNum,0x4A,0x47,NULL,NULL);
+	static u8 sendStep = 0;
 	u8 setData[2] = {0};
 	if(ydtQueryCmd[cmdNum]==0x45)
 	{
-		setData[1] = setMospara;
-		byteNum = PackBattCmdPolling(battNum,0x4A,ydtQueryCmd[cmdNum],2,setData);
+    if(sendStep == 0)
+    {
+        // 第一步：先发 0
+        setData[0] = 0;
+        setData[1] = setDisChargeMospara;
+        sendStep = 1; // 下一步发1
+    }
+    else
+    {
+        // 第二步：后发 1
+        setData[0] = 1;
+        setData[1] = setChargeMospara;
+        sendStep = 2; // 发完重置，下次继续 0→1
+    }
+
+    // 发送（每次只发一组：0 或 1）
+    byteNum = PackBattCmdPolling(battNum, 0x4A, ydtQueryCmd[cmdNum], 2, setData);
 	}
 	else
 	{
 		byteNum = PackBattCmdPolling(battNum,0x4A,ydtQueryCmd[cmdNum],NULL,NULL);
 	}
+	
+	if(ydtQueryCmd[cmdNum] == 0x45 && sendStep == 2)
+{
+    sendStep = 0;
+}
 	
 	
 	
