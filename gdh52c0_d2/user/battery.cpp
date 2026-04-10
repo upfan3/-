@@ -175,16 +175,19 @@ s8 CalcSingleBatteryRuntimeMin(u8 battIndex, u32 *runtimeMin)
 		return -3;
 	}
 
-	// runtime_min = capAh * soc * soh * 600 / (10000*10000*I(0.1A))
-	int64_t numer = (int64_t)capAh * (int64_t)soc * (int64_t)soh * 600;
-	int64_t denom = (int64_t)10000 * 10000 * (int64_t)disCurr01A;
-	if(denom <= 0)
+		// 先算当前可用容量（Ah，按整数逐步缩放）
+	int64_t availCapAh = (int64_t)capAh;
+	availCapAh = availCapAh * (int64_t)soc / 10000;
+	availCapAh = availCapAh * (int64_t)soh / 10000;
+
+	if(disCurr01A <= 0)
 	{
 		*runtimeMin = 0;
 		return -4;
 	}
 
-	int64_t minVal = numer / denom;
+	// 电流单位为0.1A，换算到分钟：runtime_min = Ah / A * 60 = Ah * 600 / I(0.1A)
+	int64_t minVal = availCapAh * 600 / (int64_t)disCurr01A;
 	if(minVal < 0)
 	{
 		minVal = 0;
@@ -228,7 +231,9 @@ s8 CalcTotalBatteryRuntimeMin(BatteryRuntimeInfo *pInfo)
 			continue;
 		}
 
-		int64_t singleAh_0p01 = (int64_t)capAh * (int64_t)soc * (int64_t)soh / (10000LL * 10000LL / 100);
+		int64_t singleAh_0p01 = (int64_t)capAh * 100;
+		 singleAh_0p01 = singleAh_0p01 * (int64_t)soc / 10000;
+		 singleAh_0p01 = singleAh_0p01 * (int64_t)soh / 10000;
 		if(singleAh_0p01 <= 0)
 		{
 			continue;
