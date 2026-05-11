@@ -78,6 +78,7 @@ s16 totalBattI = 0;  //0.1A
 u32 totalSOC = 10000;
 u32 totalSOH = 0;
 u16 vagBatVolt = 5300;
+u32 totalBattCap = 0;
 
 
 SetBattery setbatt;
@@ -274,9 +275,13 @@ void calculateTotalData(void)
 				     totalBattI=0;
 					   totalSOC = 0;
              totalSOH = 0;
+						 totalBattCap = 0;
 					  // vagBatVolt = 0;
 						 u8 vailbatCount = 0;
 						 u32 temVolt = 0;
+
+						
+
 							  for(u8 i=0;i<onlineNum;i++)
 							 {
 							   totalBattI  = totalBattI + batt[i].Ibus/10;
@@ -284,6 +289,8 @@ void calculateTotalData(void)
 								 totalSOC = totalSOC + ((batt[i].B_SOC*batt[i].B_SOH)/100)*(batt[i].B_capacity/100);
 								 
 								 totalSOH  = totalSOH + ((batt[i].B_SOH*batt[i].B_capacity)/10000);
+								 
+								 totalBattCap = totalBattCap + batt[i].B_capacity/100;
 								 
 							   if(batt[i].Vbat>0){
 								 temVolt = temVolt + batt[i].Vbat;
@@ -571,7 +578,7 @@ void detcetBattData(void)
 	{
 			g_devStatusFlags&=~FLAG_NORMAL;
 			g_devStatusFlags|=FLAG_OFF;
-		SoftReset();
+//		SoftReset();
 	}
 	
 	
@@ -619,27 +626,29 @@ void detectBatteryOnline(void)
 
 void SetBattWarning(void)
 {
-	   AlarmType WarnType[11]={ 
+	   AlarmType WarnType[12]={ 
 			                        ENVTEMP         ,ENVTEMP           ,BATT_CELL_VOLT   ,
 		                          BATT_CELL_VOLT  ,BATTSUPPLY_ALARM  ,BATTSUPPLY_ALARM ,
 		                          BATTDOWN_ALARM  ,BATTDOWN_ALARM    ,BATTDOWN_ALARM   ,  
-		                          BATTSOC         ,BATTDOWN_ALARM
+		                          BATTSOC         ,BATTDOWN_ALARM    ,MOS_TEMP
 		                        };
- AlarmBehavior Behavior[11]={ HIGH_    ,LOW_      ,HIGH_    , 
+ AlarmBehavior Behavior[12]={ HIGH_    ,LOW_      ,HIGH_    , 
 	                            LOW_     ,HIGH_     ,LOW_     ,
 	                            SHORT    ,OVER_DHG  ,OVER_CHG , 
-	                            LOW_     ,VOLT_DIFF_OVER
+	                            LOW_     ,VOLT_DIFF_OVER 			,HIGH_
                              };
-		       u16 WarnCode[11]={ 
+		       u16 WarnCode[12]={ 
 						                  ENVTEMP_TEMP_HIGH  ,ENVTEMP_TEMP_LOW ,BATT_CELL_VOLT_HIGH ,
 					                    BATT_CELL_VOLT_LOW ,BATT_VOLT_HIGH   ,BATT_VOLT_LOW       ,
 					                    BATT_SHORT         ,BATT_OVER_DHG    ,BATT_OVER_CHG       ,
-					                    BATT_SOC_LOW       ,BATT_VOLT_DIFF_OVER
+					                    BATT_SOC_LOW       ,BATT_VOLT_DIFF_OVER,BATT_MOS_TEMP_HIGH
 					                  };
 			
+			 static u8 prBattTempHigh[LI_BATTERY_NUM]={0};
+		   static u8 prBattTempLow[LI_BATTERY_NUM]={0};
 			 for(u8 i=0;i<onlineNum;i++)
 			{
-				     for(u8 j=0;j<11;j++)  //环境温度，单体电压，总体电压，短路
+				     for(u8 j=0;j<12;j++)  //环境温度，单体电压，总体电压，短路
 						{
 							   if((batt[i].prBattWarning & WarnCode[j] ) == 0)
 							{
@@ -668,7 +677,7 @@ void SetBattWarning(void)
 						
 						
 						 //电池温度高
-							if((batt[i].prBattWarning & BATT_TEMP_HIGH ) == 0)
+							if(prBattTempHigh[i] == 0)
 							{
 							
 								 if(
@@ -679,12 +688,12 @@ void SetBattWarning(void)
 								 {
 									 
 									   addAlarm(BATT_TEMP,i+1,HIGH_);
-									   batt[i].prBattWarning|= BATT_TEMP_HIGH ;
-									 
+									   prBattTempHigh[i] = 1;
+										batt[i].prBattWarning|= BATT_TEMP_HIGH;
 									
 								 }
 							} 
-							else if((batt[i].prBattWarning & BATT_TEMP_HIGH) == BATT_TEMP_HIGH)
+							else if(prBattTempHigh[i] == 1)
 							{
 								  if(
 										     ((batt[i].BattWarning & BATT_DHG_TEMP_HIGH) == 0) &&//环境温度高取消
@@ -692,7 +701,8 @@ void SetBattWarning(void)
 								    )
 								 {
 									   minusAlarm(BATT_TEMP,i+1,HIGH_);
-									   batt[i].prBattWarning &= ~(BATT_TEMP_HIGH);
+									   prBattTempHigh[i] = 0;
+									 batt[i].prBattWarning &= ~BATT_TEMP_HIGH;
 									 
 									
 								 }
@@ -700,32 +710,32 @@ void SetBattWarning(void)
 							
 							
 							 //电池温度低
-							if((batt[i].prBattWarning & BATT_TEMP_LOW ) == 0)
+							if(prBattTempLow[i] == 0)
 							{
 							
 								 if(
-									   ((batt[i].BattWarning & BATT_DHG_TEMP_LOW ) == BATT_DHG_TEMP_LOW) || //电池放电温度高
-							       ((batt[i].BattWarning & BATT_CHG_TEMP_LOW ) == BATT_CHG_TEMP_LOW)  //电池充电温度高
+									   ((batt[i].BattWarning & BATT_DHG_TEMP_LOW ) == BATT_DHG_TEMP_LOW) || //电池放电温度低
+							       ((batt[i].BattWarning & BATT_CHG_TEMP_LOW ) == BATT_CHG_TEMP_LOW)  //电池充电温度低
 							     )
 								 
 								 {
 									 
 									   addAlarm(BATT_TEMP,i+1,LOW_);
-									   batt[i].prBattWarning|= BATT_TEMP_LOW ;
-									 
+									   prBattTempLow[i] = 1;
+									 batt[i].prBattWarning|= BATT_TEMP_LOW;
 									
 								 }
 							} 
-							else if((batt[i].prBattWarning & BATT_TEMP_LOW) == BATT_TEMP_LOW)
+							else if(prBattTempLow[i] == 1)
 							{
 								  if(
-										     ((batt[i].BattWarning & BATT_DHG_TEMP_LOW) == 0) &&//环境温度高取消
+										     ((batt[i].BattWarning & BATT_DHG_TEMP_LOW) == 0) &&//电池充放电温度低取消
 									       ((batt[i].BattWarning & BATT_CHG_TEMP_LOW) == 0) 
 								    )
 								 {
 									   minusAlarm(BATT_TEMP,i+1,LOW_);
-									   batt[i].prBattWarning &= ~(BATT_TEMP_LOW);
-									 
+									   prBattTempLow[i] = 0;
+											batt[i].prBattWarning &= ~BATT_TEMP_LOW;
 									
 								 }
 							}
@@ -733,6 +743,8 @@ void SetBattWarning(void)
 		
 		
 }
+
+
 
 //计算ydt1363校验码
 u16 CalChecksum(u8* asciiData, u16 dataLength) 
@@ -960,11 +972,51 @@ void setChargeLimitI(u8 addr,u16 setData)
 	pusartBatt->SendDataEx(ydtSendData,byteNum);
 }
 
-u8 ydtQueryCmd[4] = {0x42,0x44,0x45,0x47}; 
+static u8 battMosUrgentFlag = 0;
+static u8 battMosUrgentAddr = BATTERY_START_ADDR;
+static u8 battMosUrgentStep = 0;
+
+void RequestBattMosUrgent(void)
+{
+	battMosUrgentFlag = 1;
+	battMosUrgentAddr = BATTERY_START_ADDR;
+	battMosUrgentStep = 0;
+}
+u8 ydtQueryCmd[4] = {0x42,0x44,0x45,0x47};// 0x42,0x44,0x45,
 //u8 test[2] = {0x63,0x12};
 void BattCmdPollingCommon(bool parseDoneFlag)
 {
 	static u8 timeoutCount = 1;
+	
+	if((battMosUrgentFlag != 0) && (parseDoneFlag != false))
+	{
+		u8 byteNum = 0;
+		u8 sendAddr = battMosUrgentAddr;
+		u8 setData[2] = {0};
+		
+		if(battMosUrgentStep == 0)
+		{
+			setData[0] = 0;
+			setData[1] = setDisChargeMospara;
+			battMosUrgentStep = 1;
+		}
+		else
+		{
+			setData[0] = 1;
+			setData[1] = setChargeMospara;
+			battMosUrgentStep = 0;
+			battMosUrgentAddr++;
+			if(battMosUrgentAddr > BATT_MAX_NUM)
+			{
+				battMosUrgentAddr = BATTERY_START_ADDR;
+				battMosUrgentFlag = 0;
+			}
+		}
+		
+		byteNum = PackBattCmdPolling(sendAddr, 0x4A, 0x45, 2, setData);
+		pusartBatt->SendDataEx(ydtSendData, byteNum);
+		return;
+	}
 	
 		if(timeoutCount > 0 )
 		{
@@ -974,16 +1026,16 @@ void BattCmdPollingCommon(bool parseDoneFlag)
 
 	
 	
-//	if(parseDoneFlag == false)
-//	{
-//		if(timeoutCount > 0 )
-//		{
-//			timeoutCount--;
-//			return;
-//		}
-//	}
+	if(parseDoneFlag == false)
+	{
+		if(timeoutCount > 0 )
+		{
+			timeoutCount--;
+			return;
+		}
+	}
 	
-	//timeoutCount = 5;
+	timeoutCount = 3;
 		
 	
 	//setChargeMos(1,MOS_ON);
@@ -995,38 +1047,33 @@ void BattCmdPollingCommon(bool parseDoneFlag)
 
 	//byteNum = PackBattCmdPolling(battNum,0x4A,0x47,NULL,NULL);
 	static u8 sendStep = 0;
+	u8 holdBattNum = 0;
 	u8 setData[2] = {0};
 	if(ydtQueryCmd[cmdNum]==0x45)
 	{
-    if(sendStep == 0)
-    {
-        // 第一步：先发 0
-        setData[0] = 0;
-        setData[1] = setDisChargeMospara;
-        sendStep = 1; // 下一步发1
-    }
-    else
-    {
-        // 第二步：后发 1
-        setData[0] = 1;
-        setData[1] = setChargeMospara;
-        sendStep = 2; // 发完重置，下次继续 0→1
-    }
+		if(sendStep == 0)
+		{
+			// 第一步：先发放电控制
+			setData[0] = 0;
+			setData[1] = setDisChargeMospara;
+			sendStep = 1;
+			holdBattNum = 1;
+		}
+		else
+		{
+			// 第二步：再发充电控制
+			setData[0] = 1;
+			setData[1] = setChargeMospara;
+			sendStep = 0;
+		}
 
-    // 发送（每次只发一组：0 或 1）
-    byteNum = PackBattCmdPolling(battNum, 0x4A, ydtQueryCmd[cmdNum], 2, setData);
+		// 发送（每次只发一组：0 或 1）
+		byteNum = PackBattCmdPolling(battNum, 0x4A, ydtQueryCmd[cmdNum], 2, setData);
 	}
 	else
 	{
 		byteNum = PackBattCmdPolling(battNum,0x4A,ydtQueryCmd[cmdNum],NULL,NULL);
 	}
-	
-	if(ydtQueryCmd[cmdNum] == 0x45 && sendStep == 2)
-{
-    sendStep = 0;
-}
-	
-	
 	
 	if(ydtQueryCmd[cmdNum] == 0x42)
 		recvBattCount[0]++;
@@ -1034,29 +1081,45 @@ void BattCmdPollingCommon(bool parseDoneFlag)
 //	pusartBatt->SendDataEx(ydtSendData,byteNum);
 	
 	pusartBatt->SendDataEx(ydtSendData,byteNum);
+
+		if(holdBattNum == 0)
+		{
+			if(battNum >= BATT_MAX_NUM)
+			{
+				battNum = BATTERY_START_ADDR;
+				cmdNum++;
+				if(cmdNum > cmdMaxNum)
+					cmdNum = 0;
+			}
+			else
+			{
+				battNum++;
+			}
+		}
 	
-	if(battNum >= BATT_MAX_NUM)
-	{
-		battNum = BATTERY_START_ADDR;
-		cmdNum++;
-		if(cmdNum > cmdMaxNum)
-			cmdNum = 0;
-	}
-	else
-	{
-		battNum++;
-	}
 }
 
 u16 preRemainCapSum = 0;
+u32 remainCapSum = 0;
+u16 battRuntime = 0;
 void updateRemainCap()
 {
-	u16 remainCapSum = 0;
+	u32 sum = 0;
+	u16 loadCurr = *(u16 *)&gpSysData[USER_CURR]; // 单位 0.1A
 	
 	for(u8 i = 0; i < BATT_MAX_NUM; i++)
 	{
-		remainCapSum += batt[i].remainCap;
+		sum += batt[i].remainCap;
 	}
+	remainCapSum = sum;
+	
+		if(loadCurr == 0)
+	{
+		battRuntime =0;
+		return ; // 无负载，续航时间无穷/无效
+	}
+	
+    battRuntime = (u16)((remainCapSum * 60UL) / loadCurr)/10;
 	
 	if(preRemainCapSum == 0)
 	{
@@ -1072,7 +1135,11 @@ void updateRemainCap()
 		return;
 	}
 	
+
+	
 	totalBattdisCap = diff / 100;
+	
+
 	
 	
 	
@@ -1150,6 +1217,8 @@ void parseBatteryData(u8 address, u8* hexFrame, u16 hexDataLength,u8 rtn)
 		batt[address - 1].B_SOC = swapTwoBytes(telemetryData->soc) * 100;
 		batt[address - 1].B_SOH = swapTwoBytes(telemetryData->soh) * 100;
 		
+		batt[address - 1].batteryCycleCount = swapTwoBytes(telemetryData->batteryCycleCount);
+		
 		updateRemainCap();
 		
 		recvBattNum++;
@@ -1169,12 +1238,22 @@ void parseBatteryData(u8 address, u8* hexFrame, u16 hexDataLength,u8 rtn)
 	}
 	else if(cycleFrameNumber == 0x4A44)
 	{
-		u16 battWarn = 0;
+		u32 battWarn = 0;
 		u8 vCellNum = 0, tCellNum =0;
 		u8 index = 3 + 16 + 1 + 4 + 6;	//电压事件代码
 		
 		u8 balanEventCode = hexFrame[index-1];//均衡事件代码
-		if(((balanEventCode>>5) & 0x01) == 1||((balanEventCode>>6) & 0x01) == 1)//充放电 MOS 故障
+		if(((balanEventCode >> 5) & 0x01) == 1)//充电 MOS 故障
+		{
+			battWarn |= BATT_CHG_MOS_BROKEN;
+		}
+		
+		if(((balanEventCode >> 6) & 0x01) == 1)//放电 MOS 故障
+		{
+			battWarn |= BATT_DHG_MOS_BROKEN;
+		}
+		
+		if((battWarn & (BATT_CHG_MOS_BROKEN | BATT_DHG_MOS_BROKEN)) != 0)//充放电 MOS 故障
 		{
 			g_devStatusFlags |= FLAG_FAULT;
 		}
@@ -1188,49 +1267,59 @@ void parseBatteryData(u8 address, u8* hexFrame, u16 hexDataLength,u8 rtn)
 		
 		u8 volEventCode = hexFrame[index];	//电压事件代码
 		
-		if((volEventCode & 0x01) == 1)
-		{
-			battWarn |= (1 << 0);	//单体过压告警
-		}
-		else if(((volEventCode >> 2) & 0x01) == 1)
-		{
-			battWarn |= (1 << 1);	//单体欠压告警
-		}
-		else if(((volEventCode >> 4) & 0x01) == 1)
-		{
-			battWarn |= (1 << 2);	//总体过压告警
-		}
-		else if(((volEventCode >> 6) & 0x01) == 1)
-		{
-			battWarn |= (1 << 3);	//总体欠压告警
-		}
+if(((volEventCode >> 0) & 0x01) == 1)
+{
+    battWarn |= (1 << 0);   // 单体过压告警
+}
+
+if(((volEventCode >> 2) & 0x01) == 1)
+{
+    battWarn |= (1 << 1);   // 单体欠压告警
+}
+
+if(((volEventCode >> 4) & 0x01) == 1)
+{
+    battWarn |= (1 << 2);   // 总体过压告警
+}
+
+if(((volEventCode >> 6) & 0x01) == 1)
+{
+    battWarn |= (1 << 3);   // 总体欠压告警
+}
+
 		
-		u16 tmpEventCode = hexFrame[index + 1];	//温度事件代码
-		
-		if((tmpEventCode & 0x01) == 1)
+		u16 tmpEventCode = ((u16)hexFrame[index + 1] << 8) | hexFrame[index + 2]; // 温度事件代码，2字节
+
+		if(((tmpEventCode >> 0) & 0x01) == 1)
 		{
-			battWarn |= (1 << 6);	//电池充过温告警
+				battWarn |= (1 << 6);    // 电池充电高温告警
 		}
-		else if(((tmpEventCode >> 2) & 0x01) == 1)
+
+		if(((tmpEventCode >> 2) & 0x01) == 1)
 		{
-			battWarn |= (1 << 7);	//电池充欠温告警
+				battWarn |= (1 << 7);    // 电池充电低温告警
 		}
-		else if(((tmpEventCode >> 8) & 0x01) == 1)
+
+		if(((tmpEventCode >> 8) & 0x01) == 1)
 		{
-			battWarn |= (1 << 8);	//环境高温告警
+				battWarn |= (1 << 8);    // 环境高温告警
 		}
-		else if(((tmpEventCode >> 10) & 0x01) == 1)
+
+		if(((tmpEventCode >> 10) & 0x01) == 1)
 		{
-			battWarn |= (1 << 9);	//环境低温告警
+				battWarn |= (1 << 9);    // 环境低温告警
 		}
-		else if(((tmpEventCode >> 4) & 0x01) == 1)
+
+		if(((tmpEventCode >> 4) & 0x01) == 1)
 		{
-			battWarn |= (1 << 13);	//放电过温告警
+				battWarn |= (1 << 13);   // 电池放电高温告警
 		}
-		else if(((tmpEventCode >> 6) & 0x01) == 1)
+
+		if(((tmpEventCode >> 6) & 0x01) == 1)
 		{
-			battWarn |= (1 << 14);	//放电低温告警
+				battWarn |= (1 << 14);   // 电池放电低温告警
 		}
+
 		 
 
 		
@@ -1256,7 +1345,7 @@ void parseBatteryData(u8 address, u8* hexFrame, u16 hexDataLength,u8 rtn)
 			battWarn |= (1 << 10);	//MOS过温告警
 		}
 		
-		u8 socAlarmState = hexFrame[index + 3];
+		u8 socAlarmState = hexFrame[index + 4];
 		
 		if(socAlarmState == 1)
 		{
@@ -1302,19 +1391,19 @@ void parseBatteryData(u8 address, u8* hexFrame, u16 hexDataLength,u8 rtn)
 		recvWarnflag =1;
 		
 	}
-	else if(cycleFrameNumber == 0x4A45)
-	{
-		if(rtn == 0)
-		{
-//			arrayTmp[setBattParaAddr - 1]=0;
-			
-			if(testFlag.ctrType == 0x1f)
-				testFlag.disMos = 0;
-			else
-				testFlag.disMos = 1;
-		}
-	}
-	else if(cycleFrameNumber == 0x4A47)
+//	else if(cycleFrameNumber == 0x4A45)
+//	{
+//		if(rtn == 0)
+//		{
+////			arrayTmp[setBattParaAddr - 1]=0;
+//			
+//			if(testFlag.ctrType == 0x1f)
+//				testFlag.disMos = 0;
+//			else
+//				testFlag.disMos = 1;
+//		}
+//	}
+	 else if(cycleFrameNumber == 0x4A47)
 	{
 		u8 index = 1 + 2*7 + 1 + 2*12 + 2*27 + 2*13;
 		u16 chargeClrValue = hexFrame[index] << 8;
@@ -1373,5 +1462,9 @@ void *DuleWithDataBatteryCommon(u8 *recData,u16 *dataLength)
 	cycleFrameNumber = 0;
 }
 
-//void SetBatteryCmd() 
+//void calBatterytime() 
+//{
+
+
+//}
 

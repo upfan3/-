@@ -108,8 +108,8 @@ s16 limitCap[5][12] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 AirInterfaceData g_AirInterfaceData[8] = {{350,550},{350,550},{350,550},{350,550},
 																					{350,550},{350,550},{350,550},{350,550},
 																					};								 
-u16 Volcut=4830;
-u16 recoverVol= 4930;												 
+u16 Volcut=4840;
+u16 recoverVol= 4940;												 
 																					
 u16 disChargeCount1 = 0;
 u16 disChargeCount2 = 0;

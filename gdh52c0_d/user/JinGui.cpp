@@ -756,10 +756,12 @@ void DealWithJinGuiData(void *databuf )
 																	// if(gSwitchData[addr].st_statusflag.overLoad==1)//过流状态
 																	if((pdat[38]&0x80)||(pdat[40]&0x04))
 																	{  
+																				gSwitchData[addr].st_statusflag.overLoad=1;//过流状态
 																				gDCdistribution.pst_status[addr]|=0x08;
 																	}
 																	else
 																	{
+																				gSwitchData[addr].st_statusflag.overLoad=0;//过流状态
 																				gDCdistribution.pst_status[addr]&=0xF7;
 																	}
 												
@@ -1089,6 +1091,7 @@ void DownElectricty(void)
   
 					     gSwitchData[i].st_statusflag.bit_ready=0;// 不准备下电
 					     setFlag[i]=0; // 清除下电标志
+							 gSwitchData[i].st_statusflag.NC13=0;
 					     gSwitchData[i].st_stopSupplyCount=0xff;// 倒计时置为无效值
 					 
 				 }
@@ -1102,7 +1105,7 @@ void DownElectricty(void)
 								 if( gSwitchData[i].st_statusflag.bit_ready==0)
 								 {
 								   
-								    gSwitchData[i].st_stopSupplyCount=10;// 设置倒计时（10个周期
+								    gSwitchData[i].st_stopSupplyCount=20;// 设置倒计时（10个周期
 									  gSwitchData[i].st_statusflag.bit_ready=1;
 									  setFlag[i]=1;
 								 }

@@ -143,13 +143,13 @@ const u8 * ALarmStatusFlag[]={(const u8 *)"告警",(const u8 *)"告警恢复",NULL};
 void * ALarmListStatus[]={ALarmStatusFlag};
 
 const u8 * ALarmList[]={(const u8 *)"无",(const u8 *)"输出电压",(const u8 *)"电池SOC"
-	                   ,(const u8 *)"A相电压",(const u8 *)"B相电压",(const u8 *)"C相电压"
+	                   ,(const u8 *)"MOS温度",(const u8 *)"电池充电温度",(const u8 *)"电池放电温度"
 										 ,(const u8 *)"模块输入电流",(const u8 *)"扩展单元",(const u8 *)"电池单体电压"
 										 ,(const u8 *)"交流频率"
 										 ,(const u8 *)"缺A相" ,(const u8 *)"缺B相"  ,(const u8 *)"缺C相"    
 	                   ,(const u8 *)"分路",(const u8 *)"智能空开",(const u8 *)"模块"
 										 ,(const u8 *)"电池温度",(const u8 *)"环境温度"
-										 ,(const u8 *)"电池",(const u8 *)"电池供电"
+										 ,(const u8 *)"电池",(const u8 *)"供电"//电池供电
 										
 										 ,(const u8 *)"门禁",(const u8 *)"水浸",(const u8 *)"烟雾" ,(const u8 *)"防雷"
 										 ,(const u8 *)"风机",(const u8 *)"空调"
@@ -182,7 +182,7 @@ const u8 * ALarmnbList[]={(const u8 *)" ",(const u8 *)"1号",(const u8 *)"2号",(c
 
 const u8 * BehaviorList[]={ (const u8 *)" ",(const u8 *)"过低",(const u8 *)"过高",(const u8 *)"异常",(const u8 *)"断开",(const u8 *)"下电"										 
 										       ,(const u8 *)"故障", (const u8 *)"通信故障",(const u8 *)"停电",(const u8 *)"过载",(const u8 *)"低压"
-                           ,(const u8 *)" FLASH故障",(const u8 *)" 短路",(const u8 *)" 过放",(const u8 *)" 过充",(const u8 *)" 单体压差大",NULL};
+                           ,(const u8 *)" FLASH故障",(const u8 *)" 短路",(const u8 *)" 放电过流",(const u8 *)" 充电过流",(const u8 *)" 单体压差大",NULL};
 										
 
 void *AlarmMunklis[]={ALarmnbList,ALarmList,BehaviorList};
@@ -404,13 +404,14 @@ u8 setMenu(Item **ppItem)
 				 { 
                      SetScreenItem(pMainMenu,   (u8 *)"设置"      ,&passWord,(u8 *)(&pSetPara),NEXT_SCREEN);
 					     			 SetScreenItem(NULL,        (u8 *)"实时告警"  ,NULL,(u8 *)(&pALARMMenu),NEXT_SCREEN);//pSetPara
-				             SetScreenItem(NULL,        (u8 *)"交流配电"  ,NULL,(u8 *)(&pACDMenu),NEXT_SCREEN);
-				             SetScreenItem(NULL,        (u8 *)"整流模块"  ,NULL,(u8 *)(&pSMRMenu),NEXT_SCREEN);
+//				             SetScreenItem(NULL,        (u8 *)"交流配电"  ,NULL,(u8 *)(&pACDMenu),NEXT_SCREEN);
+//				             SetScreenItem(NULL,        (u8 *)"整流模块"  ,NULL,(u8 *)(&pSMRMenu),NEXT_SCREEN);
 //					           SetScreenItem(NULL,        (u8 *)"光伏模块"  ,NULL,(u8 *)(&pSCRMenu),NEXT_SCREEN);
 					           SetScreenItem(NULL,        (u8 *)"锂电信息"  ,NULL,(u8 *)(&pBATTERYData),NEXT_SCREEN);
 					           SetScreenItem(NULL,        (u8 *)"配电信息"  ,NULL,(u8 *)(&pUSRMenu),NEXT_SCREEN);
 //					           SetScreenItem(NULL,        (u8 *)"空调信息 ", NULL,(u8 *)(&pAirMenu),NEXT_SCREEN);
-					           SetScreenItem(NULL,        (u8 *)"扩展分路信息"  ,NULL,(u8 *)(&pUSR3Menu),NEXT_SCREEN);
+//					           SetScreenItem(NULL,        (u8 *)"扩展分路信息"  ,NULL,(u8 *)(&pUSR3Menu),NEXT_SCREEN);
+											SetScreenItem(NULL,        (u8 *)"用户分路信息"  ,NULL,(u8 *)(&pUSR2Menu),NEXT_SCREEN);
 					           SetScreenItem(NULL,        (u8 *)"历史记录"  ,NULL,(u8 *)(&pRECORDMenu),NEXT_SCREEN);				
 					           	SetScreenItem(NULL,       (u8 *)"系统信息 ", NULL,(u8 *)(&pSYSINFO),NEXT_SCREEN);
 											
@@ -446,8 +447,8 @@ u8 setMenu(Item **ppItem)
 					SetScreenItem(NULL,       (u8 *)"锂电设置 ",NULL,(u8 *)(&pBatterySetMenu),NEXT_SCREEN);
 					SetScreenItem(NULL,       (u8 *)"备电设置 ",NULL,(u8 *)(&pBatteryCutMenu),NEXT_SCREEN);
 					SetScreenItem(NULL,       (u8 *)"智能空开设置 ",NULL,(u8 *)(&pSetBranchMenu),NEXT_SCREEN);
-					SetScreenItem(NULL,       (u8 *)"扩展单元设置",NULL,(u8 *)(&pBattMenu),NEXT_SCREEN);//
-					SetScreenItem(NULL,       (u8 *)"分路下电设置",NULL,(u8 *)(&pLocalPowerMenu),NEXT_SCREEN);//						
+//					SetScreenItem(NULL,       (u8 *)"扩展单元设置",NULL,(u8 *)(&pBattMenu),NEXT_SCREEN);//
+//					SetScreenItem(NULL,       (u8 *)"分路下电设置",NULL,(u8 *)(&pLocalPowerMenu),NEXT_SCREEN);//						
 					SetScreenItem(NULL,       (u8 *)"清除记录 ", NULL,(u8 *)(&pFactorySettingMenu),NEXT_SCREEN);
 					
 					if(showSpecilMenu==1)
@@ -497,7 +498,7 @@ u8 setMenu(Item **ppItem)
 				pBatteryCutMenu=pdisPlayItem;
 				if(pBatteryCutMenu!=NULL)
 				{
-					SetScreenItem(pBatteryCutMenu,   (u8 *)"备电切换电压    %F.2V"   , &pdisDisPlayData[0],0,SCREEN_TWO_BYTE|MODIFI_PARA);
+					SetScreenItem(pBatteryCutMenu,   (u8 *)"备电切换电压  %F.2V"   , &pdisDisPlayData[0],0,SCREEN_TWO_BYTE|MODIFI_PARA);
 					SetScreenItem(NULL,   (u8 *)"恢复电压    %F.2V"   , &pdisDisPlayData[2],0,SCREEN_TWO_BYTE|MODIFI_PARA);
 					SetScreenItem(NULL);//结束
 					return 1;
@@ -513,12 +514,12 @@ u8 setMenu(Item **ppItem)
 				{
 				   
 					
-					SetScreenItem(pSYSMenu,(u8 *)"电池参数设置 ",NULL,(u8 *)(&pBattParaSetMenu),NEXT_SCREEN);//
-					SetScreenItem(NULL,(u8 *)"电池均充设置 ",NULL,(u8 *)(&pBattBootSetMenu),NEXT_SCREEN);//
-					SetScreenItem(NULL,(u8 *)"电池测试设置 ",NULL,(u8 *)(&pBattTestSetMenu),NEXT_SCREEN);//
+//					SetScreenItem(pSYSMenu,(u8 *)"电池参数设置 ",NULL,(u8 *)(&pBattParaSetMenu),NEXT_SCREEN);//
+//					SetScreenItem(NULL,(u8 *)"电池均充设置 ",NULL,(u8 *)(&pBattBootSetMenu),NEXT_SCREEN);//
+//					SetScreenItem(NULL,(u8 *)"电池测试设置 ",NULL,(u8 *)(&pBattTestSetMenu),NEXT_SCREEN);//
 //					SetScreenItem(NULL,(u8 *)"节能参数设置 ",NULL,(u8 *)(&pSavePowrSetMenu),NEXT_SCREEN);//
-					SetScreenItem(NULL,(u8 *)"告警参数设置 ",NULL,(u8 *)(&pAlarmParaSetMenu),NEXT_SCREEN);//
-					SetScreenItem(NULL,(u8 *)"输入告警设置 ",NULL,(u8 *)(&pSetDIMenu),NEXT_SCREEN);
+//					SetScreenItem(NULL,(u8 *)"告警参数设置 ",NULL,(u8 *)(&pAlarmParaSetMenu),NEXT_SCREEN);//
+					SetScreenItem(pSYSMenu,(u8 *)"输入告警设置 ",NULL,(u8 *)(&pSetDIMenu),NEXT_SCREEN);
 					SetScreenItem(NULL,(u8 *)"输出告警设置 ",NULL,(u8 *)(&pSetDOMenu),NEXT_SCREEN);
 					SetScreenItem(NULL);//结束//14
 					return 1;
@@ -672,18 +673,24 @@ u8 setMenu(Item **ppItem)
 		
 				  SetScreenItem(pDCDMenu,(u8 *)"%l  %l %l %l %l",      Worklis, pdisDisPlayData,NONE_DO); 
 					SetScreenItem(NULL,   (u8 *)"直流电压    %F.2V",    &gpSysData[DCVOLTAGE], 0,SCREEN_TWO_BYTE);
-					SetScreenItem(NULL,   (u8 *)"总电流      %F.1A",    &gpSysData[LOADCURR],  0,SCREEN_TWO_BYTE);
-					SetScreenItem(NULL,   (u8 *)"负载电流    %F.1A",    &gpSysData[USER_CURR], 0,SCREEN_TWO_BYTE);
-				  SetScreenItem(NULL,   (u8 *)"备电电流    %F.1A" ,   &gpSysData[TOTAL_BATTI],0,SCREEN_TWO_BYTE);//BATT_SOC
-				 	SetScreenItem(NULL,   (u8 *)"备电SOC     %F.2%",     &gpSysData[BATT_SOC],0,SCREEN_TWO_BYTE);//
+					SetScreenItem(NULL, (u8 *)"负载电流    %F.1A", &gpSysData[USER_CURR], 0, SCREEN_TWO_BYTE);
   			  SetScreenItem(NULL,   (u8 *)"电池电流    %F.1A" ,   &totalBattI,0,SCREEN_TWO_BYTE);//BATT_SOC				
 				  SetScreenItem(NULL,   (u8 *)"电池SOC     %F.2%",     &totalSOC,0,SCREEN_FOUR_BYTE);//
-  			  SetScreenItem(NULL,   (u8 *)"电池温度    %F.2℃",		  &gpSysData[ENV_TEMP],0,SCREEN_TWO_BYTE);//gChargeStatus;				 
+					SetScreenItem(NULL,   (u8 *)"电池剩余容量 %F.2Ah",     &remainCapSum,0,SCREEN_FOUR_BYTE);//
+					SetScreenItem(NULL,   (u8 *)"电池续航 %dmin",		  &battRuntime,0,SCREEN_TWO_BYTE);//gChargeStatus;	
+				 //					SetScreenItem(NULL,   (u8 *)"总电流      %F.1A",    &gpSysData[LOADCURR],  0,SCREEN_TWO_BYTE);
+
+
+//				  SetScreenItem(NULL,   (u8 *)"备电电流    %F.1A" ,   &gpSysData[TOTAL_BATTI],0,SCREEN_TWO_BYTE);//BATT_SOC
+//				 	SetScreenItem(NULL,   (u8 *)"备电SOC     %F.2%",     &gpSysData[BATT_SOC],0,SCREEN_TWO_BYTE);//
+
+//  			  SetScreenItem(NULL,   (u8 *)"电池温度    %F.2℃",		  &gpSysData[ENV_TEMP],0,SCREEN_TWO_BYTE);//gChargeStatus;	
+
 //				  SetScreenItem(NULL,   (u8 *)"调节电压   %G.3V",		  &gModuleVoltage,0,SCREEN_TWO_BYTE);
-				  SetScreenItem(NULL,   (u8 *)"电芯电压   %F.2V",		  &vagBatVolt,0,SCREEN_TWO_BYTE);//currdiscap
-				  SetScreenItem(NULL,   (u8 *)"电芯放电量   %G.0AH",		  &currdiscap,0,SCREEN_TWO_BYTE);
-				  SetScreenItem(NULL,   (u8 *)"设定放电量   %G.0AH",		  (u8*)&currLimitCap,0,SCREEN_TWO_BYTE);
-				  SetScreenItem(NULL,   (u8 *)"总放电量:%G.0AH",		  (u8*)&totalBattdisCap,0,SCREEN_FOUR_BYTE);//u32 prtotalBattdisCap = 0;
+//				  SetScreenItem(NULL,   (u8 *)"电芯电压   %F.2V",		  &vagBatVolt,0,SCREEN_TWO_BYTE);//currdiscap
+//				  SetScreenItem(NULL,   (u8 *)"电芯放电量   %G.0AH",		  &currdiscap,0,SCREEN_TWO_BYTE);
+//				  SetScreenItem(NULL,   (u8 *)"设定放电量   %G.0AH",		  (u8*)&currLimitCap,0,SCREEN_TWO_BYTE);
+//				  SetScreenItem(NULL,   (u8 *)"总放电量:%G.0AH",		  (u8*)&totalBattdisCap,0,SCREEN_FOUR_BYTE);//u32 prtotalBattdisCap = 0;
 				     //SetScreenItem(NULL, (u8 *)"前总放电量   %G.0",		  (u8*)&prtotalBattdisCap,0,SCREEN_FOUR_BYTE);
 					SetScreenItem(NULL);//结束
 				 return 1;
@@ -937,26 +944,18 @@ u8 setMenu(Item **ppItem)
 			 
 			else if(ppItem==&pBATTERYData)//锂电池参数界面
 			{
-				
-				
-				
-				
+			
 				battID[0]=1;
 				pBATTERYData=pdisPlayItem;
-				
-				(*(u16*)&pdisDisPlayData[36])=*(disChargeCount[battID[0]-1]);
-				(*(u16*)&pdisDisPlayData[38])=*(chargeCount[battID[0]-1]);
-				
-				
 				
 				if(pBATTERYData!=NULL)
 				{
 					
 						SetScreenItem(pBATTERYData,(u8 *)"当前电池        %O/$O",  &battID,0,MODIFI_PARA);
-												SetScreenItem(NULL,(u8 *)"总线电压    %F.2V",	 &pdisDisPlayData[0],  NULL,SCREEN_TWO_BYTE);
+//												SetScreenItem(NULL,(u8 *)"总线电压    %F.2V",	 &pdisDisPlayData[0],  NULL,SCREEN_TWO_BYTE);
 												SetScreenItem(NULL,(u8 *)"电池电压    %F.2V",	 &pdisDisPlayData[2],  NULL,SCREEN_TWO_BYTE);
 												SetScreenItem(NULL,(u8 *)"电池电流    %F.2A",	 &pdisDisPlayData[4],  NULL,SCREEN_TWO_BYTE);
-					              SetScreenItem(NULL,(u8 *)"Ibat        %F.2A",	 &pdisDisPlayData[32],  NULL,SCREEN_TWO_BYTE);
+//					              SetScreenItem(NULL,(u8 *)"Ibat        %F.2A",	 &pdisDisPlayData[32],  NULL,SCREEN_TWO_BYTE);
 												SetScreenItem(NULL,(u8 *)"充放状态    %l"  , StatuLis,&pdisDisPlayData[26],MODIFI_PARA);
 												SetScreenItem(NULL,(u8 *)"电池温度    %d℃",    &pdisDisPlayData[8],  (u8 *)(&pBattTmpMenu),NEXT_SCREEN|SCREEN_TWO_BYTE);			
 												SetScreenItem(NULL,(u8 *)"电池芯数    %D个",  &pdisDisPlayData[10], NULL,MODIFI_PARA);				
@@ -964,11 +963,11 @@ u8 setMenu(Item **ppItem)
 												SetScreenItem(NULL,(u8 *)"SOH         %F.2%",	  &pdisDisPlayData[14],  NULL,SCREEN_TWO_BYTE);
 					              SetScreenItem(NULL,(u8 *)"单体电压 %F.3-%F.3V",	 &pdisDisPlayData[28],  (u8 *)(&pBattCellVMenu),NEXT_SCREEN|SCREEN_TWO_BYTE);
 												SetScreenItem(NULL,(u8 *)"额定容量    %F.2AH",   &pdisDisPlayData[16],  NULL,SCREEN_TWO_BYTE);	
-//												SetScreenItem(NULL,(u8 *)"MOS充闭合   %l",OnOffLis,&pdisDisPlayData[18],MODIFI_PARA);
-//												SetScreenItem(NULL,(u8 *)"MOS放闭合   %l",OnOffLis,&pdisDisPlayData[20],MODIFI_PARA);
+												SetScreenItem(NULL,(u8 *)"MOS充闭合   %l",OnOffLis,&pdisDisPlayData[18],MODIFI_PARA);
+												SetScreenItem(NULL,(u8 *)"MOS放闭合   %l",OnOffLis,&pdisDisPlayData[20],MODIFI_PARA);
 												SetScreenItem(NULL,(u8 *)"放电电流    %F.2A",&pdisDisPlayData[22],NULL,SCREEN_TWO_BYTE);
-												SetScreenItem(NULL,(u8 *)"放电次数    %d",&pdisDisPlayData[36],NULL,MODIFI_PARA|SCREEN_TWO_BYTE);
-												SetScreenItem(NULL,(u8 *)"充电次数    %d",&pdisDisPlayData[38],NULL,MODIFI_PARA|SCREEN_TWO_BYTE);
+												SetScreenItem(NULL,(u8 *)"电池循环次数    %d",&pdisDisPlayData[34],NULL,SCREEN_TWO_BYTE);
+
 				//	SetScreenItem(NULL,(u8 *)"剩余时间      %dMIN",    &pdisDisPlayData[24], NULL,SCREEN_TWO_BYTE);	
 					//SetScreenItem(NULL,(u8 *)"充放状态         %D"  , &pdisDisPlayData[6],  NULL,MODIFI_PARA);						
 						
@@ -1623,7 +1622,7 @@ u8 setMenu(Item **ppItem)
 						SetScreenItem(pRECORDMenu,(u8 *)"告警记录 ",NULL,(u8 *)(&pAlarmRecordMenu),NEXT_SCREEN);//0
 		        SetScreenItem(NULL,   (u8 *)"抄表记录 ",NULL,(u8 *)(&pPowrRecordMenu),NEXT_SCREEN);//1 
 					  SetScreenItem(NULL,   (u8 *)"用户电量记录 ",NULL,(u8 *)(&pPowrRecord90Menu),NEXT_SCREEN);//1
-					  SetScreenItem(NULL,   (u8 *)"电池测试记录 ",NULL,(u8 *)(&pBattRecordMenu),NEXT_SCREEN);
+//					  SetScreenItem(NULL,   (u8 *)"电池测试记录 ",NULL,(u8 *)(&pBattRecordMenu),NEXT_SCREEN);
 					  SetScreenItem(NULL,   (u8 *)"升级日志 "     ,NULL,(u8 *)(&pUpDataLogMenu),NEXT_SCREEN);
 					 
 		        SetScreenItem(NULL);//结束//2
@@ -1879,7 +1878,7 @@ u8 setMenu(Item **ppItem)
    						//SetScreenItem(NULL,                 (u8 *)"用户电量清除     %l",  OnOffLis, &pdisDisPlayData[2],MODIFI_PARA);
    						SetScreenItem(NULL,                 (u8 *)"抄表记录清除     %l",  OnOffLis, &pdisDisPlayData[3],MODIFI_PARA);
   						SetScreenItem(NULL,                 (u8 *)"用户电量清除     %l",  OnOffLis, &pdisDisPlayData[4],MODIFI_PARA);
-  						SetScreenItem(NULL,                 (u8 *)"电池测试记录清除 %l", OnOffLis, &pdisDisPlayData[5],MODIFI_PARA);
+//  						SetScreenItem(NULL,                 (u8 *)"电池测试记录清除 %l", OnOffLis, &pdisDisPlayData[5],MODIFI_PARA);
 						  SetScreenItem(NULL,                 (u8 *)"恢复配电单元参数 %l", OnOffLis, &pdisDisPlayData[6],MODIFI_PARA);
 //						  SetScreenItem(NULL,                 (u8 *)"同步配电单元     %l", OnOffLis, &pdisDisPlayData[7],MODIFI_PARA);
 						  SetScreenItem(NULL,                 (u8 *)"同步租户电能     %l", OnOffLis, &pdisDisPlayData[8],MODIFI_PARA);
@@ -1913,8 +1912,8 @@ u8 setMenu(Item **ppItem)
 				 if(pSetBranchMenu!=NULL)
 					 {
 				                 SetScreenItem(pSetBranchMenu,  (u8 *)"配电分路设置",   NULL, (u8 *)(&pSetBranchParaMenu),NEXT_SCREEN);	
-						             SetScreenItem(NULL,            (u8 *)"电池参数设置",   NULL, (u8 *)(&pUserDownMenu),NEXT_SCREEN); 
-						             SetScreenItem(NULL,            (u8 *)"电池分路设置",   NULL, (u8 *)(&pBattBranchMenu),NEXT_SCREEN); 
+//						             SetScreenItem(NULL,            (u8 *)"电池参数设置",   NULL, (u8 *)(&pUserDownMenu),NEXT_SCREEN); 
+//						             SetScreenItem(NULL,            (u8 *)"电池分路设置",   NULL, (u8 *)(&pBattBranchMenu),NEXT_SCREEN); 
 						            
 						             SetScreenItem(NULL);//结束
 						                return 1;
@@ -2121,10 +2120,10 @@ u8 setMenu(Item **ppItem)
 					SetScreenItem(pBatterySetMenu,(u8 *)"当前模块        %O/$O",  &battID,0,MODIFI_PARA);
 					SetScreenItem(NULL,(u8 *)"放电电压      %F.2V",&pdisDisPlayData[0],NULL,MODIFI_PARA|SCREEN_TWO_BYTE);
 					SetScreenItem(NULL,(u8 *)"充电系数      %F.2%",&pdisDisPlayData[2],NULL,MODIFI_PARA|SCREEN_TWO_BYTE);
-					SetScreenItem(NULL,(u8 *)"MOS充闭合      %l",OnOffLis,&pdisDisPlayData[4],MODIFI_PARA);
-					SetScreenItem(NULL,(u8 *)"MOS放闭合      %l",OnOffLis,&pdisDisPlayData[6],MODIFI_PARA);
-				  SetScreenItem(NULL,(u8 *)"锂电工作特性   %l",BattWorkCharacter,&pdisDisPlayData[8],MODIFI_PARA);
-          SetScreenItem(NULL,(u8 *)"设定工作特性   %l",BattWorkCharacter,&pdisDisPlayData[9],MODIFI_PARA);
+//					SetScreenItem(NULL,(u8 *)"MOS充闭合      %l",OnOffLis,&pdisDisPlayData[4],MODIFI_PARA);
+//					SetScreenItem(NULL,(u8 *)"MOS放闭合      %l",OnOffLis,&pdisDisPlayData[6],MODIFI_PARA);
+//				  SetScreenItem(NULL,(u8 *)"锂电工作特性   %l",BattWorkCharacter,&pdisDisPlayData[8],MODIFI_PARA);
+//          SetScreenItem(NULL,(u8 *)"设定工作特性   %l",BattWorkCharacter,&pdisDisPlayData[9],MODIFI_PARA);
 
 					SetScreenItem(NULL);//结束
 					SetScreenItemSelectFirst(pBatterySetMenu);//设置为选择翻页

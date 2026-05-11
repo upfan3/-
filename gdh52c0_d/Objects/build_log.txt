@@ -1,0 +1,3 @@
+Build target 'Target 1'
+After Build - User command #1: E:\Keil5\\ARM\ARMCC\bin\fromelf.exe --bin --output=Bin\gdh52c0.bin .\Objects\gdh52c0.axf
+".\Objects\gdh52c0.axf" - 0 Error(s), 0 Warning(s).

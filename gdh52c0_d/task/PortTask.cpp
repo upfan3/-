@@ -18,8 +18,8 @@ void PORT_Task(void * pvParameters)
 		DownElectronicDetectAC();
 		DownElectricty(); 
 		battCutCmd(LI_BATTERY_NUM);
-		SetBatteryflag(flag);
-		
+//		SetBatteryflag(flag);
+//		
 		 delayalarm++;
 		if(delayalarm>50)
 		{

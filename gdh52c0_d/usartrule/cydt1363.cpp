@@ -525,7 +525,7 @@ void CYDT1363::DuleWith1363Data(void)//1363协议打包处理
 							{
 									 if(m_cid1==0x40)
 									 {      
-											 set4041();//交流瓶
+//											 set4041();//交流瓶
 									 }
 									 else if(m_cid1==0x41)
 									 {
@@ -542,7 +542,7 @@ void CYDT1363::DuleWith1363Data(void)//1363协议打包处理
 									 }
 									 else if(m_cid1==0xE2)
 									 { 
-										 setE241();//配电分路
+//										 setE241();//配电分路
 									 }
 									 else if(m_cid1==0x4A)
 									 { 
@@ -567,7 +567,7 @@ void CYDT1363::DuleWith1363Data(void)//1363协议打包处理
 							{
 									 if(m_cid1==0x40)
 									 {   
-										 set4043();//交流瓶
+//										 set4043();//交流瓶
 									 }
 									 else if(m_cid1==0x41)
 									 {
@@ -616,7 +616,7 @@ void CYDT1363::DuleWith1363Data(void)//1363协议打包处理
 									 }
 									else if(m_cid1==0xE2)
 									{ 
-										setE244();//配电分路
+//										setE244();//配电分路
 									}
 									else if(m_cid1==0x4A)
 									{ 
@@ -655,21 +655,21 @@ void CYDT1363::DuleWith1363Data(void)//1363协议打包处理
 							{
 									 if(m_cid1==0x40)
 									 {
-										 set4046();//交流屏
+//										 set4046();//交流屏
 //                                                                 }else if(m_cid1==0x41){  set4146();//整流模块
 									 }else if(m_cid1==0x42)
 									 {
-										 set4246();//直流瓶
+//										 set4246();//直流瓶
 //                                                                 }else if(m_cid1==0xE1){  setE146();//系统
 									 }
 									 else if(m_cid1==0xE2)
 									 {
-										 setE246();//配电分路
+//										 setE246();//配电分路
 										 
 									 }
 									  else if(m_cid1==0x4A)
 									 {
-										 set4A46();//锂电
+//										 set4A46();//锂电
 										 
 									 }
 									  else if(m_cid1==0xE5)
@@ -691,12 +691,12 @@ void CYDT1363::DuleWith1363Data(void)//1363协议打包处理
 							{
 									 if(m_cid1==0x40)
 									 {
-										 set4048();//交流瓶
+//										 set4048();//交流瓶
 //                                                                 }else if(m_cid1==0x41){set4148();//整流模块
 									 }
 									 else if(m_cid1==0x42)
 									 {
-										 set4248();//直流屏
+//										 set4248();//直流屏
 //                                                                 }else if(m_cid1==0xE1){setE148();//系统
 //                                                                 }else if(m_cid1==0xE2){setE248();//直流瓶
 									 }
@@ -710,7 +710,7 @@ void CYDT1363::DuleWith1363Data(void)//1363协议打包处理
 									 }
 							     else if(m_cid1==0xE2)
 									 {
-										 setE248();//本地下电与扩展下电
+//										 setE248();//本地下电与扩展下电
 									 }
 									 else if(m_cid1==0xE6)
 									 {
@@ -755,15 +755,15 @@ void CYDT1363::DuleWith1363Data(void)//1363协议打包处理
 							}
 							else if(m_cid2==0xA7)
 							{
-									set42A7();
+//									set42A7();
 							}
 							else if(m_cid2==0xA8)
 							{
-									set42A8();
+//									set42A8();
 							}
 							else if(m_cid2==0xA9)
 							{
-									set42A9();
+//									set42A9();
 							}
 							else if(m_cid2==0xAA)
 							{
@@ -783,7 +783,7 @@ void CYDT1363::DuleWith1363Data(void)//1363协议打包处理
 							}
 							else if(m_cid2==0xAE)
 							{
-								   set42AE();
+//								   set42AE();
 							}
 							else if(m_cid2==0xAF)
 							{
@@ -989,9 +989,11 @@ void CYDT1363::set4241(void)//直流瓶获取模拟量量化数据
 					        	SetFourByteData((float)(*((s16 *)&gpSysData[DCVOLTAGE]))/100);//直流电压//表106
 	                  SetFourByteData((float)(*((s16 *)&gpSysData[USER_CURR]))/10); //负载总电流
 									
-									  SetFourByteData((float)(gDcpower)/1000); //太阳能总输出功率
-                    SetFourByteData((float)(gTotalOcrEnergy)/1000); //太阳能累计电量
+//									  SetFourByteData((float)(gDcpower)/1000); //太阳能总输出功率
+//                    SetFourByteData((float)(gTotalOcrEnergy)/1000); //太阳能累计电量
 									
+										SetFourByteData(0, 0x20); //太阳能总输出功率
+                    SetFourByteData(0, 0x20); //太阳能累计电量
 									
 	
 										if(gbattGroud==0)//非智能开关，电池分路
@@ -999,7 +1001,7 @@ void CYDT1363::set4241(void)//直流瓶获取模拟量量化数据
                          SetOneByteData(3);//电池路数
 											 
 											   SetFourByteData((float)totalBattI/10); //锂电电池电流
-											   SetFourByteData((float)(*((s16 *)&gpSysData[BATT_CURR3]))/10); //电池1电流（分流器1 AD2）
+											   SetFourByteData((float)(*((s16 *)&gpSysData[BATT_CURR3]))/10); //分流器电流（分流器1 AD2）电池1
 				                 SetFourByteData((float)(*((s16 *)&gpSysData[BATT_CURR4]))/10); //电池2电流（分流器2 AD4） 
 					              
 				                
@@ -1035,29 +1037,42 @@ void CYDT1363::set4241(void)//直流瓶获取模拟量量化数据
 									  	SetOneByteData(1);//监测直流分路数量 N
 										 
 										 
-										  SetFourByteData(tmpI); //铁塔自定义分路（非智能开关）
-										 
+//										  SetFourByteData(tmpI); //铁塔自定义分路（非智能开关）
+																 
+										 SetFourByteData(0, 0x20);//铁塔自定义分路（非智能开关）
 					            SetOneByteData(4+battGroud);//铁塔自定义字段数量 a=3+1+m m=1
 										 
-					            SetFourByteData((float)(*((s16 *)&gpSysData[DCVOLTAGE]))/100);//电池电压
+//					            SetFourByteData((float)(*((s16 *)&gpSysData[DCVOLTAGE]))/100);//电池电压
+										  SetFourByteData(0, 0x20); //电池电压
 										 
-										 	float bkTime=60*(float)(*(u16*)&gpSysData[BATT_SOC])/10000;
-				              bkTime=bkTime*gSetBattC;
-										 if(gpSysData[USER_CURR]>0)
-											 // 用户电流>0时，用容量除以电流得到时间（电流单位可能为0.1A，故除以10转换为A）
-										 {bkTime=bkTime/((float)(*((s16 *)&gpSysData[USER_CURR]))/10);}
-										 else 
-										 {
-											 bkTime=1441;
-										 }
-				
-				              if(bkTime>1440)bkTime=1440;
-				
-				              SetFourByteData(bkTime);//电池后备时间
-										  SetFourByteData(((float)(*(u16*)&gpSysData[BATT_SOC]))/100/*00*gSetBattC*/);//电池剩余容量Ah
-					            SetFourByteData(battGroud);//电池温度数Q
+//										 	float bkTime=60*(float)(*(u16*)&gpSysData[BATT_SOC])/10000;
+//				              bkTime=bkTime*gSetBattC;
+//										 if(gpSysData[USER_CURR]>0)
+//											 // 用户电流>0时，用容量除以电流得到时间（电流单位可能为0.1A，故除以10转换为A）
+//										 {bkTime=bkTime/((float)(*((s16 *)&gpSysData[USER_CURR]))/10);}
+//										 else 
+//										 {
+//											 bkTime=1441;
+//										 }
+//				
+//				              if(bkTime>1440)bkTime=1440;
+											//SetFourByteData(bkTime);
+				              SetFourByteData((float)battRuntime);//电池后备时间
+
+										  float remainPercent = 0;
+														  if(totalBattCap > 0)
+														  {
+															  remainPercent = (float)remainCapSum / totalBattCap;
+															  if(remainPercent > 100)
+																  remainPercent = 100;
+														  }
+														  SetFourByteData(remainPercent);//电池剩余容量Ah
+//										  SetFourByteData(((float)(*(u16*)&gpSysData[BATT_SOC]))/100/*00*gSetBattC*/);//电池剩余容量Ah
+//					            SetFourByteData(battGroud);//电池温度数Q
+											SetFourByteData(0,0x20);//电池温度数Q
 										 for(u8 i=0; i<battGroud; i++)
-										  SetFourByteData(((float)*((s16 *)(&gpSysData[ENV_TEMP])))/100);//电池温度
+										 SetFourByteData(0,0x20);//电池温度
+//										  SetFourByteData(((float)*((s16 *)(&gpSysData[ENV_TEMP])))/100);//电池温度
 					            SetOneByteData(0);// 厂家自定义字段数量 b = 0
 										 
 										 ///////////////////////////////数据打包///////////////////////////////////////////////////////////////////////////////
@@ -1120,8 +1135,8 @@ void CYDT1363::set4A41(void)//锂电模拟量
 			if(command_group==0xff)
 			{
 				 	SetOneByteData(m_dataflag); 
-					SetOneByteData(4);//电池数
-					for(u8 i=0;i<4;i++)
+					SetOneByteData(5);//电池数
+					for(u8 i=0;i<5;i++)
 					{
 							SetFourByteData((float)batt[i].B_SOC/100);//SOC
 							SetFourByteData((float)batt[i].Vbat/100);//电池组电压V
@@ -1131,15 +1146,17 @@ void CYDT1363::set4A41(void)//锂电模拟量
 									 SetFourByteData((float)batt[i].CellV[j]/1000);//电池组电压V
 								}
 							SetFourByteData(batt[i].CellTempMax);//电池组温度℃
-							SetOneByteData(6);//电池温度数N（N=0）
-								for(u8 j=0;j<6;j++)
+							SetOneByteData(5);//电池温度数N（N=0）
+								for(u8 j=0;j<5;j++)
 								{
 									 SetFourByteData((float)batt[i].CellTemp[j]);//电池组电压V
 								}
 							SetFourByteData((float)batt[i].Ibus/100);//电池组电流
 							SetFourByteData((float)batt[i].B_SOH/100);//SOH
-							SetOneByteData(1);//自定义数
+							SetOneByteData(2);//自定义数
 							SetFourByteData((float)batt[i].B_capacity/100);//电池额定容量
+							SetFourByteData((float)batt[i].batteryCycleCount);//电池循环次数
+								
 					}
 		}
 			else if((command_group>0)&&(command_group<=16))
@@ -1155,15 +1172,16 @@ void CYDT1363::set4A41(void)//锂电模拟量
 										 SetFourByteData((float)batt[command_group-1].CellV[j]/1000);//电池组电压V
 									}
 								SetFourByteData(batt[command_group-1].CellTempMax);//电池组温度℃
-								SetOneByteData(6);//电池温度数N（N=0）
-									for(u8 j=0;j<6;j++)
+								SetOneByteData(5);//电池温度数N（N=0）
+									for(u8 j=0;j<5;j++)
 									{
 										 SetFourByteData((float)batt[command_group-1].CellTemp[j]);//电池组电压V
 									}
 								SetFourByteData((float)batt[command_group-1].Ibus/100);//电池组电流
 								SetFourByteData((float)batt[command_group-1].B_SOH/100);//SOH
-								SetOneByteData(1);//自定义数
+								SetOneByteData(2);//自定义数
 								SetFourByteData((float)batt[command_group-1].B_capacity/100);//电池额定容量
+								SetFourByteData((float)batt[command_group-1].batteryCycleCount);//电池循环次数
 					}
 					else
 					{
@@ -1280,14 +1298,16 @@ void CYDT1363::setE2A3(void)
 										 {
 											SetOneByteData(m_dataflag); 
 											tmplen=m_sdatlen;//暂存直流配电单元数量位置
-											SetOneByteData(0);//临时写入直流配电单元数量 M
+											SetOneByteData(8);//临时写入直流配电单元数量 M
 											for(u8 i=0;i<TOTAL_USER;i++)
 											{
 												if(SwitchOnlineCount[i]>0)
 												{
 													 moduleNum++;
 					
-													 SetFourByteData(((float)(*((s16 *)&gDCdistribution.pst_I[i])))/10);//配电单元电流		
+													 SetFourByteData(((float)(*((s16 *)&gDCdistribution.pst_I[i])))/10);//配电单元电流	
+													 SetFourByteData(((float)(*((u16 *)&gpSysData[DCVOLTAGE])))/100);//配电单元电压
+													 SetFourByteData((float)Power[i]/100);//配电单元功率
 													 SetOneByteData(3);//铁塔自定义字段数量 a =3
 													 SetFourByteData((float)gDCdistribution.pst_enerqy[i]/100);//配电单元电能
 													 SetFourByteData(25);//配电单元直流配电单元机内温度
@@ -1312,6 +1332,8 @@ void CYDT1363::setE2A3(void)
 															{
 																 SetOneByteData(m_dataflag); 
 																 SetFourByteData(((float)(*((s16 *)&gDCdistribution.pst_I[i])))/10);//配电单元电流		
+																 SetFourByteData(((float)(*((u16 *)&gpSysData[DCVOLTAGE])))/100);//配电单元电压
+																 SetFourByteData((float)Power[i]/100);//配电单元功率
 																 SetOneByteData(3);//铁塔自定义字段数量 a =3
 																 SetFourByteData((float)gDCdistribution.pst_enerqy[i]/100);//配电单元电能
 																 SetFourByteData(25);//配电单元直流配电单元机内温度
@@ -1889,8 +1911,8 @@ void CYDT1363::set4A44(void)////锂电模告警量
 	
 					SetOneByteData(m_dataflag); 
 					
-					SetOneByteData(4);//电池组数
-					for(u8 i=0;i<4;i++)
+					SetOneByteData(5);//电池组数
+					for(u8 i=0;i<5;i++)
 					{
 
 						SetOneByteSwitchStatus(0x01,batt[i].prBattWarning&BATT_OVER_CHG);//电池过充
@@ -1911,6 +1933,8 @@ void CYDT1363::set4A44(void)////锂电模告警量
 						SetOneByteSwitchStatus(0x01,batt[i].prBattWarning&ENVTEMP_TEMP_HIGH);//环境温度高
 						SetOneByteSwitchStatus(0x01,batt[i].prBattWarning&ENVTEMP_TEMP_LOW);//环境温度低
 						SetOneByteSwitchStatus(0x01,batt[i].prBattWarning&BATT_SOC_LOW);//SOC低
+//						SetOneByteSwitchStatus(0x01,batt[i].prBattWarning&BATT_CHG_MOS_BROKEN);//充电MOS故障
+//						SetOneByteSwitchStatus(0x01,batt[i].prBattWarning&BATT_DHG_MOS_BROKEN);//放电MOS故障
 
 					}
 			}	
@@ -1919,6 +1943,7 @@ void CYDT1363::set4A44(void)////锂电模告警量
 			  if(batt[command_group-1].Nexttime>1)
 				{
 					  SetOneByteData(m_dataflag); 
+
 					  SetOneByteSwitchStatus(0x01,batt[command_group-1].prBattWarning&BATT_OVER_CHG);//过充
 						SetOneByteSwitchStatus(0x01,batt[command_group-1].prBattWarning&BATT_OVER_DHG);//过放
 						SetOneByteSwitchStatus(0x01,batt[command_group-1].prBattWarning&BATT_TEMP_HIGH);//电池温度高
@@ -1934,6 +1959,8 @@ void CYDT1363::set4A44(void)////锂电模告警量
 						SetOneByteSwitchStatus(0x01,batt[command_group-1].prBattWarning&ENVTEMP_TEMP_HIGH);//环境温度高
 						SetOneByteSwitchStatus(0x01,batt[command_group-1].prBattWarning&ENVTEMP_TEMP_LOW);//环境温度低
             SetOneByteSwitchStatus(0x01,batt[command_group-1].prBattWarning&BATT_SOC_LOW);//SOC低
+//						SetOneByteSwitchStatus(0x01,batt[command_group-1].prBattWarning&BATT_CHG_MOS_BROKEN);//充电MOS故障
+//						SetOneByteSwitchStatus(0x01,batt[command_group-1].prBattWarning&BATT_DHG_MOS_BROKEN);//放电MOS故障
 					  
 				}
 				else
@@ -2474,9 +2501,9 @@ void CYDT1363::set4A46(void)//设置锂电参数
 			{
 	
 	
-					SetOneByteData(4);//电池组数
+					SetOneByteData(5);//电池组数
 					
-					for(u8 i=0;i<4;i++)
+					for(u8 i=0;i<5;i++)
 					{
 						SetFourByteData((float)batt[i].Set_BattV/100);
 						SetFourByteData((float)batt[i].Set_Batt_ChargA/100);
@@ -2547,17 +2574,10 @@ void CYDT1363::setE546(void)
 
 void CYDT1363::setE646(void)
 {
-		u8 command_group=0;
-			if(AsciitoHex(&command_group,&m_recvdata[0])==0){ReturnVailData(6);return ;}//无效命令;
-			if(command_group==0xff)
-			{
+
 						SetFourByteData((float)Volcut/100);
 						SetFourByteData((float)recoverVol/100);
-		  }
-		  else
-		  {
-					ReturnVailData(6);return ;
-			}
+		  
 	
 			///////////////////////////////数据打包///////////////////////////////////////////////////////////////////////////////
 		   SetDataLen(m_sdatlen);

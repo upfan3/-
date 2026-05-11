@@ -13,6 +13,7 @@ extern u32 gTotalMrEnergy;
 extern u16 gpower[3];
 extern u8 stopPowrSupply;
 extern u8 powerBreak;
+extern void RequestBattMosUrgent(void);
 u8 usart3ConnetTimeOut=0;
 u8 acdelay=140;
 u16 downloadstatus[6]={0,0,0,0,0,0};
@@ -21,8 +22,9 @@ u16 downloadstatus[6]={0,0,0,0,0,0};
 
 u8 setBattParaAddr = 0;
 TestLogicFlag testFlag = {0,1,1};
-u8 setDisChargeMospara = MOS_OFF;
-u8 setChargeMospara = MOS_OFF;
+u8 setDisChargeMospara = 0xFF;
+u8 setChargeMospara = 0xFF;
+u8 contactorOpen = 0;   // 0: K1接触器导通，1: K1接触器关断
 
 u32 startEnergy[2]={0,0};
 void DownElectronicOnTick(void) //下电延时计数，每秒调用1次
@@ -471,79 +473,104 @@ void DownElectronicCtrl(void)//下电逻辑
 	
 }
 
+extern h52c0 gh52c0;
 
 void battCut(u8 addr)
 {
-	
-			u8 lastStatus = g_devStatusFlags;
-			u8 index = addr - 1;      
-	
-//		  if(*((s16 *)&gpSysData[BATT_CURR3])==0)
-//			{
-					if((*((u16 *)&gpSysData[DCVOLTAGE])) <=Volcut &&(*((u16 *)&gpSysData[DCVOLTAGE])) > 4200 && batt[index].Vbat > 0)
-					{
-			//			pgh52c0->setdo(0);
-//						setChargeMospara = MOS_OFF;
-						setDisChargeMospara = MOS_ON;
-
-						testFlag.status = 1;
-						g_devStatusFlags &= ~FLAG_CHARGING;
-						g_devStatusFlags |= FLAG_DISCHARGING;
-						powerBreak =1;
-						
-						
-					}
-//			}
-//			else//有分流器判断是否有市电 不需要判断电池充电电流
-//			{
-					if((*((u16 *)&gpSysData[DCVOLTAGE])) > recoverVol)
-					{
-										setChargeMospara = MOS_ON;
-										if(totalBattI>0 &&  batt[index].Vbat > 0 && recvBattEnd == 1)
-										{
-												g_devStatusFlags &= ~FLAG_DISCHARGING;
-												g_devStatusFlags &= ~FLAG_NORMAL;
-												recvBattEnd = 0;
-				//							pgh52c0->clrdo(0);
-		//										testFlag.status = 0;
-												
-												setDisChargeMospara = MOS_OFF;
-												
-												g_devStatusFlags |= FLAG_CHARGING;
-												powerBreak =0;
-											
-										}
-										
-										if(totalSOC == 10000)
-										{ 
-												if(totalBattI==0)	
-												{
-													g_devStatusFlags &= ~FLAG_CHARGING;
-													g_devStatusFlags |= FLAG_NORMAL;
-													powerBreak =0;
-												}											
-										}
-								
-					 }
-//			}
-
-			 if( !(lastStatus & FLAG_DISCHARGING) && (g_devStatusFlags & FLAG_DISCHARGING) )//放电次数
+			u8 index = addr - 1;
+			u16 dcVolt = *((u16 *)&gpSysData[DCVOLTAGE]);
+//					setDisChargeMospara = MOS_ON;
+			if(dcVolt <= Volcut)
 			{
-				(*disChargeCount[index])++;                
-				pgh52c0->savePara(disChargeCount[index]);  
-			}	
-			
-			if( !(lastStatus & FLAG_CHARGING) && (g_devStatusFlags & FLAG_CHARGING)  )//充电次数
-			{
-					(*chargeCount[index])++;                
-					pgh52c0->savePara(chargeCount[index]); 
+				pgh52c0->setdo(2);      // K1接触器关断
+				contactorOpen = 1;
+
+				if(setDisChargeMospara != MOS_ON)
+				{
+					setDisChargeMospara = MOS_ON;
+					RequestBattMosUrgent();
+				}
+				powerBreak = 1;
 			}
-		
-			
 
+			if(contactorOpen == 1)
+			{
+				if((batt[index].Vbat > 0) &&
+				   (dcVolt >= batt[index].Vbat) &&
+				   (totalBattI >= 0))
+				{
+					if(setChargeMospara != MOS_OFF)
+					{
+						setChargeMospara = MOS_OFF;
+						RequestBattMosUrgent();
+					}
+				}
+			}
+
+			if((gh52c0.m_result[2]) > 50)
+			{
+				if((dcVolt > recoverVol))
+				{
+					if(setChargeMospara != MOS_ON)
+					{
+						setChargeMospara = MOS_ON;
+						RequestBattMosUrgent();
+					}
+
+//					if((batt[index].Vbat > 0)  )//&&(recvBattEnd == 1)
+//					{
+//						recvBattEnd = 0;
+
+						pgh52c0->clrdo(2);      // K1接触器导通
+						contactorOpen = 0;
+
+						powerBreak = 0;
+//					}
+
+					if(totalSOC == 10000)
+					{
+						if(totalBattI == 0)
+						{
+							g_devStatusFlags &= ~FLAG_CHARGING;
+							g_devStatusFlags |= FLAG_NORMAL;
+							powerBreak = 0;
+						}
+					}
+				}
+			}
+
+			if(contactorOpen == 0)
+			{
+				if((dcVolt > 4840) && (totalBattI <= 0))
+				{
+					if(setDisChargeMospara != MOS_OFF)
+					{
+						setDisChargeMospara = MOS_OFF;
+						RequestBattMosUrgent();
+					}
+				}
+//				else if((dcVolt <= 4840) && (totalBattI <= 0))
+//				{
+//					setDisChargeMospara = MOS_ON;
+//				}
+			}
+
+			if(totalBattI < 0)
+			{
+				g_devStatusFlags &= ~(FLAG_CHARGING | FLAG_NORMAL | FLAG_OFF);
+				g_devStatusFlags |= FLAG_DISCHARGING;
+			}
+			else if(totalBattI > 0)
+			{
+				g_devStatusFlags &= ~(FLAG_DISCHARGING | FLAG_NORMAL | FLAG_OFF);
+				g_devStatusFlags |= FLAG_CHARGING;
+			}
+			else
+			{
+				g_devStatusFlags &= ~(FLAG_DISCHARGING | FLAG_CHARGING | FLAG_OFF);
+				g_devStatusFlags |= FLAG_NORMAL;
+			}
 }
-
-
 u8 sw =0;
 void SetBatteryflag( CtrlState state)
 {
@@ -556,8 +583,17 @@ void SetBatteryflag( CtrlState state)
 
 void battCutCmd(u8 num)
 {
-	 for(u8 i=0;i<num;i++)
-	{
-		battCut(i+1);
-	}
+    if(num > LI_BATTERY_NUM)
+        num = LI_BATTERY_NUM;
+
+    for(u8 i = 0; i < num; i++)
+    {
+        if(batt[i].Vbat > 0)
+        {
+            battCut(i + 1);
+        }
+    }
 }
+
+
+

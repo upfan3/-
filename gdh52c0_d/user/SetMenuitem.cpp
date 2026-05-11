@@ -3111,7 +3111,7 @@ void SetBranchParaMenu(Screen *pCurrentScreen)//智能空开分路参数配置页
 }
 
 u32 Power[TOTAL_USER]={0};
-
+s16 userCurr = 0; // 0.1A
 void SetUSRPara(Screen *pCurrentScreen)
 {
 	
@@ -3138,13 +3138,13 @@ void SetUSRPara(Screen *pCurrentScreen)
 										 
 										 if(i==TOTAL_USER) return;
 	
-	
+
 	
 
 		 	*((u16 *)&pdisDisPlayData[4])=gDCdistribution.pst_I[i];
 			*((u32 *)&pdisDisPlayData[6])=gDCdistribution.pst_enerqy[i];
 			*((u16 *)&pdisDisPlayData[10])=(*((u16 *)&gpSysData[DCVOLTAGE]));
-										 Power[i]=*((u16 *)&pdisDisPlayData[10])*(*((u16 *)&pdisDisPlayData[4]))/10;//*(*((u16 *)&pdisDisPlayData[10]));
+			 Power[i]=*((u16 *)&pdisDisPlayData[10])*(*((u16 *)&pdisDisPlayData[4]))/10;//*(*((u16 *)&pdisDisPlayData[10]));
 		  *((u32 *)&pdisDisPlayData[12])=Power[i];
 	
 }
@@ -3844,39 +3844,8 @@ void Update_BattData(Screen *pCurrentScreen)
 	(*(u16 *)&pdisDisPlayData[28])=batt[battID[0]-1].CellVMin;//最小单体电压
 	(*(u16 *)&pdisDisPlayData[30])=batt[battID[0]-1].CellVMax;//最大单体电压
 	(*(u16 *)&pdisDisPlayData[32])=batt[battID[0]-1].Ibat;		//充放电流
+	(*(u16 *)&pdisDisPlayData[34])=	batt[battID[0]-1].batteryCycleCount;//电池循环次数
 
-	
-	 if((pCurrentScreen->m_pItem[pCurrentScreen->m_head+pCurrentScreen->m_coursItem]).st_plink==&pdisDisPlayData[36])
-	 {
-		  if(genterflag==1)
-			{
-				*(disChargeCount[battID[0]-1]) =(*(u16 *)&pdisDisPlayData[36]);
-			  pgh52c0->savePara(&disChargeCount[battID[0]-1]);
-				genterflag=0;
-			}
-	 }
-	 
-	 else if((pCurrentScreen->m_pItem[pCurrentScreen->m_head+pCurrentScreen->m_coursItem]).st_plink==&pdisDisPlayData[38])
-	 {
-			if(genterflag==1)
-			{
-				*(chargeCount[battID[0]-1]) =(*(u16 *)&pdisDisPlayData[38]);
-				pgh52c0->savePara(&chargeCount[battID[0]-1]);
-				genterflag=0;
-			}
-		 
-		 
-	 }
-	 
-	if(pCurrentScreen->m_EnterStatus!=3)//处于非编辑状态时
-	 {
-						 				genterflag=0;
-				(*(u16 *)&pdisDisPlayData[36])=*(disChargeCount[battID[0]-1]);
-				(*(u16 *)&pdisDisPlayData[38])=*(chargeCount[battID[0]-1]);
-		 
-
-		 
-	 }
 	
 }
 

@@ -90,7 +90,7 @@
 
 //智能开关参数
 #define DELAY_COUNT 200;
-#define TOTAL_USER 94
+#define TOTAL_USER 50
 
 //#define SWITCH_PARA UPDATA_LOG+UPDATA_LOG_LEN //8092
 #define SWITCH_PARA 8192 //8K位置
@@ -218,12 +218,17 @@
 #define BATT_OVER_CHG       0x0010 //电池过充
 #define BATT_OVER_DHG       0x0020 //电池过放
 
+#define BATT_MOS_TEMP_HIGH       0x0400 //MOS温度高
+//、
+
 
 #define BATT_VOLT_HIGH      0x0004  //电池总体过压
 #define BATT_VOLT_LOW       0x0008  //电池总体欠压
 
 
 # define BATT_SHORT         0x8000 //电池短路
+#define BATT_CHG_MOS_BROKEN 0x00010000UL //电池充电MOS故障
+#define BATT_DHG_MOS_BROKEN 0x00020000UL //电池放电MOS故障
 
 #define AIR_READ_CMD    0x03    // 读命令功能码
 #define AIR_WRITE_CMD    0x06    // 写命令功能码
@@ -367,10 +372,12 @@ enum AlarmType
   
    OUT_V, //输出电压 1
 	 BATTSOC,//电池SOC
-	 IN_VA,  //A相电压 3
-	 IN_VB,  //B相电压 4
-	 IN_VC,  //C相电压 5
-	
+//	 IN_VA,  //A相电压 3
+//	 IN_VB,  //B相电压 4
+//	 IN_VC,  //C相电压 5
+	 MOS_TEMP,//mos温度
+	 BATT_CHG_TEMP,//电池充电温度
+	 BATT_DHG_TEMP,//电池放电温度
 
 	 IN_I,//  输入电流   6
 	 IN_DV,//外部扩展模块   7
@@ -529,6 +536,7 @@ typedef struct
 	u16 CellTemp[16]; //单体温度
 	u16 CellTempMax;  //单体温度最大值 
 	u16 CellTempMin;  //单体温度最小值 
+	u16 batteryCycleCount;
 	u16 SW_version;
 	u16 HW_version;
 	u32 DisCap;
@@ -1013,6 +1021,7 @@ void detectBatteryOnline(void);
 void BattCmdPolling(void);
 void SetBattWarning(void);
 
+
 void Update_BattData(Screen *pCurrentScreen);
 //void Update_BattAlarm(void);
 void SetBrainBatt(Screen *pCurrentScreen);
@@ -1330,5 +1339,12 @@ extern u8 g_devStatusFlags;
 extern u16 *disChargeCount[];
 extern u16 *chargeCount[];
 
+extern  s16 m_result[6];
+extern s16 userCurr;
+extern u32 Power[TOTAL_USER];
+extern u16 battRuntime;
+extern u32 remainCapSum ;
+extern u32 totalBattCap;
+extern u8 powerBreak;
 
 #endif

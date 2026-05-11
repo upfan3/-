@@ -26,12 +26,29 @@ Project File Date:  12/06/2025
 
 <h2>Output:</h2>
 Build target 'Target 1'
-compiling DownElectronicCtrl.cpp...
+compiling brainbattery.cpp...
+user\brainbattery.cpp(138): warning:  #940-D: missing return statement at end of non-void function "GetBatteryCmd"
+  }
+user\brainbattery.cpp(591): warning:  #177-D: variable "checkcount" was declared but never referenced
+        static u8 checkcount=60;
+user\brainbattery.cpp(1242): warning:  #177-D: variable "vCellNum" was declared but never referenced
+                u8 vCellNum = 0, tCellNum =0;
+user\brainbattery.cpp(1242): warning:  #177-D: variable "tCellNum" was declared but never referenced
+                u8 vCellNum = 0, tCellNum =0;
+user\brainbattery.cpp(1150): warning:  #177-D: variable "vCellNum" was declared but never referenced
+        u8 vCellNum = 0, tmpNum = 0;
+user\brainbattery.cpp(1150): warning:  #177-D: variable "tmpNum" was declared but never referenced
+        u8 vCellNum = 0, tmpNum = 0;
+user\brainbattery.cpp(1151): warning:  #177-D: variable "firstIn" was declared but never referenced
+        static u8 recvBattNum = 0,firstIn = 1;
+user\brainbattery.cpp(1463): warning:  #940-D: missing return statement at end of non-void function "DuleWithDataBatteryCommon"
+  }
+user\brainbattery.cpp: 8 warnings, 0 errors
 linking...
-Program Size: Code=173868 RO-data=3628 RW-data=4452 ZI-data=48212  
+Program Size: Code=166108 RO-data=3648 RW-data=4476 ZI-data=45676  
 FromELF: creating hex file...
 After Build - User command #1: E:\Keil5\\ARM\ARMCC\bin\fromelf.exe --bin --output=Bin\gdh52c0.bin .\Objects\gdh52c0.axf
-".\Objects\gdh52c0.axf" - 0 Error(s), 0 Warning(s).
+".\Objects\gdh52c0.axf" - 0 Error(s), 8 Warning(s).
 
 <h2>Collection of Component include folders:</h2>
   C:\Users\huang\Desktop\工作\项目\智能一体化备电\gdh52c0_d\RTE

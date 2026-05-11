@@ -781,13 +781,29 @@ void Monitor::LimitI(void *prule)
 
 	 
 
-	 if(*((u16*)&gpSysData[LOADCURR])>(( * m_pbattI)+totalBattI))
-	 {
-		// 负载电流 = 总负载电流 - 电池电流（电池放电时，部分负载由电池承担）
-		 ( *m_ploadI)=*((u16*)&gpSysData[LOADCURR]) - ( * m_pbattI)-totalBattI;
-	 }
-	else
-	( *m_ploadI)=0;	
+//	 if(*((u16*)&gpSysData[LOADCURR])>(( * m_pbattI)+totalBattI))
+//	 {
+//		// 负载电流 = 总负载电流 - 电池电流（电池放电时，部分负载由电池承担）
+//		 ( *m_ploadI)=*((u16*)&gpSysData[LOADCURR]) - ( * m_pbattI)-totalBattI;
+//	 }
+//	else
+//	{
+		s32 loadCurr = 0;
+
+		for (u8 i = 0; i < TOTAL_USER; i++) {
+				if (SwitchOnlineCount[i] > 1) {
+						loadCurr += *((s16 *)&gDCdistribution.pst_I[i]);
+				}
+		}
+
+		if (loadCurr < 0) loadCurr = 0;
+
+		*m_ploadI = (u16)loadCurr;
+		userCurr = (s16)loadCurr;
+			
+			
+//	}
+//	( *m_ploadI)=0;	
 			
 /*		
 			//启动初期模块 / 电池状态不稳定，通过 “降额限流” 或 “按负载动态分配限流”，避免大电流冲击硬件（如模块过流、电池损伤）

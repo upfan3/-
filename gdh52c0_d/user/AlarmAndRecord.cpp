@@ -54,6 +54,8 @@ u8 outAlarm[12]={0,0,0,0,0,0,0,0,0,0,0,0};
 u8 acAlarmV[8],AlarmVolitage,ACstopflag,mod,galram,downflag,battbreak,locdDownFlag;
 u32  moduleBreakFlag=0 ,modulecomm=0,moduleCommBreakFlag=0;
 
+u8 Powerstopflag = 0;
+
 u8 gledtimer;
 u8 ation[]={ NO,UNNOMAL,UNNOMAL,BROKEN,BROKEN,BROKEN,BREAK,NO,BREAK,BREAK,BREAK,BREAK};
 u8 shift[]={ 28,26,27,20,22,23,21,22,19,29,30,31};
@@ -147,7 +149,7 @@ void removeModule(u8 nb,u8 type)//从1号开始
 
    	if(alarmCount[2]==0)
 		{
-		  //ctrl_bee=0;
+		  ctrl_bee=0;
 			g_devStatusFlags &=~FLAG_ALARM;
 			g_devStatusFlags |= FLAG_NORMAL;
 		}
@@ -155,7 +157,8 @@ void removeModule(u8 nb,u8 type)//从1号开始
 }
 
 void minusAlarm(AlarmType type,u8 nb,AlarmBehavior behavior,u32 ext)
-{ u8 i ;
+{ u8 i,writeIndex,removeCount=0,activeCount;
+	 u16 count=0;
 	
 	
 	 u32 Altype;
@@ -165,30 +168,30 @@ void minusAlarm(AlarmType type,u8 nb,AlarmBehavior behavior,u32 ext)
 	  ((WarnStruct *)&Altype)->behavior=behavior;
 	  ((WarnStruct *)&Altype)->ext=ext;
 	
-	  for(i=0;i<alarmCount[0];i++)
-	{
+	  if(alarmCount[2]>100)
+		    activeCount=100;
+	  else
+		    activeCount=alarmCount[2];
+	
+	  writeIndex=0;
+	  for(i=0;i<activeCount;i++)
+	  {
 		    if(palarmtable[i]==Altype)
-				
-		     break;
-	}
+		    {
+			      removeCount++;
+		    }
+		    else
+		    {
+			      palarmtable[writeIndex]=palarmtable[i];
+			      writeIndex++;
+		    }
+	  }
 	  
+	  if(removeCount==0) return ;//没有要去掉的告警
 	
-	
-	
-	
-	
-	     if(i==alarmCount[0]) return ;//没有要去掉的告警
-	
-	for(;i<alarmCount[0];i++)
-	{ 
-		  palarmtable[i]= palarmtable[i+1];
-	}
-	
-	   alarmCount[2]--;
-	   alarmCount[0]--;
-	     alarmCount[1]=alarmCount[2];
-	
-	          u16 count=0;
+	  alarmCount[2]-=removeCount;
+	  alarmCount[0]=alarmCount[2];
+	  alarmCount[1]=alarmCount[2];
 	          
 	
 	            ((WarnStruct *)&Altype)->wstatus=1;//设置告警恢复标志
@@ -222,12 +225,13 @@ void minusAlarm(AlarmType type,u8 nb,AlarmBehavior behavior,u32 ext)
 			g_devStatusFlags &=~FLAG_ALARM;
 			g_devStatusFlags |= FLAG_NORMAL;
 		}
-	   //ctrl_bee=0;
+	   ctrl_bee=0;
 	
 }
 
 void addAlarm(AlarmType type,u8 nb,AlarmBehavior behavior,u32 ext)
 {  u16 count=0;
+	 u8 i;
 	
 	
 	  u32 Altype;
@@ -236,7 +240,15 @@ void addAlarm(AlarmType type,u8 nb,AlarmBehavior behavior,u32 ext)
 	  ((WarnStruct *)&Altype)->nb=nb;
 	  ((WarnStruct *)&Altype)->behavior=behavior;
 	   ((WarnStruct *)&Altype)->ext=ext;
-	
+
+
+	  for(i=0;i<alarmCount[2] && i<100;i++)
+	  {
+		    if(palarmtable[i]==Altype)
+		    {
+			      return;
+		    }
+	  }
 	  palarmtable[alarmCount[0]]=Altype;
 	 alarmCount[0]++;
 	if(alarmCount[0]>99)
@@ -376,9 +388,9 @@ void ledIndicator(void)
             blink_red ? pgh52c0->m_io.set(WARN_LED, LED_ON) : pgh52c0->m_io.set(WARN_LED, LED_OFF);  // 独立慢闪
             break;
 
-//        default:
-//            //pgh52c0->m_io.set(WARN_LED, LED_OFF);
-//            break;
+        default:
+            pgh52c0->m_io.set(WARN_LED, LED_OFF);
+            break;
     }
 }
 
@@ -447,7 +459,7 @@ void OnTickAlarm(void)//告警产生
 	
 				 if((pgh52c0->m_di._diData&(diMask<<i))!=0)
 				 {
-					    distatus=1;
+								distatus=1;
 				 }
 				 
 
@@ -532,6 +544,28 @@ void OnTickAlarm(void)//告警产生
 					 
 		}			 
 	//
+		{//市电备电切换
+			if(powerBreak)
+			{
+					if(Powerstopflag == 0)
+					{
+							Powerstopflag = 1;
+							acAlarmV[7]=0xE0;//交流停电
+							addAlarm(ACINPUT, 0, STOP_SUPPLY);
+					}
+			}
+			else
+			{
+					if(Powerstopflag == 1)
+					{
+							Powerstopflag = 0;
+							acAlarmV[7]=0;
+							minusAlarm(ACINPUT, 0, STOP_SUPPLY);
+					}
+			}
+
+			
+		}
 		{//三相交流输入告警			 
 					 
 						 acAlarmV[0]=0;
@@ -542,14 +576,14 @@ void OnTickAlarm(void)//告警产生
 							if(pgACmointor->st_Ua>gInOverVLimit)
 							{
 									if(gpAlarmbit->bit_IN_OVER_VA==0) 
-									 addAlarm(IN_VA,0,HIGH_);
+//									 addAlarm(IN_VA,0,HIGH_);
 									 gpAlarmbit->bit_IN_OVER_VA=1;
 										 acAlarmV[0]=2;
 							 }
 							else  if(pgACmointor->st_Ua<(gInOverVLimit-200))//A相过压恢复
 							{
 									 if(gpAlarmbit->bit_IN_OVER_VA==1) 
-										 minusAlarm(IN_VA,0,HIGH_);
+//										 minusAlarm(IN_VA,0,HIGH_);
 										gpAlarmbit->bit_IN_OVER_VA=0;
 									 
 							 }
@@ -558,14 +592,14 @@ void OnTickAlarm(void)//告警产生
 							 if(pgACmointor->st_Uc>gInOverVLimit)
 							 {
 								if(gpAlarmbit->bit_IN_OVER_VC==0) 
-								 addAlarm(IN_VC,0,HIGH_);
+//								 addAlarm(IN_VC,0,HIGH_);
 								 gpAlarmbit->bit_IN_OVER_VC=1;
 								 acAlarmV[2]=2;
 							 }
 							 else if(pgACmointor->st_Uc<(gInOverVLimit-200))//C相过压恢复
 							 {
 								 if(gpAlarmbit->bit_IN_OVER_VC==1) 
-									 minusAlarm(IN_VC,0,HIGH_);
+//									 minusAlarm(IN_VC,0,HIGH_);
 									gpAlarmbit->bit_IN_OVER_VC=0;
 							
 							 }
@@ -575,14 +609,14 @@ void OnTickAlarm(void)//告警产生
                if(pgACmointor->st_Ub>gInOverVLimit)
 							 {
 								if(gpAlarmbit->bit_IN_OVER_VB==0) 
-								 addAlarm(IN_VB,0,HIGH_);
+//								 addAlarm(IN_VB,0,HIGH_);
 								 gpAlarmbit->bit_IN_OVER_VB=1;
 									acAlarmV[1]=2;
 							 }
 							 else if(pgACmointor->st_Ub<(gInOverVLimit-200))//B相过压恢复
 							 {
 								 if(gpAlarmbit->bit_IN_OVER_VB==1) 
-									 minusAlarm(IN_VB,0,HIGH_);
+//									 minusAlarm(IN_VB,0,HIGH_);
 									gpAlarmbit->bit_IN_OVER_VB=0;
 							
 								
@@ -645,9 +679,9 @@ void OnTickAlarm(void)//告警产生
 								 if(ACstopflag==0)
 								 {
 										ACstopflag=1;
-											acAlarmV[7]=0xE0;//交流停电
+//											acAlarmV[7]=0xE0;//交流停电
 											 mod=2;//电池供电
-											addAlarm(ACINPUT,0,STOP_SUPPLY);
+//											addAlarm(ACINPUT,0,STOP_SUPPLY);
 									}
 								 
 								 //停电时产生电池欠压
@@ -692,21 +726,21 @@ void OnTickAlarm(void)//告警产生
 								  //停电时，交流电压A低恢复
 								 {
 									  if(gpAlarmbit->bit_IN_OWR_VA==1) 
-											minusAlarm(IN_VA,0,LOW_);
+//											minusAlarm(IN_VA,0,LOW_);
 											gpAlarmbit->bit_IN_OWR_VA=0;
 								 }
 								 
 								 //停电时，交流电压B低恢复
 								 {
 									  if(gpAlarmbit->bit_IN_OWR_VB==1) 
-											minusAlarm(IN_VB,0,LOW_);
+//											minusAlarm(IN_VB,0,LOW_);
 											gpAlarmbit->bit_IN_OWR_VB=0;
 								 }
 								 
 								 //停电时，交流电压C低恢复
 								 {
 									  if(gpAlarmbit->bit_IN_OWR_VC==1) 
-											minusAlarm(IN_VC,0,LOW_);
+//											minusAlarm(IN_VC,0,LOW_);
 											gpAlarmbit->bit_IN_OWR_VC=0;
 								 }
 								 
@@ -742,8 +776,8 @@ void OnTickAlarm(void)//告警产生
 											 if(ACstopflag==1) 
 											 {  
 													ACstopflag=0;
-													minusAlarm(ACINPUT,0,STOP_SUPPLY);
-													acAlarmV[7]=0;
+//													minusAlarm(ACINPUT,0,STOP_SUPPLY);
+//													acAlarmV[7]=0;
 													mod=0;
 											}
 
@@ -796,14 +830,14 @@ void OnTickAlarm(void)//告警产生
 											if((pgACmointor->st_Ua<gInOwrVLimit)&& (gpAlarmbit->bit_OWR_PHA==0)&&((gAcPhase&0x04)==0x04))
 											{
 													if(gpAlarmbit->bit_IN_OWR_VA==0) 
-														 addAlarm(IN_VA,0,LOW_);
+//														 addAlarm(IN_VA,0,LOW_);
 														 gpAlarmbit->bit_IN_OWR_VA=1;
 														acAlarmV[0]=1;
 												 }
 											else if(pgACmointor->st_Ua>(gInOwrVLimit+200))
 											{
 													 if(gpAlarmbit->bit_IN_OWR_VA==1) 
-														minusAlarm(IN_VA,0,LOW_);
+//														minusAlarm(IN_VA,0,LOW_);
 														gpAlarmbit->bit_IN_OWR_VA=0;
 
 
@@ -831,14 +865,14 @@ void OnTickAlarm(void)//告警产生
 										  if((pgACmointor->st_Ub<gInOwrVLimit)&&(gpAlarmbit->bit_OWR_PHB==0)&&((gAcPhase&0x02)==0x02))
 											 {
 												if(gpAlarmbit->bit_IN_OWR_VB==0) 
-												 addAlarm(IN_VB,0,LOW_);
+//												 addAlarm(IN_VB,0,LOW_);
 												 gpAlarmbit->bit_IN_OWR_VB=1;
 													acAlarmV[1]=1;
 											 }
 											 else if(pgACmointor->st_Ub>(gInOwrVLimit+200))
 											 {
 												 if(gpAlarmbit->bit_IN_OWR_VB==1) 
-													 minusAlarm(IN_VB,0,LOW_);
+//													 minusAlarm(IN_VB,0,LOW_);
 													gpAlarmbit->bit_IN_OWR_VB=0;
 												 
 											 }
@@ -867,14 +901,14 @@ void OnTickAlarm(void)//告警产生
 										 if((pgACmointor->st_Uc<gInOwrVLimit)&&(gpAlarmbit->bit_OWR_PHC==0)&&((gAcPhase&0x01)==0x01))
 											{
 												if(gpAlarmbit->bit_IN_OWR_VC==0) 
-												 addAlarm(IN_VC,0,LOW_);
+//												 addAlarm(IN_VC,0,LOW_);
 												 gpAlarmbit->bit_IN_OWR_VC=1;
 													acAlarmV[2]=1;
 											}
 											else if(pgACmointor->st_Uc>(gInOwrVLimit+200))
 										  {
 												 if(gpAlarmbit->bit_IN_OWR_VC==1) 
-													 minusAlarm(IN_VC,0,LOW_);
+//													 minusAlarm(IN_VC,0,LOW_);
 													gpAlarmbit->bit_IN_OWR_VC=0;
 													
 											}	
